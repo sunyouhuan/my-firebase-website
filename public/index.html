@@ -52,10 +52,20 @@
                 <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
                 <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
                     <h2 class="text-2xl font-bold text-center text-slate-800">登入您的帳號</h2>
-                    <div class="flex flex-col space-y-4">
-                        <button onclick="loginAs('merchant')" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">商家登入</button>
-                        <button onclick="loginAs('influencer')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">網紅登入</button>
-                    </div>
+                    <form id="login-form" class="space-y-4" onsubmit="return false;">
+                        <div>
+                            <label for="email" class="text-sm font-medium text-gray-700">電子郵件</label>
+                            <input id="email" name="email" type="email" autocomplete="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div>
+                            <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
+                            <input id="password" name="password" type="password" autocomplete="current-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            <button type="button" onclick="handleLogin()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">登入</button>
+                            <button type="button" onclick="handleRegister()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">註冊新帳號</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -78,7 +88,20 @@
 
                 <!-- 主內容區 -->
                 <div class="flex-1 flex flex-col overflow-hidden">
+
+
                     <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0"><h1 id="merchant-header-title" class="text-2xl font-bold text-slate-800">總覽</h1><div class="flex items-center space-x-4"><span class="text-gray-600">你好, A 公司</span><img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/E2E8F0/4A5568?text=A" alt="公司 Logo"></div></header>
+
+                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
+                        <h1 id="merchant-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
+                        <div class="flex items-center space-x-4">
+                            <span id="user-email-display" class="text-gray-600"></span>
+                            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
+                        </div>
+                    </header>
+
+
+
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
                         <div id="merchant-dashboard-content" class="dashboard-content active">
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -93,14 +116,21 @@
                         <div id="merchant-campaign-detail-content" class="dashboard-content"></div>
 
                         <div id="merchant-campaigns-content" class="dashboard-content">
-                             <div class="flex justify-between items-center mb-6">
+                            <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-bold text-slate-800">所有行銷活動</h2>
-                                <button onclick="openAIChat()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors flex items-center space-x-2"><span>+</span><span>建立新活動</span></button>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-between"><div><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">進行中</span><h3 class="font-bold text-lg mt-2 text-slate-800">聯名無線耳機預熱</h3><p class="text-sm text-gray-500 mt-1">合作網紅: 5 位</p></div><div class="mt-4"><div class="flex justify-between text-sm text-gray-600"><span>進度</span><span>60%</span></div><div class="w-full bg-gray-200 rounded-full h-2 mt-1"><div class="bg-yellow-400 h-2 rounded-full" style="width: 60%"></div></div><button onclick="showCampaignDetail('聯名無線耳機預熱')" class="w-full mt-4 text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200">查看詳情</button></div></div>
+
+                            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                                <h3 class="font-bold text-lg mb-4 text-slate-800">建立新活動</h3>
+                                <div class="flex space-x-2">
+                                    <input id="campaign-name-input" type="text" placeholder="輸入活動名稱..." class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                                    <button onclick="saveCampaign()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">儲存</button>
+                                </div>
                             </div>
-                        </div>
+
+                            <div id="campaigns-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                </div>
+                        </div>                        
 
                         <div id="merchant-reports-content" class="dashboard-content">
                             <div class="bg-white rounded-xl shadow p-6"><h3 class="font-bold text-slate-800 mb-4">曝光 & 點擊趨勢</h3><div class="h-80"><canvas id="performanceLineChart"></canvas></div></div>
@@ -147,139 +177,234 @@
         <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300"></div></div>
     </div>
 
-    <script>
-        // --- 全域變數與模擬數據 ---
-        let currentOpenModal = null;
-        const platformData = {
-            instagram: { name: "Instagram", handle: "hsi_daily", followers: "15.2k", price: "NT$ 8,000 - 15,000", tags: ["#美食", "#旅遊", "#生活"], genderData: [78, 22], ageData: [15, 55, 25, 5] },
-            youtube: { name: "YouTube", handle: "小希的探索頻道", followers: "8.9k", price: "NT$ 20,000 - 35,000", tags: ["#開箱", "#VLOG", "#評測"], genderData: [40, 60], ageData: [20, 50, 20, 10] },
-        };
-        const campaignDetailData = { };
+    <script type="module">
+    // 匯入您需要的 Firebase SDK 功能
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            query, 
+            where, 
+            getDocs 
+        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-        // --- 核心導航邏輯 ---
-        function navigateTo(viewId) {
-            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            window.scrollTo(0, 0);
-        }
-
-        function loginAs(role) {
-            if (role === 'merchant') {
-                navigateTo('merchant-dashboard-view');
-                switchTab('merchant', 'dashboard');
-            } else if (role === 'influencer') {
-                navigateTo('influencer-dashboard-view');
-                switchTab('influencer', 'dashboard');
-            }
-        }
-
-        function logout() {
-            navigateTo('login-view');
-        }
-
-        const headerTitles = {
-            merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定', campaignDetail: '活動詳情' },
-            influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
+    // 您的 Firebase 專案設定
+    // 【重要】請用您自己在 Firebase 主控台「專案設定」中取得的 firebaseConfig 物件取代這裡的內容！
+        const firebaseConfig = {
+          apiKey: "AIzaSy...", // 換成您自己的
+          authDomain: "test-b493a.firebaseapp.com",
+          projectId: "test-b493a",
+          storageBucket: "test-b493a.appspot.com",
+          messagingSenderId: "...", // 換成您自己的
+          appId: "...", // 換成您自己的
+          measurementId: "..." // 換成您自己的
         };
 
-        function switchTab(role, tabId, titleOverride = null) {
-            const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
-            const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
-            const headerTitle = document.getElementById(`${role}-header-title`);
-            
-            sidebarLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('onclick').includes(`'${tabId}'`)) link.classList.add('active');
-            });
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-            contents.forEach(content => content.classList.remove('active'));
-            const activeContent = document.getElementById(`${role}-${tabId}-content`);
-            if (activeContent) activeContent.classList.add('active');
-            
-            headerTitle.textContent = titleOverride || headerTitles[role][tabId];
+        // 我們將把所有新功能寫在這裡，並掛載到 window 物件上
+        // 這樣 HTML 的 onclick 屬性才能呼叫到它們
+        window.auth = auth;
+        window.db = db;
 
-            // 動態渲染圖表
-            if (role === 'influencer' && tabId === 'dashboard') setTimeout(renderRadarChart, 50);
-            if (role === 'merchant' && tabId === 'reports') setTimeout(renderMerchantReportCharts, 50);
-        }
 
-        function showCampaignDetail(campaignName) {
-            switchTab('merchant', 'campaign-detail', `活動詳情: ${campaignName}`);
-            const contentArea = document.getElementById('merchant-campaign-detail-content');
-            contentArea.innerHTML = `
-                <div class="bg-white rounded-xl shadow p-6 mb-6">
-                    <h2 class="text-xl font-bold text-slate-800">${campaignName}</h2>
-                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div><p class="text-sm text-gray-500">狀態</p><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">進行中</span></div>
-                        <div><p class="text-sm text-gray-500">預算</p><p class="font-bold">NT$ 80,000</p></div>
-                        <div><p class="text-sm text-gray-500">總曝光</p><p class="font-bold">350k</p></div>
-                        <div><p class="text-sm text-gray-500">總點擊</p><p class="font-bold">8,230</p></div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow">
-                    <h3 class="p-6 font-bold text-slate-800 border-b">合作網紅列表</h3>
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50"><tr><th class="p-4 text-left text-xs font-medium text-gray-500">網紅</th><th class="p-4 text-left text-xs font-medium text-gray-500">進度</th><th class="p-4 text-left text-xs font-medium text-gray-500">成效</th><th class="p-4 text-left text-xs font-medium text-gray-500">操作</th></tr></thead>
-                        <tbody class="divide-y">
-                            <tr>
-                                <td class="p-4 flex items-center"><img src="https://placehold.co/40x40/ECC94B/4A5568?text=C" class="rounded-full mr-3"/>Celia</td>
-                                <td class="p-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">審核中</span></td>
-                                <td class="p-4 text-sm text-gray-500">曝光: 80k, 點擊: 1.5k</td>
-                                <td class="p-4"><button class="text-teal-600 font-semibold text-sm">審核內容</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-        
-        function showPlatformDetail(platform) {
-            const data = platformData[platform];
-            const modalContent = document.getElementById('platform-detail-content');
-            modalContent.innerHTML = `
-                <div class="p-6 border-b flex justify-between items-center flex-shrink-0">
-                    <div class="flex items-center space-x-4"><img src="https://placehold.co/48x48/${platform === 'instagram' ? 'E1306C' : 'FF0000'}/FFFFFF?text=${platform.substring(0,2).toUpperCase()}" class="rounded-full" /><div><h2 class="text-xl font-bold text-slate-800">${data.handle}</h2><p class="text-sm text-gray-500">${data.name}</p></div></div>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                </div>
-                <div class="p-6 overflow-y-auto">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="bg-white p-4 rounded-lg text-center"><p class="text-sm text-gray-500">粉絲數</p><p class="text-2xl font-bold">${data.followers}</p></div><div class="bg-white p-4 rounded-lg text-center"><p class="text-sm text-gray-500">互動率</p><p class="text-2xl font-bold">${platform === 'instagram' ? '5.2%' : '3.8%'}</p></div><div class="bg-white p-4 rounded-lg text-center"><p class="text-sm text-gray-500">預估業配價值</p><p class="text-2xl font-bold text-teal-600">${data.price}</p></div></div>
-                    <div class="bg-white p-6 rounded-lg mb-6"><h3 class="font-bold text-slate-800 mb-2">內容風格標籤</h3><div class="flex flex-wrap gap-2">${data.tags.map(tag => `<span class="bg-slate-200 text-slate-700 text-xs font-medium px-2.5 py-0.5 rounded-full">${tag}</span>`).join('')}</div></div>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white rounded-lg p-6"><h3 class="font-bold text-slate-800 mb-4">粉絲性別分佈</h3><div class="h-64"><canvas id="detailGenderChart"></canvas></div></div><div class="bg-white rounded-lg p-6"><h3 class="font-bold text-slate-800 mb-4">粉絲年齡分佈</h3><div class="h-64"><canvas id="detailAgeChart"></canvas></div></div></div>
-                </div>`;
-            openModal('platform-detail-modal');
-            setTimeout(() => {
-                const genderCtx = document.getElementById('detailGenderChart')?.getContext('2d');
-                if(genderCtx) new Chart(genderCtx, { type: 'doughnut', data: { labels: ['女性', '男性'], datasets: [{ data: data.genderData, backgroundColor: ['#fb7185', '#60a5fa'] }] }, options: { responsive: true, maintainAspectRatio: false } });
-                const ageCtx = document.getElementById('detailAgeChart')?.getContext('2d');
-                if(ageCtx) new Chart(ageCtx, { type: 'bar', data: { labels: ['18-24', '25-34', '35-44', '45+'], datasets: [{ label: '年齡分佈 (%)', data: data.ageData, backgroundColor: '#818cf8' }] }, options: { responsive: true, maintainAspectRatio: false } });
-            }, 100);
-        }
-        
-        function openModal(modalId) { const modal = document.getElementById(modalId); currentOpenModal = modal; modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div > div').classList.remove('scale-95'); }, 10); }
-        function closeModal() { if (!currentOpenModal) return; currentOpenModal.classList.add('opacity-0'); currentOpenModal.querySelector('div > div').classList.add('scale-95'); setTimeout(() => { currentOpenModal.classList.add('hidden'); currentOpenModal = null; }, 300); }
-        
-        function openAIChat() {
-            openModal('ai-chat-modal');
-            const chatWindow = document.getElementById('chat-window');
-            chatWindow.innerHTML = '';
-            addMessage('ai', "您好！我是您的專屬行銷顧問。今天想推廣什麼好產品呢？");
-        }
-        function closeAIChat() { closeModal(); }
-        function sendChatMessage() { /* ... */ }
+        // ▼▼▼▼▼ 在 window.db = db; 的下一行，貼上所有這些新程式碼 ▼▼▼▼▼
 
-        function renderRadarChart() {
-            const ctx = document.getElementById('valueRadarChart')?.getContext('2d');
-            if(!ctx) return;
-            if(window.myRadarChart) window.myRadarChart.destroy();
-            window.myRadarChart = new Chart(ctx, { type: 'radar', data: { labels: ['影響力廣度', '互動深度', '受眾商業價值', '品牌安全度', '轉換潛力'], datasets: [{ label: '綜合價值評估', data: [85, 90, 75, 95, 70], fill: true, backgroundColor: 'rgba(56, 178, 172, 0.2)', borderColor: 'rgb(56, 178, 172)' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { suggestedMin: 0, suggestedMax: 100 } } } });
-        }
-         function renderMerchantReportCharts() {
-            const lineCtx = document.getElementById('performanceLineChart')?.getContext('2d');
-            if(lineCtx) {
-                if(window.myLineChart) window.myLineChart.destroy();
-                window.myLineChart = new Chart(lineCtx, { type: 'line', data: { labels: ['一月', '二月', '三月', '四月', '五月'], datasets: [{ label: '曝光', data: [120, 190, 300, 500, 220], borderColor: '#3b82f6', tension: 0.1 }, { label: '點擊', data: [12, 19, 30, 50, 22], borderColor: '#14b8a6', tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false } });
-            }
-        }
+// --- 核心導航邏輯 (我們依然需要它來切換頁面) ---
+       function navigateTo(viewId) {
+           document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+           const targetView = document.getElementById(viewId);
+           if (targetView) {
+               targetView.classList.add('active');
+           }
+           window.scrollTo(0, 0);
+       }
+// 讓 HTML 可以呼叫到
+       window.navigateTo = navigateTo;
+
+// ▼▼▼▼▼ 在 window.navigateTo = navigateTo; 的下一行，貼上這段程式碼 ▼▼▼▼▼
+
+// --- 儀表板 UI 邏輯 (這些是您原本就有的，我們把它們移到這裡) ---
+       const headerTitles = {
+           merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
+           influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
+       };
+
+       function switchTab(role, tabId) {
+           const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
+           const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
+           const headerTitle = document.getElementById(`${role}-header-title`);
+
+           sidebarLinks.forEach(link => {
+               link.classList.remove('active');
+               if (link.getAttribute('onclick').includes(`'${tabId}'`)) {
+                   link.classList.add('active');
+               }
+           });
+
+           contents.forEach(content => content.classList.remove('active'));
+           const activeContent = document.getElementById(`${role}-${tabId}-content`);
+           if (activeContent) {
+               activeContent.classList.add('active');
+           }
+
+           headerTitle.textContent = headerTitles[role][tabId];
+       }
+       window.switchTab = switchTab; // 讓 HTML 可以呼叫
+
+// 圖表相關的函式也放回來
+       function renderRadarChart() {
+    // ... (這部分可以先保留為空，或貼回您原本的圖表邏輯)
+       }
+       function renderMerchantReportCharts() {
+    // ... (這部分可以先保留為空，或貼回您原本的圖表邏輯)
+       }
+// ▲▲▲▲▲ 貼到這裡結束 ▲▲▲▲▲
+
+
+// --- 新的 Firebase 驗證功能 ---
+
+// 處理註冊的函式
+       window.handleRegister = async function() {
+           const email = document.getElementById('email').value;
+           const password = document.getElementById('password').value;
+           if (!email || !password) {
+               alert('請輸入電子郵件和密碼！');
+               return;
+           }
+           try {
+               await createUserWithEmailAndPassword(auth, email, password);
+               alert('註冊成功！現在您可以直接登入。');
+           } catch (error) {
+               alert('註冊失敗：' + error.message);
+           }
+       };
+
+// 處理登入的函式
+       window.handleLogin = async function() {
+           const email = document.getElementById('email').value;
+           const password = document.getElementById('password').value;
+           if (!email || !password) {
+               alert('請輸入電子郵件和密碼！');
+               return;
+           }
+           try {
+               await signInWithEmailAndPassword(auth, email, password);
+        // 登入成功後，onAuthStateChanged 會自動處理頁面切換，不需要 alert
+           } catch (error) {
+               alert('登入失敗：' + error.message);
+           }
+       };
+
+// 處理登出的函式
+       window.handleLogout = async function() {
+           try {
+               await signOut(auth);
+        // 登出後，onAuthStateChanged 會自動處理頁面切換
+           } catch (error) {
+               alert('登出失敗：' + error.message);
+           }
+       };
+
+
+// --- 新的 Firestore 資料庫功能 ---
+
+// 儲存新活動到 Firestore
+       window.saveCampaign = async function() {
+           const campaignNameInput = document.getElementById('campaign-name-input');
+           const campaignName = campaignNameInput.value;
+
+           if (!campaignName.trim()) {
+               alert('請輸入活動名稱！');
+               return;
+           }
+
+           const user = auth.currentUser;
+           if (!user) {
+               alert('請先登入！');
+               return;
+           }
+
+           try {
+        // 將資料寫入 campaigns 集合
+               await addDoc(collection(db, "campaigns"), {
+                   name: campaignName,
+                   userId: user.uid, // 【關鍵】儲存目前使用者的 ID
+                   createdAt: new Date()
+               });
+               campaignNameInput.value = '';
+               alert('活動已儲存！');
+               loadCampaigns(); // 成功後，重新載入活動列表
+           } catch (e) {
+               console.error("儲存失敗: ", e);
+               alert('儲存失敗！請查看 console 的錯誤訊息。');
+           }
+       };
+
+// 從 Firestore 讀取目前使用者的活動
+       async function loadCampaigns() {
+           const campaignsListDiv = document.getElementById('campaigns-list');
+           campaignsListDiv.innerHTML = '<p class="text-gray-500">正在載入活動...</p>';
+
+           const user = auth.currentUser;
+           if (!user) {
+               campaignsListDiv.innerHTML = '';
+               return;
+           }
+
+    // 建立查詢，只尋找 "userId" 欄位等於目前使用者 "uid" 的文件
+           const q = query(collection(db, "campaigns"), where("userId", "==", user.uid));
+           const querySnapshot = await getDocs(q);
+
+           let campaignsHTML = '';
+           querySnapshot.forEach((doc) => {
+               const campaign = doc.data();
+               campaignsHTML += `
+                   <div class="bg-white rounded-xl shadow p-6">
+                       <h3 class="font-bold text-lg text-slate-800">${campaign.name}</h3>
+                       <p class="text-sm text-gray-500 mt-1">建立時間: ${new Date(campaign.createdAt.seconds * 1000).toLocaleString('zh-TW')}</p>
+                   </div>
+               `;
+           });
+
+           campaignsListDiv.innerHTML = campaignsHTML || '<p class="text-gray-500">您還沒有建立任何活動。</p>';
+       }
+
+// --- 應用程式的「大腦」：監聽使用者登入狀態 ---
+
+       onAuthStateChanged(auth, (user) => {
+           const userEmailDisplay = document.getElementById('user-email-display');
+           const logoutButton = document.querySelector('header button[onclick="handleLogout()"]');
+
+           if (user) {
+        // 使用者已登入
+               userEmailDisplay.textContent = `你好, ${user.email}`;
+               logoutButton.classList.remove('hidden');
+
+               navigateTo('merchant-dashboard-view');
+               loadCampaigns(); // 登入後，立刻載入該使用者的活動
+
+           } else {
+        // 使用者已登出
+               userEmailDisplay.textContent = '';
+               logoutButton.classList.add('hidden');
+
+               navigateTo('login-view');
+           }
+       });
+
+// ▲▲▲▲▲ 貼到這裡結束 ▲▲▲▲▲
     </script>
 </body>
 </html>
