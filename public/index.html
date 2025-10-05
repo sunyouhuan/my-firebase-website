@@ -103,7 +103,7 @@
         <div id="merchant-dashboard-view" class="view">
             <div class="flex h-screen bg-slate-50">
                 <!-- 側邊欄 -->
-                <div class="w-64 bg-white shadow-md flex-shrink-0">
+                <div id="merchant-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
                     <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
                     <nav class="mt-6">
                         <a href="#" onclick="switchTab('merchant', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
@@ -118,6 +118,11 @@
                 <!-- 主內容區 -->
                 <div class="flex-1 flex flex-col overflow-hidden">
                     <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
+                        <button onclick="toggleMenu('merchant')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                                </svg>
+                            </button>
                         <h1 id="merchant-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
                         <div class="flex items-center space-x-4">
                             <span id="user-email-display" class="text-gray-600"></span>
@@ -170,7 +175,9 @@
                     </main>
                 </div>
             </div>
+         <div id="merchant-sidebar-overlay" onclick="toggleMenu('merchant')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
         </div>
+
         
         <div id="influencer-dashboard-view" class="view">
              <div class="flex h-screen bg-slate-50">
@@ -279,7 +286,18 @@
     // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
         window.navigateTo = navigateTo;
         window.switchTab = switchTab;
+        // --- 新增的響應式側邊欄控制功能 ---
+        window.toggleMenu = function(role) {
+            const sidebar = document.getElementById(`${role}-sidebar`);
+            const overlay = document.getElementById(`${role}-sidebar-overlay`);
 
+            if (sidebar && overlay) {
+                // 切換側邊欄的 translate-x-full class，讓它滑入或滑出
+                sidebar.classList.toggle('-translate-x-full');
+                // 切換遮罩的 hidden class
+                overlay.classList.toggle('hidden');
+            }
+        }
 
     // --- 4. Firebase 驗證功能 ---
 
@@ -368,9 +386,6 @@
             }
         });
     </script>
-
-
-
 </body>
 </html>
 
