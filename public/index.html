@@ -83,6 +83,22 @@
             </div>
         </div>
 
+
+        <!-- 角色選擇頁面 -->
+        <div id="role-selection-view" class="view">
+            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
+                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
+                <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
+                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
+                    <h2 class="text-2xl font-bold text-center text-slate-800">請選擇您的身分</h2>
+                    <div class="flex flex-col space-y-4">
+                        <button onclick="selectRole('merchant')" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">我是商家</button>
+                        <button onclick="selectRole('influencer')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">我是網紅</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 商家儀表板 -->
         <div id="merchant-dashboard-view" class="view">
             <div class="flex h-screen bg-slate-50">
@@ -95,7 +111,7 @@
                         <a href="#" onclick="switchTab('merchant', 'reports')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">成效報告</a>
                         <a href="#" onclick="switchTab('merchant', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
                         <a href="#" onclick="switchTab('merchant', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
-                        <a href="#" onclick="logout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
+                        <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
                     </nav>
                 </div>
 
@@ -166,11 +182,22 @@
                         <a href="#" onclick="switchTab('influencer', 'invitations')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">合作邀請</a>
                         <a href="#" onclick="switchTab('influencer', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
                         <a href="#" onclick="switchTab('influencer', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
-                        <a href="#" onclick="logout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
+                        <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
                     </nav>
                 </div>
+
+                
                 <div class="flex-1 flex flex-col overflow-hidden">
-                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0"><h1 id="influencer-header-title" class="text-2xl font-bold text-slate-800">總覽</h1><div class="flex items-center space-x-4"><span class="text-gray-600">你好, 小希</span><img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/FEFBF6/4A5568?text=希" alt="網紅頭像"></div></header>
+                    
+                    <!-- influencer header -->
+                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
+                        <h1 id="influencer-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-600"></span>
+                            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
+                        </div>
+                    </header>
+
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
                         <div id="influencer-dashboard-content" class="dashboard-content active"><div class="h-80"><canvas id="valueRadarChart"></canvas></div></div>
                         <div id="influencer-value-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6"><h3 class="text-lg font-bold text-slate-800 mb-4">點擊社群平台查看詳細分析報告</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><div onclick="showPlatformDetail('instagram')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/E1306C/FFFFFF?text=IG" class="rounded-full" /><div><p class="font-bold">hsi_daily</p><p class="text-sm text-gray-500">Instagram</p></div></div><div onclick="showPlatformDetail('youtube')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/FF0000/FFFFFF?text=YT" class="rounded-full" /><div><p class="font-bold">小希的探索頻道</p><p class="text-sm text-gray-500">YouTube</p></div></div><div class="p-4 border border-dashed rounded-lg flex items-center space-x-4 text-gray-400"><img src="https://placehold.co/48x48/000000/FFFFFF?text=TK" class="rounded-full" /><div><p class="font-bold">連結 TikTok</p><p class="text-sm">尚未連結</p></div></div></div></div></div>
@@ -187,7 +214,7 @@
     </div>
 
     <script type="module">
-    // 匯入您需要的 Firebase SDK 功能
+        // --- 1. Firebase 初始化 ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { 
             getAuth, 
@@ -198,20 +225,12 @@
             GoogleAuthProvider,
             signInWithPopup 
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            query, 
-            where, 
-            getDocs 
-        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+    // (我們暫時不需要 Firestore，所以先不匯入)
 
-    // 您的 Firebase 專案設定
-    // 【重要】請用您自己在 Firebase 主控台「專案設定」中取得的 firebaseConfig 物件取代這裡的內容！
+    // 【重要】請確認這裡的 firebaseConfig 是您自己的真實金鑰！
         const firebaseConfig = {
           apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
-          authDomain: "test-b493a.firebaseapp.com",
+          authDomain: "ttest-b493a.firebaseapp.com",
           projectId: "test-b493a",
           storageBucket: "test-b493a.firebasestorage.app",
           messagingSenderId: "1089014108157",
@@ -219,222 +238,139 @@
           measurementId: "G-1GY922PWL9"
         };
 
-        // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // 我們將把所有新功能寫在這裡，並掛載到 window 物件上
-        // 這樣 HTML 的 onclick 屬性才能呼叫到它們
-        window.auth = auth;
-        window.db = db;
 
 
-        // ▼▼▼▼▼ 在 window.db = db; 的下一行，貼上所有這些新程式碼 ▼▼▼▼▼
+    // --- 2. 核心 UI 導航與控制函式 ---
 
-// --- 核心導航邏輯 (我們依然需要它來切換頁面) ---
-       function navigateTo(viewId) {
-           document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-           const targetView = document.getElementById(viewId);
-           if (targetView) {
-               targetView.classList.add('active');
-           }
-           window.scrollTo(0, 0);
-       }
-// 讓 HTML 可以呼叫到
-       window.navigateTo = navigateTo;
+    // 頁面跳轉函式
+        function navigateTo(viewId) {
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            const targetView = document.getElementById(viewId);
+            if (targetView) {
+                targetView.classList.add('active');
+            }
+            window.scrollTo(0, 0);
+        }
 
-// ▼▼▼▼▼ 在 window.navigateTo = navigateTo; 的下一行，貼上這段程式碼 ▼▼▼▼▼
+    // 儀表板內部分頁切換函式
+        const headerTitles = {
+            merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
+            influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
+        };
 
-// --- 儀表板 UI 邏輯 (這些是您原本就有的，我們把它們移到這裡) ---
-       const headerTitles = {
-           merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
-           influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
-       };
-
-       function switchTab(role, tabId) {
-           const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
-           const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
-           const headerTitle = document.getElementById(`${role}-header-title`);
-
-           sidebarLinks.forEach(link => {
-               link.classList.remove('active');
-               if (link.getAttribute('onclick').includes(`'${tabId}'`)) {
-                   link.classList.add('active');
-               }
-           });
-
-           contents.forEach(content => content.classList.remove('active'));
-           const activeContent = document.getElementById(`${role}-${tabId}-content`);
-           if (activeContent) {
-               activeContent.classList.add('active');
-           }
-
-           headerTitle.textContent = headerTitles[role][tabId];
-       }
-       window.switchTab = switchTab; // 讓 HTML 可以呼叫
-
-// 圖表相關的函式也放回來
-       function renderRadarChart() {
-    // ... (這部分可以先保留為空，或貼回您原本的圖表邏輯)
-       }
-       function renderMerchantReportCharts() {
-    // ... (這部分可以先保留為空，或貼回您原本的圖表邏輯)
-       }
-// ▲▲▲▲▲ 貼到這裡結束 ▲▲▲▲▲
+        function switchTab(role, tabId) {
+        // ... (這段函式與您原本的完全相同，我們只是把它放在這裡)
+            const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
+            const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
+            const headerTitle = document.getElementById(`${role}-header-title`);
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('onclick').includes(`'${tabId}'`)) link.classList.add('active');
+            });
+            contents.forEach(content => content.classList.remove('active'));
+            const activeContent = document.getElementById(`${role}-${tabId}-content`);
+            if (activeContent) activeContent.classList.add('active');
+            headerTitle.textContent = headerTitles[role][tabId];
+        }
 
 
-// --- 新的 Firebase 驗證功能 ---
+    // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
+        window.navigateTo = navigateTo;
+        window.switchTab = switchTab;
 
-// 處理註冊的函式
-       window.handleRegister = async function() {
-           const email = document.getElementById('email').value;
-           const password = document.getElementById('password').value;
-           if (!email || !password) {
-               alert('請輸入電子郵件和密碼！');
-               return;
-           }
-           try {
-               await createUserWithEmailAndPassword(auth, email, password);
-               alert('註冊成功！現在您可以直接登入。');
-           } catch (error) {
-               alert('註冊失敗：' + error.message);
+
+    // --- 4. Firebase 驗證功能 ---
+
+    // 處理註冊
+        window.handleRegister = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert('註冊成功！現在您可以登入了。');
+            } catch (error) {
+                alert('註冊失敗：' + error.message);
+            }
+        };
+
+    // 處理郵件登入
+        window.handleLogin = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            // 登入成功後，onAuthStateChanged 會自動處理
+            } catch (error) {
+                alert('登入失敗：' + error.message);
+            }
+        };
+
+    // 處理 Google 登入
+        window.handleGoogleLogin = async function() {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            // 登入成功後，onAuthStateChanged 會自動處理
+            } catch (error) {
+                alert('Google 登入失敗：' + error.message);
            }
        };
 
-// 處理登入的函式
-       window.handleLogin = async function() {
-           const email = document.getElementById('email').value;
-           const password = document.getElementById('password').value;
-           if (!email || !password) {
-               alert('請輸入電子郵件和密碼！');
-               return;
-           }
-           try {
-               await signInWithEmailAndPassword(auth, email, password);
-        // 登入成功後，onAuthStateChanged 會自動處理頁面切換，不需要 alert
-           } catch (error) {
-               alert('登入失敗：' + error.message);
-           }
-       };
+    // 處理登出
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+            // 登出成功後，onAuthStateChanged 會自動處理
+            } catch (error) {
+                alert('登出失敗：' + error.message);
+            }
+        };
 
-// 處理 Google 登入的函式
-       window.handleGoogleLogin = async function() {
-           // 建立一個 GoogleAuthProvider 的實例
-           const provider = new GoogleAuthProvider();
+    // 【新功能】處理角色選擇後的儀表板進入
+        window.enterDashboard = function(role) {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('發生錯誤，請重新登入！');
+                navigateTo('login-view');
+                return;
+            }
 
-           try {
-               // 透過彈出式視窗進行登入
-               const result = await signInWithPopup(auth, provider);
-               // 登入成功後，onAuthStateChanged 會自動處理後續頁面跳轉
-               console.log('Google 登入成功:', result.user);
-           } catch (error) {
-               // 處理可能發生的錯誤，例如使用者關閉彈出視窗
-               console.error('Google 登入失敗:', error);
-               alert('Google 登入失敗：' + error.message);
-           }
-       };
-
-
-// 處理登出的函式
-       window.handleLogout = async function() {
-           try {
-               await signOut(auth);
-        // 登出後，onAuthStateChanged 會自動處理頁面切換
-           } catch (error) {
-               alert('登出失敗：' + error.message);
-           }
-       };
+            if (role === 'merchant') {
+                // 導向商家儀表板
+                navigateTo('merchant-dashboard-view');
+                // 更新商家儀表板的 header
+                document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
+                document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
+                switchTab('merchant', 'dashboard'); // 確保預設顯示總覽
+            } else if (role === 'influencer') {
+            // 導向網紅儀表板
+                navigateTo('influencer-dashboard-view');
+            // 更新網紅儀表板的 header
+                document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
+                document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
+                switchTab('influencer', 'dashboard'); // 確保預設顯示總覽
+            }
+        };
 
 
-// --- 新的 Firestore 資料庫功能 ---
-
-// 儲存新活動到 Firestore
-       window.saveCampaign = async function() {
-           const campaignNameInput = document.getElementById('campaign-name-input');
-           const campaignName = campaignNameInput.value;
-
-           if (!campaignName.trim()) {
-               alert('請輸入活動名稱！');
-               return;
-           }
-
-           const user = auth.currentUser;
-           if (!user) {
-               alert('請先登入！');
-               return;
-           }
-
-           try {
-        // 將資料寫入 campaigns 集合
-               await addDoc(collection(db, "campaigns"), {
-                   name: campaignName,
-                   userId: user.uid, // 【關鍵】儲存目前使用者的 ID
-                   createdAt: new Date()
-               });
-               campaignNameInput.value = '';
-               alert('活動已儲存！');
-               loadCampaigns(); // 成功後，重新載入活動列表
-           } catch (e) {
-               console.error("儲存失敗: ", e);
-               alert('儲存失敗！請查看 console 的錯誤訊息。');
-           }
-       };
-
-// 從 Firestore 讀取目前使用者的活動
-       async function loadCampaigns() {
-           const campaignsListDiv = document.getElementById('campaigns-list');
-           campaignsListDiv.innerHTML = '<p class="text-gray-500">正在載入活動...</p>';
-
-           const user = auth.currentUser;
-           if (!user) {
-               campaignsListDiv.innerHTML = '';
-               return;
-           }
-
-    // 建立查詢，只尋找 "userId" 欄位等於目前使用者 "uid" 的文件
-           const q = query(collection(db, "campaigns"), where("userId", "==", user.uid));
-           const querySnapshot = await getDocs(q);
-
-           let campaignsHTML = '';
-           querySnapshot.forEach((doc) => {
-               const campaign = doc.data();
-               campaignsHTML += `
-                   <div class="bg-white rounded-xl shadow p-6">
-                       <h3 class="font-bold text-lg text-slate-800">${campaign.name}</h3>
-                       <p class="text-sm text-gray-500 mt-1">建立時間: ${new Date(campaign.createdAt.seconds * 1000).toLocaleString('zh-TW')}</p>
-                   </div>
-               `;
-           });
-
-           campaignsListDiv.innerHTML = campaignsHTML || '<p class="text-gray-500">您還沒有建立任何活動。</p>';
-       }
-
-// --- 應用程式的「大腦」：監聽使用者登入狀態 ---
-
-       onAuthStateChanged(auth, (user) => {
-           const userEmailDisplay = document.getElementById('user-email-display');
-           const logoutButton = document.querySelector('header button[onclick="handleLogout()"]');
-
-           if (user) {
-        // 使用者已登入
-               userEmailDisplay.textContent = `你好, ${user.email}`;
-               logoutButton.classList.remove('hidden');
-
-               navigateTo('merchant-dashboard-view');
-               loadCampaigns(); // 登入後，立刻載入該使用者的活動
-
-           } else {
-        // 使用者已登出
-               userEmailDisplay.textContent = '';
-               logoutButton.classList.add('hidden');
-
-               navigateTo('login-view');
-           }
-       });
-
-// ▲▲▲▲▲ 貼到這裡結束 ▲▲▲▲▲
+    // --- 5. 應用程式的「新大腦」：簡化後的登入狀態監聽 ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+            // 使用者已登入 -> 【一律】前往角色選擇頁面
+               console.log('使用者已登入，前往角色選擇頁');
+                navigateTo('role-selection-view');
+            } else {
+            // 使用者已登出 -> 前往登入頁面
+                console.log('使用者已登出，前往登入頁');
+                navigateTo('login-view');
+            }
+        });
     </script>
+
+
+
 </body>
 </html>
 
