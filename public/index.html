@@ -216,51 +216,55 @@
                     <h2 class="text-xl font-bold text-slate-800">建立新的行銷需求</h2>
                     <button onclick="closeModal('new-campaign-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
                 </div>
-                <div class="flex-1 p-6 overflow-y-auto space-y-6">
-                    <div>
-                        <label for="brief-product-name" class="block text-sm font-medium text-gray-700">產品名稱</label>
-                        <input type="text" id="brief-product-name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：我的酷炫無線耳機">
-                    </div>
-                    <div>
-                        <label for="brief-product-desc" class="block text-sm font-medium text-gray-700">產品描述與特色</label>
-                        <textarea id="brief-product-desc" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="描述您的產品，以及希望網紅強調的賣點"></textarea>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <form id="campaign-form">
+                    <div class="flex-1 p-6 overflow-y-auto space-y-6">
                         <div>
-                            <label for="brief-impressions" class="block text-sm font-medium text-gray-700">預期曝光次數</label>
-                            <input type="number" id="brief-impressions" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：100000">
+                            <label for="brief-product-name" class="block text-sm font-medium text-gray-700">產品名稱</label>
+                            <input type="text" id="brief-product-name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：我的酷炫無線耳機">
                         </div>
                         <div>
-                            <label for="brief-budget" class="block text-sm font-medium text-gray-700">預算範圍 (NT$)</label>
-                            <input type="number" id="brief-budget" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：50000">
+                            <label for="brief-product-desc" class="block text-sm font-medium text-gray-700">產品描述與特色</label>
+                            <textarea id="brief-product-desc" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="描述您的產品，以及希望網紅強調的賣點"></textarea>
                         </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="brief-impressions" class="block text-sm font-medium text-gray-700">預期曝光次數</label>
+                                <input type="number" id="brief-impressions" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：100000">
+                            </div>
+                            <div>
+                                <label for="brief-budget" class="block text-sm font-medium text-gray-700">預算範圍 (NT$)</label>
+                                <input type="number" id="brief-budget" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：50000">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="brief-influencer-count" class="block text-sm font-medium text-gray-700">希望網紅數量</label>
+                                <input type="number" id="brief-influencer-count" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：10">
+                            </div>
+                            <div>
+                                <label for="brief-follower-range" class="block text-sm font-medium text-gray-700">網紅粉絲數區間</label>
+                                <select id="brief-follower-range" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                    <option>不限</option>
+                                    <option>1萬 - 5萬</option>
+                                    <option>5萬 - 10萬</option>
+                                    <option>10萬以上</option>
+                                </select>
+                            </div>
+                        </div>
                         <div>
-                            <label for="brief-influencer-count" class="block text-sm font-medium text-gray-700">希望網紅數量</label>
-                            <input type="number" id="brief-influencer-count" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：10">
-                        </div>
-                        <div>
-                            <label for="brief-follower-range" class="block text-sm font-medium text-gray-700">網紅粉絲數區間</label>
-                            <select id="brief-follower-range" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                <option>不限</option>
-                                <option>1萬 - 5萬</option>
-                                <option>5萬 - 10萬</option>
-                                <option>10萬以上</option>
-                            </select>
+                            <label class="block text-sm font-medium text-gray-700">希望發布平台</label>
+                            <div id="brief-platforms" class="mt-2 flex flex-wrap gap-4">
+                                <label class="inline-flex items-center"><input type="checkbox" value="Instagram" class="rounded border-gray-300"> <span class="ml-2">Instagram</span></label>
+                                <label class="inline-flex items-center"><input type="checkbox" value="YouTube" class="rounded border-gray-300"> <span class="ml-2">YouTube</span></label>
+                                <label class="inline-flex items-center"><input type="checkbox" value="Facebook" class="rounded border-gray-300"> <span class="ml-2">Facebook</span></label>
+                                        <label class="inline-flex items-center"><input type="checkbox" value="TikTok" class="rounded border-gray-300"> <span class="ml-2">TikTok</span></label>
+                                <label class="inline-flex items-center"><input type="checkbox" value="XiaoHongShu" class="rounded border-gray-300"> <span class="ml-2">小紅書</span></label>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">希望發布平台</label>
-                        <div id="brief-platforms" class="mt-2 flex flex-wrap gap-4">
-                            <label class="inline-flex items-center"><input type="checkbox" value="Instagram" class="rounded border-gray-300"> <span class="ml-2">Instagram</span></label>
-                            <label class="inline-flex items-center"><input type="checkbox" value="YouTube" class="rounded border-gray-300"> <span class="ml-2">YouTube</span></label>
-                            <label class="inline-flex items-center"><input type="checkbox" value="Facebook" class="rounded border-gray-300"> <span class="ml-2">Facebook</span></label>
-                                    <label class="inline-flex items-center"><input type="checkbox" value="TikTok" class="rounded border-gray-300"> <span class="ml-2">TikTok</span></label>
-                            <label class="inline-flex items-center"><input type="checkbox" value="XiaoHongShu" class="rounded border-gray-300"> <span class="ml-2">小紅書</span></label>
-                        </div>
-                    </div>
-                </div>
+                </form>
+
                 <div class="p-5 border-t bg-slate-50">
                     <button onclick="handleSaveBrief()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">儲存需求並開始配對</button>
                 </div>
@@ -272,7 +276,7 @@
     </div>
 
     <script type="module">
-        // --- 1. Firebase 初始化 ---
+    // --- 1. Firebase 初始化 (這部分不變) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { 
             getAuth, 
@@ -285,6 +289,7 @@
             getRedirectResult 
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
+    // === 修改部分 START：從 Firestore 匯入更多我們需要的功能 ===
         import { 
             getFirestore, 
             collection, 
@@ -295,11 +300,12 @@
             doc,
             getDoc,
             setDoc,
-            updateDoc,
-            orderBy
+            updateDoc,       // 新增：用於更新文件 (例如：軟刪除)
+            onSnapshot,      // 新增：用於即時監聽資料變化
+            orderBy          // 新增：用於排序查詢結果
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+    // === 修改部分 END ===
 
-    
         const firebaseConfig = {
           apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
           authDomain: "test-b493a.firebaseapp.com",
@@ -314,23 +320,17 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-
-        // 檢查頁面載入時，是否是從 Google 登入跳轉回來的
         getRedirectResult(auth)
             .then((result) => {
                 if (result) {
-            // 如果 result 存在，代表使用者剛剛成功透過 Google 登入並跳轉回來
-            // 這時 onAuthStateChanged 會被觸發，自動處理後續的頁面導向
                     console.log('Google 重新導向登入成功:', result.user);
                 }
             }).catch((error) => {
-        // 處理可能發生的錯誤
                 console.error('Google 重新導向失敗:', error);
                 alert('Google 登入時發生錯誤：' + error.message);
             });
 
-
-        // --- 2. 核心 UI 導航與控制函式 ---
+    // --- 2. 核心 UI 導航與控制函式 ---
         function navigateTo(viewId) {
             document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
             const targetView = document.getElementById(viewId);
@@ -344,41 +344,46 @@
             merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
             influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
         };
-
+    
+    // === 修改部分 START：修改 switchTab 以支援詳情頁 ===
         function switchTab(role, tabId) {
             const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
             const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
             const headerTitle = document.getElementById(`${role}-header-title`);
+        
             sidebarLinks.forEach(link => {
                 link.classList.remove('active');
-                if (link.getAttribute('onclick').includes(`'${tabId}'`)) link.classList.add('active');
+            // 如果是詳情頁，則讓 'campaigns' 保持 active
+                const linkTab = tabId === 'campaign-detail' ? 'campaigns' : tabId;
+                if (link.getAttribute('onclick').includes(`'${linkTab}'`)) {
+                    link.classList.add('active');
+                }
             });
+
             contents.forEach(content => content.classList.remove('active'));
             const activeContent = document.getElementById(`${role}-${tabId}-content`);
             if (activeContent) activeContent.classList.add('active');
-            headerTitle.textContent = headerTitles[role][tabId];
-
-            if (role === 'merchant' && tabId === 'campaigns') {
-                loadBriefs();
+        
+        // 只有在 headerTitles 中有定義時才更新標題，避免覆蓋詳情頁的自訂標題
+            if (headerTitles[role][tabId]) {
+                headerTitle.textContent = headerTitles[role][tabId];
             }
         }
+    // === 修改部分 END ===
 
-
-        // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
+    // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
         window.navigateTo = navigateTo;
         window.switchTab = switchTab;
-        
+    
         window.toggleMenu = function(role) {
             const sidebar = document.getElementById(`${role}-sidebar`);
             const overlay = document.getElementById(`${role}-sidebar-overlay`);
-
             if (sidebar && overlay) {
-                 sidebar.classList.toggle('-translate-x-full');
+                sidebar.classList.toggle('-translate-x-full');
                 overlay.classList.toggle('hidden');
             }
         }
 
-        // --- 新增的功能：開啟/關閉彈出視窗 ---
         window.openModal = function(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
@@ -400,14 +405,138 @@
             }
         }
 
-        // --- 新增的功能：儲存商家需求單 ---
-        window.handleSaveBrief = async function() {
-            const user = auth.currentUser;
-            if (!user) {
-                return alert('請先登入！');
+    // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
+
+    // 功能 1: 根據傳入的活動資料，產生 HTML 卡片
+        function renderCampaigns(campaigns) {
+            const listElement = document.getElementById('campaigns-list');
+            if (!listElement) return;
+
+            if (campaigns.length === 0) {
+                listElement.innerHTML = `<p class="col-span-full text-center text-gray-500">目前沒有任何行銷活動，點擊右上角建立一個吧！</p>`;
+                return;
             }
 
-            // 1. 收集表單中的所有資料
+            let campaignsHTML = '';
+            campaigns.forEach(campaign => {
+                const data = campaign.data;
+                const id = campaign.id;
+
+                let statusBadge = '';
+                switch (data.status) {
+                    case 'pending_match':
+                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">正在配對中</span>`;
+                        break;
+                    case 'matched':
+                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">配對完成</span>`;
+                        break;
+                    case 'in_progress':
+                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">執行中</span>`;
+                        break;
+                    default:
+                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">未知</span>`;
+                }
+            
+                let deleteButtonHTML = '';
+                if (data.status === 'pending_match') {
+                    deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}')" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100">刪除</button>`;
+                }
+
+                campaignsHTML += `
+                    <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-between">
+                        <div>
+                            ${statusBadge}
+                            <h3 class="font-bold text-lg mt-2 text-slate-800">${data.productName}</h3>
+                            <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
+                            <p class="text-sm text-gray-500 mt-1">希望網紅數: ${data.influencerCount} 位</p>
+                        </div>
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200">查看詳情</button>
+                            ${deleteButtonHTML}
+                        </div>
+                    </div>
+                `;
+            });
+            listElement.innerHTML = campaignsHTML;
+        }
+
+    // 功能 2: 建立一個即時監聽器，當資料庫有變化時自動更新畫面
+        let unsubscribeCampaigns = null; 
+        function listenForCampaigns() {
+            const user = auth.currentUser;
+            if (!user) return;
+            if (unsubscribeCampaigns) unsubscribeCampaigns();
+
+            const briefsRef = collection(db, "briefs");
+            const q = query(briefsRef, 
+                where("merchantId", "==", user.uid),// 只查詢屬於當前商家的
+                where("isDeleted", "==", false), // 只查詢未被軟刪除的
+                orderBy("createdAt", "desc") // 按照建立時間倒序排列
+            );
+
+            unsubscribeCampaigns = onSnapshot(q, (querySnapshot) => {
+                const campaigns = querySnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+                renderCampaigns(campaigns);// 將獲取的資料傳遞給渲染函式
+            }, (error) => {
+                console.error("監聽活動失敗: ", error);
+                 // 可以在此處加入錯誤提示 UI
+            });
+        }
+
+    // 功能 3: 處理刪除活動的邏輯 (軟刪除)
+        window.handleDeleteCampaign = async function(campaignId) {
+            if (!campaignId || !confirm("您確定要刪除這個行銷活動嗎？此操作無法復原。")) return;
+            try {
+                const campaignDocRef = doc(db, "briefs", campaignId);
+                await updateDoc(campaignDocRef, { isDeleted: true });
+                alert("活動已刪除。");
+            } catch (error) {
+                console.error("刪除活動失敗: ", error);
+                alert("刪除失敗，請稍後再試。");
+            }
+       }
+
+    // 功能 4: 處理顯示活動詳情的邏輯
+        window.showCampaignDetail = async function(campaignId) {
+            if (!campaignId) return;
+            try {
+                const docSnap = await getDoc(doc(db, "briefs", campaignId));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const contentArea = document.getElementById('merchant-campaign-detail-content');
+                    contentArea.innerHTML = `
+                        <div class="bg-white rounded-xl shadow p-6 mb-6">
+                            <h2 class="text-xl font-bold text-slate-800">${data.productName}</h2>
+                            <p class="text-gray-600 mt-2">${data.productDesc}</p>
+                            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-t pt-4">
+                                <div><p class="text-sm text-gray-500">狀態</p><p class="font-bold">${data.status}</p></div>
+                                <div><p class="text-sm text-gray-500">預算</p><p class="font-bold">NT$ ${data.budget.toLocaleString()}</p></div>
+                                <div><p class="text-sm text-gray-500">預期曝光</p><p class="font-bold">${data.impressions.toLocaleString()}</p></div>
+                                <div><p class="text-sm text-gray-500">希望網紅數</p><p class="font-bold">${data.influencerCount}</p></div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow">
+                            <h3 class="p-6 font-bold text-slate-800 border-b">合作網紅列表 (開發中)</h3>
+                            <div class="p-6 text-center text-gray-500">配對完成後，這裡會顯示合作的網紅名單與成效。</div>
+                        </div>
+                    `;
+                    switchTab('merchant', 'campaign-detail');
+                    document.getElementById('merchant-header-title').textContent = `活動詳情: ${data.productName}`;
+                } else {
+                    alert("無法載入活動詳情。");
+                }
+            } catch (error) {
+                console.error("讀取詳情失敗: ", error);
+                alert("讀取詳情時發生錯誤。");
+            }
+        }
+    // === 新增部分 END ===
+
+    // === 修改部分 START: 修改 handleSaveBrief 以符合新架構 ===
+        window.handleSaveBrief = async function() {
+            const user = auth.currentUser;
+            if (!user) return alert('請先登入！');
+
             const briefData = {
                 productName: document.getElementById('brief-product-name').value,
                 productDesc: document.getElementById('brief-product-desc').value,
@@ -415,134 +544,30 @@
                 budget: parseInt(document.getElementById('brief-budget').value) || 0,
                 influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
                 followerRange: document.getElementById('brief-follower-range').value,
-                platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
-                status: 'pending_match', // 狀態：等待配對
-
-        // 關鍵資訊
-                merchantId: user.uid, // 將需求單與目前登入的商家綁定
+               platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
+                status: 'pending_match',
+                isDeleted: false, // 新增：軟刪除標記
+                merchantId: user.uid,
                 merchantEmail: user.email,
                 createdAt: new Date()
             };
 
-            // 2. 簡單驗證
-            if (!briefData.productName) {
-                return alert('請至少填寫產品名稱！');
-            }
+            if (!briefData.productName) return alert('請至少填寫產品名稱！');
 
             try {
-                // 3. 將資料儲存到一個名為 "briefs" 的新集合中
-                const docRef = await addDoc(collection(db, "briefs"), briefData);
-                console.log("需求單已儲存，文件 ID: ", docRef.id);
-                alert('您的需求已成功送出！平台將開始為您進行配對。');
-
+                await addDoc(collection(db, "briefs"), briefData);
+                alert('您的需求已成功送出！');
                 closeModal('new-campaign-modal');
-                // 之後可以在這裡加入重新整理需求列表的功能
-                loadBriefs();
-
+            // 清空表單，注意: 這需要你在 HTML 中用 <form> 標籤包住 modal 的內容
+                document.getElementById('campaign-form').reset();
             } catch (error) {
                 console.error("儲存需求單失敗:", error);
                 alert('儲存失敗，請查看 console 的錯誤訊息。');
             }
         }
+    // === 修改部分 END ===
 
-        // ▼▼▼▼▼ 在 handleSaveBrief 函式下方，貼上這兩個新函式 ▼▼▼▼▼
-        // --- 新增的功能：讀取並顯示商家自己的需求單列表 ---
-        async function loadBriefs() {
-            const listEl = document.getElementById('campaigns-list'); // campaigns-list 是我們之前在 HTML 中放的 div
-            if (!listEl) return;
-            listEl.innerHTML = '<p class="text-gray-500">正在載入您的需求單...</p>';
-
-            const user = auth.currentUser;
-            if (!user) {
-                listEl.innerHTML = '<p class="text-red-500">請先登入以查看需求單。</p>';
-                return;
-            }
-
-            try {
-        // 建立查詢：
-        // 1. 在 "briefs" 集合中
-        // 2. 尋找 'merchantId' 等於目前使用者 ID 的文件
-        // 3. 並且 'deleted' 欄位「不等於」 true 的文件 (過濾掉已軟刪除的)
-        // 4. 依照建立時間倒序排列 (最新的在最前面)
-                const q = query(collection(db, "briefs"), 
-                                    where("merchantId", "==", user.uid),
-                                    where("deleted", "!=", true),
-                                    orderBy("createdAt", "desc"));
-
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    listEl.innerHTML = '<p class="text-gray-500 col-span-full">您還沒有建立任何行銷需求。</p>';
-                    return;
-                }
-
-                let briefsHTML = '';
-                querySnapshot.forEach((doc) => {
-                    const brief = doc.data();
-                    const briefId = doc.id; // 取得文件在資料庫中的唯一 ID
-
-            // 根據狀態決定顯示的顏色和文字
-                    let statusClass = 'bg-gray-100 text-gray-600';
-                    if (brief.status === 'pending_match') {
-                        statusClass = 'bg-blue-100 text-blue-700';
-                    } else if (brief.status === 'match_complete') {
-                        statusClass = 'bg-green-100 text-green-700';
-                    }
-
-            // 【關鍵】如果狀態不是 '配對完成'，才顯示刪除按鈕
-                    const deleteButtonHTML = brief.status !== 'match_complete' 
-                        ? `<button class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-red-50" onclick="deleteBrief('${briefId}')">刪除</button>`
-                        : '';
-
-                    briefsHTML += `
-                        <div class="bg-white rounded-xl shadow p-6 flex flex-col space-y-4">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h4 class="font-bold text-slate-800 text-lg">${brief.productName}</h4>
-                                    <p class="text-sm text-gray-500 mt-1">建立於：${new Date(brief.createdAt.seconds * 1000).toLocaleDateString()}</p>
-                                </div>
-                                <span class="text-xs px-2 py-1 rounded-full ${statusClass}">${brief.status}</span>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                <p>預算: NT$ ${brief.budget.toLocaleString()}</p>
-                                <p>平台: ${brief.platforms.join(', ') || '未指定'}</p>
-                            </div>
-                            <div class="flex gap-2 pt-2 border-t">
-                                ${deleteButtonHTML}
-                            </div>
-                        </div>
-                    `;
-                });
-                listEl.innerHTML = briefsHTML;
-            } catch (error) {
-                console.error("讀取需求單失敗:", error);
-                listEl.innerHTML = '<p class="text-red-500">讀取需求單失敗，請稍後再試。</p>';
-            }
-        }
-
-        // --- 新增的功能：軟刪除一個需求單 ---
-        window.deleteBrief = async function(briefId) {
-            if (!confirm('您確定要刪除這個需求嗎？此操作無法復原。')) {
-                return;
-            }
-
-            try {
-               const briefDocRef = doc(db, "briefs", briefId);
-        // 我們不是刪除文件，而是「更新」文件，新增一個 'deleted: true' 的欄位
-                await updateDoc(briefDocRef, {
-                    deleted: true
-                });
-                alert('需求已刪除。');
-                loadBriefs(); // 重新載入列表
-            } catch (error) {
-                console.error("刪除需求單失敗:", error);
-                alert('刪除失敗，請查看 console 的錯誤訊息。');
-            }
-        }
-        // ▲▲▲▲▲ 貼到這裡結束 ▲▲▲▲▲
-
-
-        // --- 4. Firebase 驗證功能 ---
+    // --- 4. Firebase 驗證功能 (這部分不變) ---
         window.handleRegister = async function() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -553,7 +578,6 @@
                 alert('註冊失敗：' + error.message);
             }
         };
-
 
         window.handleLogin = async function() {
             const email = document.getElementById('email').value;
@@ -567,17 +591,15 @@
 
         window.handleLogout = async function() {
             try {
-                await signOut(auth);
+            await signOut(auth);
             } catch (error) {
                 alert('登出失敗：' + error.message);
             }
         };
 
-        // 處理 Google 登入的函式
         window.handleGoogleLogin = async function() {
             const provider = new GoogleAuthProvider();
             try {
-                // 使用頁面重新導向的方式進行登入，以解決手機版彈出視窗被封鎖的問題
                 await signInWithRedirect(auth, provider);
             } catch (error) {
                 console.error('Google 登入導向失敗:', error);
@@ -598,7 +620,6 @@
                 document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
                 document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
                 switchTab('merchant', 'dashboard');
-                loadBriefs();
             } else if (role === 'influencer') {
                 navigateTo('influencer-dashboard-view');
                 document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
@@ -608,16 +629,25 @@
         };
 
 
-        // --- 5. 應用程式的「新大腦」：登入狀態監聽 ---
+    // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
         onAuthStateChanged(auth, (user) => {
             if (user) {
-               console.log('使用者已登入，前往角色選擇頁');
+                console.log('使用者已登入，開始監聽活動...');
+            // 當用戶登入後，立刻開始監聽他/她的活動資料
+                listenForCampaigns();
                 navigateTo('role-selection-view');
             } else {
-                console.log('使用者已登入，前往登入頁');
+                console.log('使用者已登出，停止監聽。');
+            // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
+                if (unsubscribeCampaigns) {
+                    unsubscribeCampaigns();
+                }
                 navigateTo('login-view');
             }
         });
+    // === 修改部分 END ===
     </script>
+
+
 </body>
 </html>
