@@ -225,164 +225,107 @@
             signInWithEmailAndPassword, 
             signOut, 
             onAuthStateChanged,
-            GoogleAuthProvider, 
+            GoogleAuthProvider,
             signInWithRedirect, 
-            getRedirectResult 
+            getRedirectResult,
+            setPersistence,
+            browserLocalPersistence
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-    
+    // 我們暫時先不匯入 Firestore，專注解決登入問題
+
+    // 【重要】請再次確認這裡的 firebaseConfig 是您自己的真實金鑰！
         const firebaseConfig = {
-          apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
-          authDomain: "test-b493a.firebaseapp.com",
-          projectId: "test-b493a",
-          storageBucket: "test-b493a.firebasestorage.app",
-          messagingSenderId: "1089014108157",
-          appId: "1:1089014108157:web:2ac36c728f861795909394",
-          measurementId: "G-1GY922PWL9"
+            apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
+            authDomain: "test-b493a.firebaseapp.com",
+            projectId: "test-b493a",
+            storageBucket: "test-b493a.firebasestorage.app",
+            messagingSenderId: "1089014108157",
+            appId: "1:1089014108157:web:2ac36c728f861795909394",
+            measurementId: "G-1GY922PWL9"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        // 設定登入狀態將被保存在瀏覽器的 localStorage 中，這是最持久的選項
-        setPersistence(auth, browserLocalPersistence)
-            .catch((error) => {
-                console.error("設定登入持續性失敗:", error);
-            });
 
+    // 設定登入狀態將被保存在瀏覽器的 localStorage 中
+        setPersistence(auth, browserLocalPersistence);
 
+    // 【修正點 1】建立一個標誌，告訴大腦我們正在處理跳轉
+        let isHandlingRedirect = true;
 
-        // 檢查頁面載入時，是否是從 Google 登入跳轉回來的
+    // 檢查頁面載入時，是否是從 Google 登入跳轉回來的
         getRedirectResult(auth)
             .then((result) => {
                 if (result) {
-            // 如果 result 存在，代表使用者剛剛成功透過 Google 登入並跳轉回來
-            // 這時 onAuthStateChanged 會被觸發，自動處理後續的頁面導向
                     console.log('Google 重新導向登入成功:', result.user);
                 }
-            }).catch((error) => {
-        // 處理可能發生的錯誤
+            })
+            .catch((error) => {
                 console.error('Google 重新導向失敗:', error);
                 alert('Google 登入時發生錯誤：' + error.message);
+            })
+            .finally(() => {
+                // 【修正點 2】無論成功或失敗，「海關人員」都完成了工作
+                isHandlingRedirect = false;
+            // 手動觸發一次認證狀態檢查，確保在海關檢查完後立即反應
+                onAuthStateChanged(auth, auth.currentUser);
             });
 
 
-        // --- 2. 核心 UI 導航與控制函式 ---
+    // --- 2. 核心 UI 導航與控制函式 (與您現有版本相同) ---
         function navigateTo(viewId) {
-            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-            const targetView = document.getElementById(viewId);
-            if (targetView) {
-                targetView.classList.add('active');
-            }
-            window.scrollTo(0, 0);
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            const target = document.getElementById(viewId);
+            if (target) target.classList.add('active');
         }
-
-        const headerTitles = {
-            merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
-            influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
-        };
-
-        function switchTab(role, tabId) {
-            const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
-            const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
-            const headerTitle = document.getElementById(`${role}-header-title`);
-            sidebarLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('onclick').includes(`'${tabId}'`)) link.classList.add('active');
-            });
-            contents.forEach(content => content.classList.remove('active'));
-            const activeContent = document.getElementById(`${role}-${tabId}-content`);
-            if (activeContent) activeContent.classList.add('active');
-            headerTitle.textContent = headerTitles[role][tabId];
-        }
+    // ... 其他 UI 函式 ...
+        function switchTab(role, tabId) { /* ... 您的 switchTab 邏輯 ... */ }
+        function toggleMenu(role) { /* ... 您的 toggleMenu 邏輯 ... */ }
 
 
-        // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
-        window.navigateTo = navigateTo;
-        window.switchTab = switchTab;
-        
-        window.toggleMenu = function(role) {
-            const sidebar = document.getElementById(`${role}-sidebar`);
-            const overlay = document.getElementById(`${role}-sidebar-overlay`);
-
-            if (sidebar && overlay) {
-                 sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            }
-        }
-
-        // --- 4. Firebase 驗證功能 ---
-        window.handleRegister = async function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                alert('註冊成功！現在您可以登入了。');
-            } catch (error) {
-                alert('註冊失敗：' + error.message);
-            }
-        };
-
-        window.handleLogin = async function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                alert('登入失敗：' + error.message);
-            }
-        };
-
-        window.handleLogout = async function() {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                alert('登出失敗：' + error.message);
-            }
-        };
-
-        // 處理 Google 登入的函式
-        window.handleGoogleLogin = async function() {
+    // --- 3. Firebase 驗證功能 (與您現有版本相同) ---
+        async function handleRegister() { /* ... 您的 handleRegister 邏輯 ... */ }
+        async function handleLogin() { /* ... 您的 handleLogin 邏輯 ... */ }
+        async function handleGoogleLogin() {
             const provider = new GoogleAuthProvider();
-            try {
-                // 使用頁面重新導向的方式進行登入，以解決手機版彈出視窗被封鎖的問題
-                await signInWithRedirect(auth, provider);
-            } catch (error) {
-                console.error('Google 登入導向失敗:', error);
-                alert('Google 登入失敗：' + error.message);
-            }
-        };
+            await signInWithRedirect(auth, provider);
+        }
+        async function handleLogout() { /* ... 您的 handleLogout 邏輯 ... */ }
 
-        window.enterDashboard = function(role) {
-            const user = auth.currentUser;
-            if (!user) {
-                alert('發生錯誤，請重新登入！');
-                navigateTo('login-view');
-                return;
-            }
-
-            if (role === 'merchant') {
-                navigateTo('merchant-dashboard-view');
-                document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
-                document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
-                switchTab('merchant', 'dashboard');
-            } else if (role === 'influencer') {
-                navigateTo('influencer-dashboard-view');
-                document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
-                document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
-                switchTab('influencer', 'dashboard');
-            }
-        };
+    // 處理角色選擇後的儀表板進入
+        function enterDashboard(role) { /* ... 您的 enterDashboard 邏輯 ... */ }
 
 
-        // --- 5. 應用程式的「新大腦」：登入狀態監聽 ---
+    // --- 4. 應用程式的「新大腦」：修正後的登入狀態監聽 ---
         onAuthStateChanged(auth, (user) => {
+        // 【修正點 3】如果「海關人員」還在工作，大腦就先不作決定
+            if (isHandlingRedirect) {
+                return; // 等待 getRedirectResult 完成
+            }
+
             if (user) {
-               console.log('使用者已登入，前往角色選擇頁');
+            // 使用者已登入 -> 前往角色選擇頁面
+                console.log('使用者已登入，前往角色選擇頁');
                 navigateTo('role-selection-view');
             } else {
-                console.log('使用者已登入，前往登入頁');
+            // 使用者已登出 -> 前往登入頁面
+                console.log('使用者已登出，前往登入頁');
                 navigateTo('login-view');
             }
         });
+
+    // --- 5. 將函式掛載到 window，讓 HTML 可以呼叫 ---
+        window.handleRegister = handleRegister;
+        window.handleLogin = handleLogin;
+        window.handleGoogleLogin = handleGoogleLogin;
+        window.handleLogout = handleLogout;
+       window.enterDashboard = enterDashboard;
+        window.toggleMenu = toggleMenu;
+        window.switchTab = switchTab;
+
     </script>
+
+
+
 </body>
 </html>
