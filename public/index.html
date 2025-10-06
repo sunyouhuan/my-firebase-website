@@ -381,6 +381,7 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
         // 檢查頁面載入時，是否是從 Google 登入跳轉回來的
         getRedirectResult(auth)
             .then((result) => {
@@ -395,7 +396,6 @@
                 alert('Google 登入時發生錯誤：' + error.message);
             });
 
-        const db = getFirestore(app);
 
 
     // --- 2. 核心 UI 導航與控制函式 ---
