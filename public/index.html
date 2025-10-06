@@ -148,6 +148,10 @@
                         <div id="merchant-campaigns-content" class="dashboard-content">
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-bold text-slate-800">所有行銷活動</h2>
+                                <button onclick="openModal('new-campaign-modal')" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors flex items-center space-x-2">
+                                    <span>+</span>
+                                    <span>建立新活動</span>
+                                </button>
                             </div>
 
                             <div class="bg-white rounded-xl shadow p-6 mb-6">
@@ -159,7 +163,7 @@
                             </div>
 
                             <div id="campaigns-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                </div>
+                            </div>
                         </div>                        
 
                         <div id="merchant-reports-content" class="dashboard-content">
@@ -173,7 +177,7 @@
 
                         <div id="merchant-settings-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto"><h2 class="text-xl font-bold text-slate-800">公司設定</h2></div></div>
                     </main>
-                    
+
                     <div id="new-campaign-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
                     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col h-[90vh] transform scale-95 transition-transform duration-300">
                         <div class="p-5 border-b flex justify-between items-center">
@@ -230,7 +234,6 @@
                         </div>
                     </div>
                 </div>
-                </div>
             </div>
          <div id="merchant-sidebar-overlay" onclick="toggleMenu('merchant')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
         </div>
@@ -275,6 +278,62 @@
                         <div id="influencer-finance-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6 mb-6"><h3 class="text-lg font-medium text-gray-500">可提領金額</h3><p class="text-4xl font-bold text-green-500 mt-2">NT$ 25,600</p></div><div class="bg-white rounded-xl shadow p-8"><h2 class="text-xl font-bold text-slate-800 mb-4">申請提領 (出金)</h2><div class="space-y-4"><div><label class="text-sm font-medium">提領銀行</label><select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option>中國信託 (822)</option><option>國泰世華 (013)</option></select></div><div><label class="text-sm font-medium">銀行帳號</label><input type="text" value="1234-5678-9012-3456" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><div><label class="text-sm font-medium">提領金額</label><input type="number" placeholder="最高可提領 NT$ 25,600" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><button class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">確認提領</button></div></div></div>
                         <div id="influencer-settings-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto"><h2 class="text-xl font-bold text-slate-800">個人設定</h2></div></div>
                     </main>
+                    <div id="new-campaign-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
+                        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col h-[90vh] transform scale-95 transition-transform duration-300">
+                            <div class="p-5 border-b flex justify-between items-center">
+                                <h2 class="text-xl font-bold text-slate-800">建立新的行銷需求</h2>
+                                <button onclick="closeModal('new-campaign-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                            </div>
+                            <div class="flex-1 p-6 overflow-y-auto space-y-6">
+                                <div>
+                                    <label for="brief-product-name" class="block text-sm font-medium text-gray-700">產品名稱</label>
+                                    <input type="text" id="brief-product-name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：我的酷炫無線耳機">
+                                </div>
+                                <div>
+                                    <label for="brief-product-desc" class="block text-sm font-medium text-gray-700">產品描述與特色</label>
+                                    <textarea id="brief-product-desc" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="描述您的產品，以及希望網紅強調的賣點"></textarea>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="brief-impressions" class="block text-sm font-medium text-gray-700">預期曝光次數</label>
+                                        <input type="number" id="brief-impressions" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：100000">
+                                    </div>
+                                    <div>
+                                        <label for="brief-budget" class="block text-sm font-medium text-gray-700">預算範圍 (NT$)</label>
+                                        <input type="number" id="brief-budget" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：50000">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="brief-influencer-count" class="block text-sm font-medium text-gray-700">希望網紅數量</label>
+                                        <input type="number" id="brief-influencer-count" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：10">
+                                    </div>
+                                    <div>
+                                        <label for="brief-follower-range" class="block text-sm font-medium text-gray-700">網紅粉絲數區間</label>
+                                        <select id="brief-follower-range" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                            <option>不限</option>
+                                            <option>1萬 - 5萬</option>
+                                            <option>5萬 - 10萬</option>
+                                            <option>10萬以上</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">希望發布平台</label>
+                                    <div id="brief-platforms" class="mt-2 flex flex-wrap gap-4">
+                                        <label class="inline-flex items-center"><input type="checkbox" value="Instagram" class="rounded border-gray-300"> <span class="ml-2">Instagram</span></label>
+                                        <label class="inline-flex items-center"><input type="checkbox" value="YouTube" class="rounded border-gray-300"> <span class="ml-2">YouTube</span></label>
+                                        <label class="inline-flex items-center"><input type="checkbox" value="Facebook" class="rounded border-gray-300"> <span class="ml-2">Facebook</span></label>
+                                        <label class="inline-flex items-center"><input type="checkbox" value="TikTok" class="rounded border-gray-300"> <span class="ml-2">TikTok</span></label>
+                                        <label class="inline-flex items-center"><input type="checkbox" value="XiaoHongShu" class="rounded border-gray-300"> <span class="ml-2">小紅書</span></label>
+                </div>
+            </div>
+        </div>
+        <div class="p-5 border-t bg-slate-50">
+            <button onclick="handleSaveBrief()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">儲存需求並開始配對</button>
+        </div>
+    </div>
+</div>
                 </div>
             </div>
         <div id="influencer-sidebar-overlay" onclick="toggleMenu('influencer')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
@@ -296,9 +355,18 @@
             GoogleAuthProvider,
             signInWithPopup,
             signInWithRedirect, 
-            getRedirectResult 
+            getRedirectResult,
+            getFirestore, 
+            collection, 
+            addDoc, 
+            query, 
+            where, 
+            getDocs,
+            doc,
+            getDoc,
+            setDoc
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-    // (我們暫時不需要 Firestore，所以先不匯入)
+
 
     // 【重要】請確認這裡的 firebaseConfig 是您自己的真實金鑰！
         const firebaseConfig = {
@@ -327,6 +395,7 @@
                 alert('Google 登入時發生錯誤：' + error.message);
             });
 
+        const db = getFirestore(app);
 
 
     // --- 2. 核心 UI 導航與控制函式 ---
@@ -379,6 +448,74 @@
                 overlay.classList.toggle('hidden');
             }
         }
+
+
+        // --- 新增的功能：開啟/關閉彈出視窗 ---
+        window.openModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.querySelector('div > div').classList.remove('scale-95');
+                }, 10);
+            }
+        }
+        window.closeModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            if(modal) {
+                modal.classList.add('opacity-0');
+                modal.querySelector('div > div').classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // --- 新增的功能：儲存商家需求單 ---
+        window.handleSaveBrief = async function() {
+            const user = auth.currentUser;
+            if (!user) {
+                return alert('請先登入！');
+            }
+
+            // 1. 收集表單中的所有資料
+            const briefData = {
+                productName: document.getElementById('brief-product-name').value,
+                productDesc: document.getElementById('brief-product-desc').value,
+                impressions: parseInt(document.getElementById('brief-impressions').value) || 0,
+                budget: parseInt(document.getElementById('brief-budget').value) || 0,
+                influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
+                followerRange: document.getElementById('brief-follower-range').value,
+                platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
+                status: 'pending_match', // 狀態：等待配對
+
+        // 關鍵資訊
+                merchantId: user.uid, // 將需求單與目前登入的商家綁定
+                merchantEmail: user.email,
+                createdAt: new Date()
+            };
+
+    // 2. 簡單驗證
+            if (!briefData.productName) {
+                return alert('請至少填寫產品名稱！');
+            }
+
+            try {
+    // 3. 將資料儲存到一個名為 "briefs" 的新集合中
+                const docRef = await addDoc(collection(db, "briefs"), briefData);
+                console.log("需求單已儲存，文件 ID: ", docRef.id);
+                alert('您的需求已成功送出！平台將開始為您進行配對。');
+
+                closeModal('new-campaign-modal');
+    // 之後可以在這裡加入重新整理需求列表的功能
+
+            } catch (error) {
+                console.error("儲存需求單失敗:", error);
+                alert('儲存失敗，請查看 console 的錯誤訊息。');
+            }
+        }
+
 
     // --- 4. Firebase 驗證功能 ---
 
