@@ -286,7 +286,8 @@
             onAuthStateChanged,
             GoogleAuthProvider, 
             signInWithRedirect, 
-            getRedirectResult 
+            getRedirectResult,
+            signInWithPopup
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
     // === 修改部分 START：從 Firestore 匯入更多我們需要的功能 ===
@@ -600,13 +601,12 @@
         window.handleGoogleLogin = async function() {
             const provider = new GoogleAuthProvider();
             try {
-                await signInWithRedirect(auth, provider);
-        // 在此處匯入 signInWithPopup
-                const { signInWithPopup } = await import("https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js");
-                await signInWithPopup(auth, provider); // 改成使用彈出視窗
+                // 直接使用我們在頂部匯入的 signInWithPopup
+                const result = await signInWithPopup(auth, provider);
+                console.log("Google 彈出視窗登入成功:", result.user);
             } catch (error) {
-                console.error('Google 登入導向失敗:', error);
-                alert('Google 登入失敗：' + error.message);
+                console.error("Google 登入失敗，錯誤訊息:", error);
+                alert("Google 登入時發生錯誤: " + error.message);
             }
         };
 
