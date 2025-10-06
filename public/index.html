@@ -237,7 +237,9 @@
             signOut, 
             onAuthStateChanged,
             GoogleAuthProvider,
-            signInWithPopup 
+            signInWithPopup,
+            signInWithRedirect, 
+            getRedirectResult 
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
     // (我們暫時不需要 Firestore，所以先不匯入)
 
@@ -254,6 +256,20 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        // 檢查頁面載入時，是否是從 Google 登入跳轉回來的
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result) {
+            // 如果 result 存在，代表使用者剛剛成功透過 Google 登入並跳轉回來
+            // 這時 onAuthStateChanged 會被觸發，自動處理後續的頁面導向
+                    console.log('Google 重新導向登入成功:', result.user);
+                }
+            }).catch((error) => {
+        // 處理可能發生的錯誤
+                console.error('Google 重新導向失敗:', error);
+                alert('Google 登入時發生錯誤：' + error.message);
+            });
+
 
 
     // --- 2. 核心 UI 導航與控制函式 ---
@@ -335,13 +351,9 @@
     // 處理 Google 登入
         window.handleGoogleLogin = async function() {
             const provider = new GoogleAuthProvider();
-            try {
-                await signInWithPopup(auth, provider);
-            // 登入成功後，onAuthStateChanged 會自動處理
-            } catch (error) {
-                alert('Google 登入失敗：' + error.message);
-           }
-       };
+            // 直接呼叫重新導向，而不是彈出視窗
+            await signInWithRedirect(auth, provider); 
+        };
 
     // 處理登出
         window.handleLogout = async function() {
