@@ -242,6 +242,12 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        // 設定登入狀態將被保存在瀏覽器的 localStorage 中，這是最持久的選項
+        setPersistence(auth, browserLocalPersistence)
+            .catch((error) => {
+                console.error("設定登入持續性失敗:", error);
+            });
+
 
 
         // 檢查頁面載入時，是否是從 Google 登入跳轉回來的
