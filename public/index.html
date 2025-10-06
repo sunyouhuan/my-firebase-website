@@ -1,615 +1,340 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MatchAI - AI 驅動的網紅行銷平台</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: 'Inter','Noto Sans TC',sans-serif; background-color:#f8fafc; }
-    .view, .dashboard-content { display:none; }
-    .view.active, .dashboard-content.active { display:block; }
-    .sidebar-link { transition: all .2s; }
-    .sidebar-link.active, .sidebar-link:hover { background:#f1f5f9; color:#1e293b; transform:translateX(4px); border-left:3px solid #0d9488; }
-    .modal { transition: opacity .3s ease, transform .3s ease; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MatchAI - AI 驅動的網紅行銷平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc; /* cool gray 50 */
+        }
+        .view, .dashboard-content {
+            display: none;
+        }
+        .view.active, .dashboard-content.active {
+            display: block;
+        }
+        .sidebar-link {
+            transition: all 0.2s;
+        }
+        .sidebar-link.active, .sidebar-link:hover {
+            background-color: #f1f5f9; /* slate 100 */
+            color: #1e293b; /* slate 800 */
+            transform: translateX(4px);
+            border-left: 3px solid #0d9488; /* teal 600 */
+        }
+        .tab-button {
+            transition: all 0.2s;
+        }
+        .tab-button.active {
+            color: #0d9488; /* teal 600 */
+            border-bottom-color: #0d9488;
+        }
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+    </style>
 </head>
 <body>
-<div id="app">
 
-  <!-- 登入頁 -->
-  <div id="login-view" class="view active">
-    <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-      <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
-      <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
+    <div id="app">
 
-      <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
-        <h2 class="text-2xl font-bold text-center text-slate-800">登入您的帳號</h2>
-
-        <form id="login-form" class="space-y-4" onsubmit="return false;">
-          <div>
-            <label for="email" class="text-sm font-medium text-gray-700">電子郵件</label>
-            <input id="email" name="email" type="email" autocomplete="email" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500" />
-          </div>
-          <div>
-            <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500" />
-          </div>
-          <div class="flex flex-col space-y-2">
-            <button type="button" onclick="handleLogin()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800">登入</button>
-            <button type="button" onclick="handleRegister()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">註冊新帳號</button>
-          </div>
-        </form>
-
-        <div class="flex items-center">
-          <div class="flex-1 h-px bg-gray-200"></div>
-          <span class="px-3 text-gray-500 text-sm">或</span>
-          <div class="flex-1 h-px bg-gray-200"></div>
+        <div id="login-view" class="view active">
+            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
+                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
+                <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
+                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
+                    <h2 class="text-2xl font-bold text-center text-slate-800">登入您的帳號</h2>
+                    <form id="login-form" class="space-y-4" onsubmit="return false;">
+                        <div>
+                            <label for="email" class="text-sm font-medium text-gray-700">電子郵件</label>
+                            <input id="email" name="email" type="email" autocomplete="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div>
+                            <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
+                            <input id="password" name="password" type="password" autocomplete="current-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            <button type="button" onclick="handleLogin()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">登入</button>
+                            <button type="button" onclick="handleRegister()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">註冊新帳號</button>
+                        </div>
+                    </form>
+                    
+                </div>
+            </div>
         </div>
 
-        <!-- Google 登入 -->
-        <button type="button" onclick="handleGoogleLogin()"
-                class="w-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-3">
-          <svg viewBox="0 0 48 48" class="w-5 h-5" aria-hidden="true">
-            <path fill="#FFC107" d="M43.61 20.083h-1.86v-.097H24v8h11.284C33.5 31.37 29.25 34 24 34c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.06 0 5.84 1.153 7.948 3.04l5.657-5.657C33.86 4.025 29.198 2 24 2 12.954 2 4 10.954 4 22s8.954 20 20 20 20-8.954 20-20c0-1.34-.138-2.65-.39-3.917z"/>
-            <path fill="#FF3D00" d="M6.306 14.691l6.574 4.818C14.4 16.246 18.86 14 24 14c3.06 0 5.84 1.153 7.948 3.04l5.657-5.657C33.86 4.025 29.198 2 24 2 15.22 2 7.742 6.996 6.306 14.691z"/>
-            <path fill="#4CAF50" d="M24 42c5.164 0 9.86-1.975 13.404-5.2l-6.19-5.24C29.22 33.935 26.77 35 24 35c-5.22 0-9.63-3.34-11.22-7.98l-6.5 5.01C8.69 37.88 15.77 42 24 42z"/>
-            <path fill="#1976D2" d="M43.61 20.083H24v8h11.284c-1.08 3.097-3.643 5.527-6.87 6.526l6.19 5.24C38.63 36.342 44 30.8 44 22c0-1.34-.138-2.65-.39-3.917z"/>
-          </svg>
-          <span>使用 Google 登入</span>
-        </button>
 
-      </div>
-    </div>
-  </div>
-
-  <!-- 身分選擇 -->
-  <div id="role-selection-view" class="view">
-    <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-      <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
-      <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
-      <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
-        <h2 class="text-2xl font-bold text-center text-slate-800">請選擇您的身分</h2>
-        <div class="flex flex-col space-y-4">
-          <button onclick="enterDashboard('merchant')" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800">我是商家</button>
-          <button onclick="enterDashboard('influencer')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">我是網紅</button>
+        <div id="role-selection-view" class="view">
+            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
+                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
+                <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
+                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
+                    <h2 class="text-2xl font-bold text-center text-slate-800">請選擇您的身分</h2>
+                    <div class="flex flex-col space-y-4">
+                        <button onclick="enterDashboard('merchant')" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">我是商家</button>
+                        <button onclick="enterDashboard('influencer')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">我是網紅</button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- 商家 Dashboard -->
-  <div id="merchant-dashboard-view" class="view">
-    <div class="flex h-screen bg-slate-50">
-      <div id="merchant-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
-        <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
-        <nav class="mt-6">
-          <a href="#" onclick="switchTab('merchant','dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
-          <a href="#" onclick="switchTab('merchant','campaigns')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">行銷活動</a>
-          <a href="#" onclick="switchTab('merchant','reports')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">成效報告</a>
-          <a href="#" onclick="switchTab('merchant','finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
-          <a href="#" onclick="switchTab('merchant','settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
-          <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
-        </nav>
-      </div>
-
-      <div class="flex-1 flex flex-col overflow-hidden w-full">
-        <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
-          <button onclick="toggleMenu('merchant')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
-          </button>
-          <h1 id="merchant-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
-          <div class="flex items-center space-x-4">
-            <span id="user-email-display" class="text-gray-600"></span>
-            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
-          </div>
-        </header>
-
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
-          <!-- 總覽 -->
-          <div id="merchant-dashboard-content" class="dashboard-content active">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總花費</h3><p class="text-3xl font-bold text-slate-800 mt-2">NT$ 150,000</p></div>
-              <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總曝光數</h3><p class="text-3xl font-bold text-slate-800 mt-2">1.2M</p></div>
-              <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">平均 ROAS</h3><p class="text-3xl font-bold text-green-500 mt-2">350%</p></div>
-              <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">進行中活動</h3><p class="text-3xl font-bold text-slate-800 mt-2" id="inprogress-count">3</p></div>
-            </div>
-            <div class="bg-slate-700 text-white rounded-xl p-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-              <h2 class="text-2xl font-bold">準備好發起新的行銷活動了嗎？</h2>
-              <button onclick="openAIChat()" class="bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-600 transition-transform hover:scale-105">與 AI 顧問開始</button>
-            </div>
-          </div>
-
-          <!-- 活動列表 -->
-          <div id="merchant-campaigns-content" class="dashboard-content">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-xl font-bold text-slate-800">所有行銷活動</h2>
-            </div>
-            <div class="bg-white rounded-xl shadow p-6 mb-6">
-              <h3 class="font-bold text-lg mb-4 text-slate-800">建立新活動</h3>
-              <div class="flex space-x-2">
-                <input id="campaign-name-input" type="text" placeholder="輸入活動名稱..." class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
-                <button onclick="saveCampaign()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">儲存</button>
-              </div>
-            </div>
-            <div id="campaigns-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-          </div>
-
-          <!-- 成效報告 -->
-          <div id="merchant-reports-content" class="dashboard-content">
-            <div class="bg-white rounded-xl shadow p-6">
-              <h3 class="font-bold text-slate-800 mb-4">曝光 & 點擊趨勢</h3>
-              <div class="h-80"><canvas id="performanceLineChart"></canvas></div>
-            </div>
-          </div>
-
-          <!-- 財務 -->
-          <div id="merchant-finance-content" class="dashboard-content">
-            <div class="bg-white rounded-xl shadow p-6 mb-6"><h3 class="text-lg font-medium text-gray-500">帳戶餘額</h3><p class="text-4xl font-bold text-slate-800 mt-2">NT$ 88,500</p></div>
-            <div class="bg-white rounded-xl shadow p-8">
-              <h2 class="text-xl font-bold text-slate-800 mb-4">線上儲值 (入金)</h2>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <button class="border-2 border-teal-500 text-teal-500 font-bold p-4 rounded-lg">信用卡</button>
-                <button class="border border-gray-300 p-4 rounded-lg">銀行轉帳</button>
-                <button class="border border-gray-300 p-4 rounded-lg">電子支付</button>
-              </div>
-              <div class="space-y-4">
-                <div><label class="text-sm font-medium">儲值金額</label><input type="number" placeholder="NT$ 10,000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                <button class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800">確認儲值</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 設定 -->
-          <div id="merchant-settings-content" class="dashboard-content">
-            <div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto">
-              <h2 class="text-xl font-bold text-slate-800">公司設定</h2>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
-    <div id="merchant-sidebar-overlay" onclick="toggleMenu('merchant')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
-  </div>
-
-  <!-- 網紅 Dashboard -->
-  <div id="influencer-dashboard-view" class="view">
-    <div class="flex h-screen bg-slate-50">
-      <div id="influencer-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
-        <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
-        <nav class="mt-6">
-          <a href="#" onclick="switchTab('influencer','dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
-          <a href="#" onclick="switchTab('influencer','value')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">我的價值</a>
-          <a href="#" onclick="switchTab('influencer','invitations')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">合作邀請</a>
-          <a href="#" onclick="switchTab('influencer','finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
-          <a href="#" onclick="switchTab('influencer','settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
-          <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
-        </nav>
-      </div>
-
-      <div class="flex-1 flex flex-col overflow-hidden w-full">
-        <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
-          <button onclick="toggleMenu('influencer')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
-          </button>
-          <h1 id="influencer-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
-          <div class="flex items-center space-x-4">
-            <span class="text-gray-600" id="influencer-user-display"></span>
-            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
-          </div>
-        </header>
-
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
-          <div id="influencer-dashboard-content" class="dashboard-content active">
-            <div class="bg-white rounded-xl shadow p-6">
-              <h3 class="font-bold text-slate-800 mb-4">影響力雷達</h3>
-              <div class="h-80"><canvas id="valueRadarChart"></canvas></div>
-            </div>
-          </div>
-
-          <div id="influencer-value-content" class="dashboard-content">
-            <div class="bg-white rounded-xl shadow p-6">
-              <h3 class="text-lg font-bold text-slate-800 mb-4">點擊社群平台查看詳細分析報告</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div onclick="showPlatformDetail('instagram')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50">
-                  <img src="https://placehold.co/48x48/E1306C/FFFFFF?text=IG" class="rounded-full" />
-                  <div><p class="font-bold">hsi_daily</p><p class="text-sm text-gray-500">Instagram</p></div>
+        <div id="merchant-dashboard-view" class="view">
+            <div class="flex h-screen bg-slate-50">
+                <div id="merchant-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
+                    <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
+                    <nav class="mt-6">
+                        <a href="#" onclick="switchTab('merchant', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
+                        <a href="#" onclick="switchTab('merchant', 'campaigns')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">行銷活動</a>
+                        <a href="#" onclick="switchTab('merchant', 'reports')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">成效報告</a>
+                        <a href="#" onclick="switchTab('merchant', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
+                        <a href="#" onclick="switchTab('merchant', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
+                        <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
+                    </nav>
                 </div>
-                <div onclick="showPlatformDetail('youtube')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50">
-                  <img src="https://placehold.co/48x48/FF0000/FFFFFF?text=YT" class="rounded-full" />
-                  <div><p class="font-bold">小希的探索頻道</p><p class="text-sm text-gray-500">YouTube</p></div>
-                </div>
-                <div class="p-4 border border-dashed rounded-lg flex items-center space-x-4 text-gray-400">
-                  <img src="https://placehold.co/48x48/000000/FFFFFF?text=TK" class="rounded-full" />
-                  <div><p class="font-bold">連結 TikTok</p><p class="text-sm">尚未連結</p></div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div id="influencer-invitations-content" class="dashboard-content">
-            <div class="space-y-6">
-              <div class="bg-white rounded-xl shadow p-6">
-                <div class="flex flex-col md:flex-row justify-between">
-                  <div>
-                    <p class="font-bold text-sm text-teal-600">A 公司</p>
-                    <h3 class="font-bold text-xl mt-1 text-slate-800">聯名無線耳機預熱</h3>
-                    <p class="text-sm text-gray-500 mt-2">內容形式: 1 則 Instagram 圖文 + 3 則限時動態</p>
-                  </div>
-                  <div class="mt-4 md:mt-0 text-left md:text-right">
-                    <p class="font-bold text-xl text-slate-800">NT$ 8,000 - 12,000</p>
-                    <p class="text-sm text-gray-500">預算範圍</p>
-                  </div>
-                </div>
-                <div class="mt-4 pt-4 border-t flex flex-col md:flex-row items-center justify-between">
-                  <p class="text-sm text-gray-500">截止日期: 2025-10-15</p>
-                  <div class="flex space-x-2 mt-3 md:mt-0">
-                    <button class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">婉拒</button>
-                    <button class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">查看詳情並接受</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                <div class="flex-1 flex flex-col overflow-hidden w-full">
+                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
+                        <button onclick="toggleMenu('merchant')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                                </svg>
+                            </button>
+                        <h1 id="merchant-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
+                        <div class="flex items-center space-x-4">
+                            <span id="user-email-display" class="text-gray-600"></span>
+                            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
+                        </div>
+                    </header>
 
-          <div id="influencer-finance-content" class="dashboard-content">
-            <div class="bg-white rounded-xl shadow p-6 mb-6">
-              <h3 class="text-lg font-medium text-gray-500">可提領金額</h3>
-              <p class="text-4xl font-bold text-green-500 mt-2">NT$ 25,600</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-8">
-              <h2 class="text-xl font-bold text-slate-800 mb-4">申請提領 (出金)</h2>
-              <div class="space-y-4">
-                <div><label class="text-sm font-medium">提領銀行</label>
-                  <select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option>中國信託 (822)</option><option>國泰世華 (013)</option></select>
-                </div>
-                <div><label class="text-sm font-medium">銀行帳號</label>
-                  <input type="text" value="1234-5678-9012-3456" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                </div>
-                <div><label class="text-sm font-medium">提領金額</label>
-                  <input type="number" placeholder="最高可提領 NT$ 25,600" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                </div>
-                <button class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">確認提領</button>
-              </div>
-            </div>
-          </div>
+                    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
+                        <div id="merchant-dashboard-content" class="dashboard-content active">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總花費</h3><p class="text-3xl font-bold text-slate-800 mt-2">NT$ 150,000</p></div>
+                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總曝光數</h3><p class="text-3xl font-bold text-slate-800 mt-2">1.2M</p></div>
+                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">平均 ROAS</h3><p class="text-3xl font-bold text-green-500 mt-2">350%</p></div>
+                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">進行中活動</h3><p class="text-3xl font-bold text-slate-800 mt-2">3</p></div>
+                            </div>
+                            <div class="bg-slate-700 text-white rounded-xl p-8 flex justify-between items-center"><h2 class="text-2xl font-bold">準備好發起新的行銷活動了嗎？</h2><button onclick="openAIChat()" class="bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-600 transition-transform hover:scale-105">與 AI 顧問開始</button></div>
+                        </div>
+                        
+                        <div id="merchant-campaign-detail-content" class="dashboard-content"></div>
 
-          <div id="influencer-settings-content" class="dashboard-content">
-            <div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto">
-              <h2 class="text-xl font-bold text-slate-800">個人設定</h2>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
-    <div id="influencer-sidebar-overlay" onclick="toggleMenu('influencer')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
-  </div>
+                        <div id="merchant-campaigns-content" class="dashboard-content">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-bold text-slate-800">所有行銷活動</h2>
+                            </div>
+                            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                                <h3 class="font-bold text-lg mb-4 text-slate-800">建立新活動</h3>
+                                <div class="flex space-x-2">
+                                    <input id="campaign-name-input" type="text" placeholder="輸入活動名稱..." class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                                    <button onclick="saveCampaign()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">儲存</button>
+                                </div>
+                            </div>
+                            <div id="campaigns-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                </div>
+                        </div>                        
 
-  <!-- AI 顧問 Modal -->
-  <div id="ai-chat-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col h-[70vh] transform scale-95 transition-transform duration-300">
-      <div class="p-4 border-b flex justify-between items-center">
-        <h2 class="text-lg font-bold text-slate-800">AI 行銷顧問</h2>
-        <button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-      </div>
-      <div id="chat-window" class="flex-1 p-4 overflow-y-auto space-y-4"></div>
-      <div class="p-4 border-t">
-        <div class="flex space-x-2">
-          <input id="chat-input" type="text" class="flex-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="請輸入您的回覆...">
-          <button onclick="sendChatMessage()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">發送</button>
+                        <div id="merchant-reports-content" class="dashboard-content">
+                            <div class="bg-white rounded-xl shadow p-6"><h3 class="font-bold text-slate-800 mb-4">曝光 & 點擊趨勢</h3><div class="h-80"><canvas id="performanceLineChart"></canvas></div></div>
+                        </div>
+                        
+                        <div id="merchant-finance-content" class="dashboard-content">
+                             <div class="bg-white rounded-xl shadow p-6 mb-6"><h3 class="text-lg font-medium text-gray-500">帳戶餘額</h3><p class="text-4xl font-bold text-slate-800 mt-2">NT$ 88,500</p></div>
+                             <div class="bg-white rounded-xl shadow p-8"><h2 class="text-xl font-bold text-slate-800 mb-4">線上儲值 (入金)</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><button class="border-2 border-teal-500 text-teal-500 font-bold p-4 rounded-lg">信用卡</button><button class="border border-gray-300 p-4 rounded-lg">銀行轉帳</button><button class="border border-gray-300 p-4 rounded-lg">電子支付</button></div><div class="space-y-4"><div><label class="text-sm font-medium">儲值金額</label><input type="number" placeholder="NT$ 10,000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><button class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800">確認儲值</button></div></div>
+                        </div>
+
+                        <div id="merchant-settings-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto"><h2 class="text-xl font-bold text-slate-800">公司設定</h2></div></div>
+                    </main>
+                </div>
+            </div>
+         <div id="merchant-sidebar-overlay" onclick="toggleMenu('merchant')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- 平台詳情 Modal -->
-  <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
-    <div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300">
-      <!-- 內容由 JS 注入 -->
-    </div>
-  </div>
+        
+        <div id="influencer-dashboard-view" class="view">
+             <div class="flex h-screen bg-slate-50">
+                <div id="influencer-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
+                    <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
+                    <nav class="mt-6">
+                        <a href="#" onclick="switchTab('influencer', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
+                        <a href="#" onclick="switchTab('influencer', 'value')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">我的價值</a>
+                        <a href="#" onclick="switchTab('influencer', 'invitations')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">合作邀請</a>
+                        <a href="#" onclick="switchTab('influencer', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
+                        <a href="#" onclick="switchTab('influencer', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
+                        <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
+                    </nav>
+                </div>
 
-</div>
+                
+                <div class="flex-1 flex flex-col overflow-hidden w-full">
+                    
+                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
+                        <button onclick="toggleMenu('influencer')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                             </svg>
+                         </button>
 
-<!-- Firebase 與 App 主程式 -->
-<script type="module">
-  // --- Firebase 初始化 ---
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-  import {
-    getAuth,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    GoogleAuthProvider,
-    signInWithPopup,
-    signInWithRedirect,
-    getRedirectResult,
-    setPersistence,
-    browserLocalPersistence
-  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+                        <h1 id="influencer-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-600"></span>
+                            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
+                        </div>
+                    </header>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
-    authDomain: "test-b493a.firebaseapp.com",
-    projectId: "test-b493a",
-    storageBucket: "test-b493a.firebasestorage.app",
-    messagingSenderId: "1089014108157",
-    appId: "1:1089014108157:web:2ac36c728f861795909394",
-    measurementId: "G-1GY922PWL9"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  setPersistence(auth, browserLocalPersistence).catch(()=>{});
-
-  // --- UI 導航與共用 ---
-  function navigateTo(viewId) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const target = document.getElementById(viewId);
-    if (target) target.classList.add('active');
-    window.scrollTo(0, 0);
-  }
-  const headerTitles = {
-    merchant: { dashboard:'總覽', campaigns:'行銷活動', reports:'成效報告', finance:'財務管理', settings:'設定' },
-    influencer: { dashboard:'總覽', value:'我的價值', invitations:'合作邀請', finance:'財務管理', settings:'設定' }
-  };
-  function switchTab(role, tabId) {
-    const sidebarLinks = document.querySelectorAll(\`#\${role}-dashboard-view .sidebar-link\`);
-    const contents = document.querySelectorAll(\`#\${role}-dashboard-view .dashboard-content\`);
-    const headerTitle = document.getElementById(\`\${role}-header-title\`);
-    sidebarLinks.forEach(l => {
-      l.classList.remove('active');
-      if (l.getAttribute('onclick').includes(\`'\${tabId}'\`)) l.classList.add('active');
-    });
-    contents.forEach(c => c.classList.remove('active'));
-    const active = document.getElementById(\`\${role}-\${tabId}-content\`);
-    if (active) active.classList.add('active');
-    if (headerTitle) headerTitle.textContent = headerTitles[role][tabId];
-
-    // 需要圖表時才初始化，避免重複
-    if (role === 'merchant' && tabId === 'reports') initPerformanceChart();
-    if (role === 'influencer' && tabId === 'dashboard') initRadarChart();
-  }
-  window.navigateTo = navigateTo;
-  window.switchTab = switchTab;
-  window.toggleMenu = function(role){
-    const sidebar = document.getElementById(\`\${role}-sidebar\`);
-    const overlay = document.getElementById(\`\${role}-sidebar-overlay\`);
-    if (sidebar && overlay){ sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); }
-  };
-
-  // --- Email/Password 驗證 ---
-  window.handleRegister = async function() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert('註冊成功！現在您可以登入了。');
-    } catch (err) { alert('註冊失敗：' + err.message); }
-  };
-  window.handleLogin = async function() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) { alert('登入失敗：' + err.message); }
-  };
-  window.handleLogout = async function() {
-    try { await signOut(auth); } catch (err) { alert('登出失敗：' + err.message); }
-  };
-
-  // --- Google 登入 ---
-  const googleProvider = new GoogleAuthProvider();
-  googleProvider.setCustomParameters({ prompt: 'select_account' });
-  window.handleGoogleLogin = async function() {
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (err) {
-      if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/popup-closed-by-user') {
-        try { await signInWithRedirect(auth, googleProvider); }
-        catch (e2) { alert('Google 登入失敗（redirect）：' + e2.message); }
-      } else {
-        alert('Google 登入失敗：' + err.message);
-      }
-    }
-  };
-  getRedirectResult(auth).catch(()=>{});
-
-  // --- 進入 Dashboard ---
-  window.enterDashboard = function(role) {
-    const user = auth.currentUser;
-    if (!user) { alert('發生錯誤，請重新登入！'); navigateTo('login-view'); return; }
-
-    if (role === 'merchant') {
-      navigateTo('merchant-dashboard-view');
-      const emailSpan = document.getElementById('user-email-display');
-      if (emailSpan) emailSpan.textContent = \`你好, \${user.displayName || user.email || '使用者'}\`;
-      const btn = document.querySelector('#merchant-dashboard-view header button.bg-gray-200');
-      if (btn) btn.classList.remove('hidden');
-      switchTab('merchant', 'dashboard');
-    } else {
-      navigateTo('influencer-dashboard-view');
-      const span = document.getElementById('influencer-user-display');
-      if (span) span.textContent = \`你好, \${user.displayName || user.email || '使用者'}\`;
-      const btn = document.querySelector('#influencer-dashboard-view header button.bg-gray-200');
-      if (btn) btn.classList.remove('hidden');
-      switchTab('influencer', 'dashboard');
-    }
-  };
-
-  // --- 登入狀態監聽（修正訊息） ---
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      console.log('使用者已登入，前往角色選擇頁');
-      navigateTo('role-selection-view');
-    } else {
-      console.log('使用者未登入，前往登入頁');
-      navigateTo('login-view');
-    }
-  });
-
-  // --- 商家：活動清單（前端暫存示範） ---
-  const campaignsKey = 'matchai_campaigns';
-  function loadCampaigns() {
-    try { return JSON.parse(localStorage.getItem(campaignsKey)) || []; }
-    catch { return []; }
-  }
-  function saveCampaignsToStorage(list) {
-    localStorage.setItem(campaignsKey, JSON.stringify(list));
-  }
-  function renderCampaigns() {
-    const listEl = document.getElementById('campaigns-list');
-    if (!listEl) return;
-    const list = loadCampaigns();
-    listEl.innerHTML = '';
-    list.forEach((c, idx) => {
-      const el = document.createElement('div');
-      el.className = 'bg-white rounded-xl shadow p-6 flex flex-col space-y-3';
-      el.innerHTML = `
-        <div class="flex justify-between items-start">
-          <div>
-            <h4 class="font-bold text-slate-800">${c.name}</h4>
-            <p class="text-sm text-gray-500 mt-1">建立於：${new Date(c.createdAt).toLocaleString()}</p>
-          </div>
-          <span class="text-xs px-2 py-1 rounded-full ${c.status==='進行中'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-600'}">${c.status}</span>
-        </div>
-        <div class="flex gap-2">
-          <button class="px-3 py-1 rounded border text-sm" onclick="updateCampaignStatus(${idx}, '進行中')">標記為進行中</button>
-          <button class="px-3 py-1 rounded border text-sm" onclick="updateCampaignStatus(${idx}, '已結束')">標記為已結束</button>
-          <button class="px-3 py-1 rounded border text-sm text-red-600" onclick="deleteCampaign(${idx})">刪除</button>
-        </div>
-      `;
-      listEl.appendChild(el);
-    });
-    // 更新進行中數量
-    const inprogress = list.filter(c => c.status === '進行中').length;
-    const counter = document.getElementById('inprogress-count');
-    if (counter) counter.textContent = inprogress;
-  }
-  window.saveCampaign = function() {
-    const input = document.getElementById('campaign-name-input');
-    const name = (input?.value || '').trim();
-    if (!name) { alert('請輸入活動名稱'); return; }
-    const list = loadCampaigns();
-    list.unshift({ name, createdAt: Date.now(), status: '進行中' });
-    saveCampaignsToStorage(list);
-    input.value = '';
-    renderCampaigns();
-  };
-  window.updateCampaignStatus = function(idx, status) {
-    const list = loadCampaigns();
-    if (list[idx]) list[idx].status = status;
-    saveCampaignsToStorage(list);
-    renderCampaigns();
-  };
-  window.deleteCampaign = function(idx) {
-    const list = loadCampaigns();
-    list.splice(idx,1);
-    saveCampaignsToStorage(list);
-    renderCampaigns();
-  };
-
-  // 初始渲染（避免第一次空白）
-  renderCampaigns();
-
-  // --- 圖表（Chart.js） ---
-  let perfChart, radarChart;
-  function initPerformanceChart() {
-    const ctx = document.getElementById('performanceLineChart');
-    if (!ctx) return;
-    if (perfChart) { perfChart.destroy(); }
-    perfChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['週一','週二','週三','週四','週五','週六','週日'],
-        datasets: [
-          { label: '曝光', data: [120, 190, 300, 500, 200, 300, 450] },
-          { label: '點擊', data: [12, 19, 30, 50, 20, 30, 45] }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false }
-    });
-  }
-  function initRadarChart() {
-    const ctx = document.getElementById('valueRadarChart');
-    if (!ctx) return;
-    if (radarChart) { radarChart.destroy(); }
-    radarChart = new Chart(ctx, {
-      type: 'radar',
-      data: {
-        labels: ['互動率','觸及','內容深度','轉換率','品牌契合','穩定度'],
-        datasets: [{ label: '本月', data: [65, 59, 80, 81, 56, 55] }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true } } }
-    });
-  }
-
-  // --- AI 顧問聊天（前端假資料） ---
-  function appendChat(sender, text) {
-    const win = document.getElementById('chat-window');
-    const bubble = document.createElement('div');
-    bubble.className = \`max-w-[80%] p-3 rounded-lg \${sender==='me' ? 'bg-teal-50 self-end ml-auto' : 'bg-white border'}\`;
-    bubble.innerHTML = \`<div class="text-xs text-gray-500 mb-1">\${sender==='me'?'你':'AI 顧問'}</div><div class="text-slate-800">\${text}</div>\`;
-    win.appendChild(bubble);
-    win.scrollTop = win.scrollHeight;
-  }
-  window.openAIChat = function() {
-    const modal = document.getElementById('ai-chat-modal');
-    modal.classList.remove('hidden'); setTimeout(()=>{ modal.classList.remove('opacity-0'); }, 10);
-    const chatWin = document.getElementById('chat-window');
-    chatWin.innerHTML = '';
-    appendChat('ai', '嗨！請描述你的目標（例如提升 ROAS 到 400%），我會幫你規劃活動。');
-  };
-  window.closeAIChat = function() {
-    const modal = document.getElementById('ai-chat-modal');
-    modal.classList.add('opacity-0'); setTimeout(()=>{ modal.classList.add('hidden'); }, 250);
-  };
-  window.sendChatMessage = function() {
-    const input = document.getElementById('chat-input');
-    const text = (input?.value || '').trim();
-    if (!text) return;
-    appendChat('me', text);
-    input.value = '';
-    setTimeout(()=> appendChat('ai', '收到！我建議：1) 先用種子名單做 A/B Creative Test；2) 日預算 NT$3,000；3) 看 48 小時 CTR/CPA 再擴量。'), 500);
-  };
-
-  // --- 平台詳情 Modal ---
-  window.showPlatformDetail = function(platform) {
-    const modal = document.getElementById('platform-detail-modal');
-    const content = document.getElementById('platform-detail-content');
-    const title = platform === 'instagram' ? 'Instagram 詳細報告' : 'YouTube 詳細報告';
-    const metrics = platform === 'instagram'
-      ? [['粉絲數','12,430'],['平均觸及','38,200'],['平均互動率','6.2%'],['品牌契合度','高']]
-      : [['訂閱數','21,800'],['平均觀看','14,300'],['完播率','42%'],['觀眾互動','中高']];
-    content.innerHTML = `
-      <div class="p-6 border-b flex justify-between items-center bg-white rounded-t-xl">
-        <h2 class="text-xl font-bold text-slate-800">${title}</h2>
-        <button onclick="closePlatformDetail()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-      </div>
-      <div class="p-6 overflow-y-auto">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          ${metrics.map(m => `
-            <div class="bg-white rounded-xl shadow p-4">
-              <div class="text-sm text-gray-500">${m[0]}</div>
-              <div class="text-2xl font-bold text-slate-800 mt-1">${m[1]}</div>
+                    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
+                        <div id="influencer-dashboard-content" class="dashboard-content active"><div class="h-80"><canvas id="valueRadarChart"></canvas></div></div>
+                        <div id="influencer-value-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6"><h3 class="text-lg font-bold text-slate-800 mb-4">點擊社群平台查看詳細分析報告</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><div onclick="showPlatformDetail('instagram')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/E1306C/FFFFFF?text=IG" class="rounded-full" /><div><p class="font-bold">hsi_daily</p><p class="text-sm text-gray-500">Instagram</p></div></div><div onclick="showPlatformDetail('youtube')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/FF0000/FFFFFF?text=YT" class="rounded-full" /><div><p class="font-bold">小希的探索頻道</p><p class="text-sm text-gray-500">YouTube</p></div></div><div class="p-4 border border-dashed rounded-lg flex items-center space-x-4 text-gray-400"><img src="https://placehold.co/48x48/000000/FFFFFF?text=TK" class="rounded-full" /><div><p class="font-bold">連結 TikTok</p><p class="text-sm">尚未連結</p></div></div></div></div></div>
+                        <div id="influencer-invitations-content" class="dashboard-content"><div class="space-y-6"><div class="bg-white rounded-xl shadow p-6"><div class="flex flex-col md:flex-row justify-between"><div><p class="font-bold text-sm text-teal-600">A 公司</p><h3 class="font-bold text-xl mt-1 text-slate-800">聯名無線耳機預熱</h3><p class="text-sm text-gray-500 mt-2">內容形式: 1 則 Instagram 圖文 + 3 則限時動態</p></div><div class="mt-4 md:mt-0 text-left md:text-right"><p class="font-bold text-xl text-slate-800">NT$ 8,000 - 12,000</p><p class="text-sm text-gray-500">預算範圍</p></div></div><div class="mt-4 pt-4 border-t flex flex-col md:flex-row items-center justify-between"><p class="text-sm text-gray-500">截止日期: 2025-10-15</p><div class="flex space-x-2 mt-3 md:mt-0"><button class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">婉拒</button><button class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">查看詳情並接受</button></div></div></div></div></div>
+                        <div id="influencer-finance-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6 mb-6"><h3 class="text-lg font-medium text-gray-500">可提領金額</h3><p class="text-4xl font-bold text-green-500 mt-2">NT$ 25,600</p></div><div class="bg-white rounded-xl shadow p-8"><h2 class="text-xl font-bold text-slate-800 mb-4">申請提領 (出金)</h2><div class="space-y-4"><div><label class="text-sm font-medium">提領銀行</label><select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option>中國信託 (822)</option><option>國泰世華 (013)</option></select></div><div><label class="text-sm font-medium">銀行帳號</label><input type="text" value="1234-5678-9012-3456" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><div><label class="text-sm font-medium">提領金額</label><input type="number" placeholder="最高可提領 NT$ 25,600" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><button class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">確認提領</button></div></div></div>
+                        <div id="influencer-settings-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto"><h2 class="text-xl font-bold text-slate-800">個人設定</h2></div></div>
+                    </main>
+                </div>
             </div>
-          `).join('')}
+        <div id="influencer-sidebar-overlay" onclick="toggleMenu('influencer')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
         </div>
-      </div>
-    `;
-    modal.classList.remove('hidden'); setTimeout(()=>{ modal.classList.remove('opacity-0'); }, 10);
-  };
-  window.closePlatformDetail = function() {
-    const modal = document.getElementById('platform-detail-modal');
-    modal.classList.add('opacity-0'); setTimeout(()=>{ modal.classList.add('hidden'); }, 250);
-  };
 
-</script>
+        <div id="ai-chat-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col h-[70vh] transform scale-95 transition-transform duration-300"><div class="p-4 border-b flex justify-between items-center"><h2 class="text-lg font-bold text-slate-800">AI 行銷顧問</h2><button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div><div id="chat-window" class="flex-1 p-4 overflow-y-auto space-y-4"></div><div class="p-4 border-t"><div class="flex space-x-2"><input id="chat-input" type="text" class="flex-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="請輸入您的回覆..."><button onclick="sendChatMessage()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">發送</button></div></div></div></div>
+        <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300"></div></div>
+    </div>
+
+    <script type="module">
+        // --- 1. Firebase 初始化 ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+    
+        const firebaseConfig = {
+          apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
+          authDomain: "test-b493a.firebaseapp.com",
+          projectId: "test-b493a",
+          storageBucket: "test-b493a.firebasestorage.app",
+          messagingSenderId: "1089014108157",
+          appId: "1:1089014108157:web:2ac36c728f861795909394",
+          measurementId: "G-1GY922PWL9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+
+        // --- 2. 核心 UI 導航與控制函式 ---
+        function navigateTo(viewId) {
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            const targetView = document.getElementById(viewId);
+            if (targetView) {
+                targetView.classList.add('active');
+            }
+            window.scrollTo(0, 0);
+        }
+
+        const headerTitles = {
+            merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
+            influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
+        };
+
+        function switchTab(role, tabId) {
+            const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
+            const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
+            const headerTitle = document.getElementById(`${role}-header-title`);
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('onclick').includes(`'${tabId}'`)) link.classList.add('active');
+            });
+            contents.forEach(content => content.classList.remove('active'));
+            const activeContent = document.getElementById(`${role}-${tabId}-content`);
+            if (activeContent) activeContent.classList.add('active');
+            headerTitle.textContent = headerTitles[role][tabId];
+        }
+
+
+        // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
+        window.navigateTo = navigateTo;
+        window.switchTab = switchTab;
+        
+        window.toggleMenu = function(role) {
+            const sidebar = document.getElementById(`${role}-sidebar`);
+            const overlay = document.getElementById(`${role}-sidebar-overlay`);
+
+            if (sidebar && overlay) {
+                 sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+        }
+
+        // --- 4. Firebase 驗證功能 ---
+        window.handleRegister = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert('註冊成功！現在您可以登入了。');
+            } catch (error) {
+                alert('註冊失敗：' + error.message);
+            }
+        };
+
+        window.handleLogin = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert('登入失敗：' + error.message);
+            }
+        };
+
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                alert('登出失敗：' + error.message);
+            }
+        };
+
+        window.enterDashboard = function(role) {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('發生錯誤，請重新登入！');
+                navigateTo('login-view');
+                return;
+            }
+
+            if (role === 'merchant') {
+                navigateTo('merchant-dashboard-view');
+                document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
+                document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
+                switchTab('merchant', 'dashboard');
+            } else if (role === 'influencer') {
+                navigateTo('influencer-dashboard-view');
+                document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
+                document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
+                switchTab('influencer', 'dashboard');
+            }
+        };
+
+
+        // --- 5. 應用程式的「新大腦」：登入狀態監聽 ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+               console.log('使用者已登入，前往角色選擇頁');
+                navigateTo('role-selection-view');
+            } else {
+                console.log('使用者已登入，前往登入頁');
+                navigateTo('login-view');
+            }
+        });
+    </script>
 </body>
 </html>
