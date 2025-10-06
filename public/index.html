@@ -355,7 +355,11 @@
             GoogleAuthProvider,
             signInWithPopup,
             signInWithRedirect, 
-            getRedirectResult,
+            getRedirectResult
+        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+
+
+        import { 
             getFirestore, 
             collection, 
             addDoc, 
@@ -365,7 +369,7 @@
             doc,
             getDoc,
             setDoc
-        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 
     // 【重要】請確認這裡的 firebaseConfig 是您自己的真實金鑰！
