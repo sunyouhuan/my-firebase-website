@@ -42,10 +42,8 @@
 </head>
 <body>
 
-    <!-- 主應用程式容器 -->
     <div id="app">
 
-        <!-- 登入頁面 -->
         <div id="login-view" class="view active">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
                 <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
@@ -64,19 +62,6 @@
                         <div class="flex flex-col space-y-2">
                             <button type="button" onclick="handleLogin()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">登入</button>
                             <button type="button" onclick="handleRegister()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">註冊新帳號</button>
-
-                        <div class="relative flex py-3 items-center">
-                            <div class="flex-grow border-t border-gray-300"></div>
-                            <span class="flex-shrink mx-4 text-gray-400 text-sm">或</span>
-                            <div class="flex-grow border-t border-gray-300"></div>
-                        </div>
-
-                        <button type="button" onclick="handleGoogleLogin()" class="w-full flex justify-center items-center bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.021,35.592,44,30.138,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                            </svg>
-                            使用 Google 帳號登入
-                        </button>
                         </div>
                     </form>
                 </div>
@@ -84,7 +69,6 @@
         </div>
 
 
-        <!-- 角色選擇頁面 -->
         <div id="role-selection-view" class="view">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
                 <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
@@ -99,10 +83,8 @@
             </div>
         </div>
 
-        <!-- 商家儀表板 -->
         <div id="merchant-dashboard-view" class="view">
             <div class="flex h-screen bg-slate-50">
-                <!-- 側邊欄 -->
                 <div id="merchant-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
                     <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
                     <nav class="mt-6">
@@ -115,7 +97,6 @@
                     </nav>
                 </div>
 
-                <!-- 主內容區 -->
                 <div class="flex-1 flex flex-col overflow-hidden w-full">
                     <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
                         <button onclick="toggleMenu('merchant')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
@@ -129,8 +110,6 @@
                             <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
                         </div>
                     </header>
-
-
 
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
                         <div id="merchant-dashboard-content" class="dashboard-content active">
@@ -149,7 +128,6 @@
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-bold text-slate-800">所有行銷活動</h2>
                             </div>
-
                             <div class="bg-white rounded-xl shadow p-6 mb-6">
                                 <h3 class="font-bold text-lg mb-4 text-slate-800">建立新活動</h3>
                                 <div class="flex space-x-2">
@@ -157,7 +135,6 @@
                                     <button onclick="saveCampaign()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">儲存</button>
                                 </div>
                             </div>
-
                             <div id="campaigns-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 </div>
                         </div>                        
@@ -196,7 +173,6 @@
                 
                 <div class="flex-1 flex flex-col overflow-hidden w-full">
                     
-                    <!-- influencer header -->
                     <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
                         <button onclick="toggleMenu('influencer')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -231,16 +207,11 @@
         // --- 1. Firebase 初始化 ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { 
-            initializeAuth,
-            browserLocalPersistence,
+            getAuth, 
             createUserWithEmailAndPassword, 
             signInWithEmailAndPassword, 
             signOut, 
-            onAuthStateChanged,
-            GoogleAuthProvider,
-            signInWithPopup,
-            signInWithRedirect, 
-            getRedirectResult 
+            onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
     
         const firebaseConfig = {
@@ -254,34 +225,10 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = initializeAuth(app, {
-          persistence: browserLocalPersistence
-        });
-
-    // ▼▼▼ 【請將這段最重要的程式碼加回來！】 ▼▼▼
-    // 檢查頁面載入時，是否是從 Google 登入跳轉回來的
-        getRedirectResult(auth)
-            .then((result) => {
-                if (result) {
-                    // 如果 result 存在，代表使用者剛剛成功透過 Google 登入並跳轉回來
-                    // 這時 onAuthStateChanged 會被觸發，自動處理後續的頁面導向
-                    console.log('Google 重新導向登入成功:', result.user);
-                }
-            }).catch((error) => {
-            // 處理可能發生的錯誤
-                console.error('Google 重新導向失敗:', error);
-                alert('Google 登入時發生錯誤：' + error.message);
-            });
+        const auth = getAuth(app);
 
 
-        
-
-
-
-    // --- 2. 核心 UI 導航與控制函式 ---
-
-
-    // 頁面跳轉函式
+        // --- 2. 核心 UI 導航與控制函式 ---
         function navigateTo(viewId) {
             document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
             const targetView = document.getElementById(viewId);
@@ -291,14 +238,12 @@
             window.scrollTo(0, 0);
         }
 
-    // 儀表板內部分頁切換函式
         const headerTitles = {
             merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
             influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
         };
 
         function switchTab(role, tabId) {
-        // ... (這段函式與您原本的完全相同，我們只是把它放在這裡)
             const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
             const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
             const headerTitle = document.getElementById(`${role}-header-title`);
@@ -313,25 +258,21 @@
         }
 
 
-    // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
+        // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
         window.navigateTo = navigateTo;
         window.switchTab = switchTab;
-        // --- 新增的響應式側邊欄控制功能 ---
+        
         window.toggleMenu = function(role) {
             const sidebar = document.getElementById(`${role}-sidebar`);
             const overlay = document.getElementById(`${role}-sidebar-overlay`);
 
             if (sidebar && overlay) {
-                // 切換側邊欄的 translate-x-full class，讓它滑入或滑出
                  sidebar.classList.toggle('-translate-x-full');
-        // 切換遮罩的 hidden class
                 overlay.classList.toggle('hidden');
             }
         }
 
-    // --- 4. Firebase 驗證功能 ---
-
-    // 處理註冊
+        // --- 4. Firebase 驗證功能 ---
         window.handleRegister = async function() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -343,36 +284,24 @@
             }
         };
 
-    // 處理郵件登入
         window.handleLogin = async function() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-            // 登入成功後，onAuthStateChanged 會自動處理
             } catch (error) {
                 alert('登入失敗：' + error.message);
             }
         };
 
-    // 處理 Google 登入
-        window.handleGoogleLogin = async function() {
-            const provider = new GoogleAuthProvider();
-            // 直接呼叫重新導向，而不是彈出視窗
-            await signInWithRedirect(auth, provider); 
-        };
-
-    // 處理登出
         window.handleLogout = async function() {
             try {
                 await signOut(auth);
-            // 登出成功後，onAuthStateChanged 會自動處理
             } catch (error) {
                 alert('登出失敗：' + error.message);
             }
         };
 
-    // 【新功能】處理角色選擇後的儀表板進入
         window.enterDashboard = function(role) {
             const user = auth.currentUser;
             if (!user) {
@@ -382,32 +311,26 @@
             }
 
             if (role === 'merchant') {
-                // 導向商家儀表板
                 navigateTo('merchant-dashboard-view');
-                // 更新商家儀表板的 header
                 document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
                 document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
-                switchTab('merchant', 'dashboard'); // 確保預設顯示總覽
+                switchTab('merchant', 'dashboard');
             } else if (role === 'influencer') {
-            // 導向網紅儀表板
                 navigateTo('influencer-dashboard-view');
-            // 更新網紅儀表板的 header
                 document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
                 document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
-                switchTab('influencer', 'dashboard'); // 確保預設顯示總覽
+                switchTab('influencer', 'dashboard');
             }
         };
 
 
-    // --- 5. 應用程式的「新大腦」：簡化後的登入狀態監聽 ---
+        // --- 5. 應用程式的「新大腦」：登入狀態監聽 ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
-            // 使用者已登入 -> 【一律】前往角色選擇頁面
                console.log('使用者已登入，前往角色選擇頁');
                 navigateTo('role-selection-view');
             } else {
-            // 使用者已登出 -> 前往登入頁面
-                console.log('使用者已登出，前往登入頁');
+                console.log('使用者已登入，前往登入頁');
                 navigateTo('login-view');
             }
         });
