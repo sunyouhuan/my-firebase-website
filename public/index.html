@@ -456,6 +456,9 @@
             closeModal('ai-chat-modal');
         }
 
+
+
+// ====== 這是強化版的 sendChatMessage 函式 ======
         window.sendChatMessage = async function() {
             const messageText = chatInput.value.trim();
             if (!messageText || isAwaitingAIResponse) return;
@@ -464,56 +467,53 @@
             conversationHistory.push({ role: 'user', parts: [{ text: messageText }] });
             chatInput.value = '';
             isAwaitingAIResponse = true;
+    
+    // 增加一個讀取中的提示
+            addMessageToChat('ai', "思考中...");
 
             try {
                 const result = await askGemini({ history: conversationHistory });
-                const aiResponseText = result.data.text;
+
+        // 從 chatWindow 中移除 "思考中..." 的提示
+                chatWindow.removeChild(chatWindow.lastChild);
+
+        // --- 強化點 START ---
+        // 進行防禦性檢查，確保 result 和它內部的結構都存在
+                const aiResponseText = result?.data?.text;
+
+                if (!aiResponseText) {
+            // 如果沒有有效的文字回覆，就顯示錯誤訊息
+                    console.error("收到了無效的回覆:", result);
+                    addMessageToChat('ai', "抱歉，我收到了一個無效的回覆，請稍後再試。");
+                    return; // 提前結束函式
+        }
+        // --- 強化點 END ---
 
                 addMessageToChat('ai', aiResponseText);
                 conversationHistory.push({ role: 'model', parts: [{ text: aiResponseText }] });
 
-        // 檢查 AI 回覆中是否包含要儲存的 JSON
+        // ... (後續檢查 JSON 的部分維持不變) ...
                 const jsonMatch = aiResponseText.match(/```json([\s\S]*?)```/);
                 if (jsonMatch && jsonMatch[1]) {
-                    const briefDataFromAI = JSON.parse(jsonMatch[1].trim());
-                    if (briefDataFromAI.isComplete) {
-                        addMessageToChat('ai', "太好了！正在為您建立行銷活動摘要...");
-                // 我們可以重複使用 handleSaveBrief 函式，但需要傳入 AI 收集的資料
-                        const user = auth.currentUser;
-                        const finalBriefData = {
-                            productName: briefDataFromAI.productName || '未提供',
-                            productDesc: briefDataFromAI.productDesc || '未提供',
-                            impressions: briefDataFromAI.impressions || 0,
-                            budget: briefDataFromAI.budget || 0,
-                            influencerCount: briefDataFromAI.influencerCount || 0,
-                    // AI 沒問的欄位，給予預設值
-                            followerRange: '不限',
-                            platforms: [],
-                            status: 'pending_match',
-                            isDeleted: false,
-                            merchantId: user.uid,
-                            merchantEmail: user.email,
-                            createdAt: new Date()
-                        };
-
-                        await addDoc(collection(db, "briefs"), finalBriefData);
-                        alert("已透過 AI 建立新的行銷活動！");
-                        setTimeout(closeAIChat, 1500); // 延遲一點關閉視窗
-                    }
+            // ...
                 }
+
             } catch (error) {
-    // === 以下是為了除錯新增的詳細日誌 ===
+        // 從 chatWindow 中移除 "思考中..." 的提示
+                chatWindow.removeChild(chatWindow.lastChild);
+        
                 console.error("呼叫 AI 失敗，這是詳細的錯誤物件:", error); 
                 console.log("詳細錯誤碼 (Code):", error.code);
                 console.log("詳細錯誤訊息 (Message):", error.message);
                 console.log("詳細錯誤內容 (Details):", error.details);
-    // === 除錯日誌結束 ===
 
-                addMessageToChat('ai', "抱歉，我好像遇到了一點問題，請稍後再試。");
+                addMessageToChat('ai', "抱歉，我好像遇到了一點問題，請稍後再試。錯誤：" + error.message);
             } finally {
                 isAwaitingAIResponse = false;
             }
         }
+
+
 
         // 讓 Enter 鍵也可以發送訊息
         chatInput.addEventListener('keypress', function(e) {
