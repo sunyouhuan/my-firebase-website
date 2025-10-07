@@ -48,9 +48,12 @@ exports.askGemini = onCall({ secrets: [geminiApiKey] }, async (request) => {
     // 從前端請求中獲取對話歷史
     const conversationHistory = request.data.history || [];
 
-    // 初始化 Gemini
+
     const genAI = new GoogleGenerativeAI(geminiApiKey.value());
+
+
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
 
     // 這是最重要的部分：給 AI 的指令 (Prompt Engineering)
     const systemInstruction = `

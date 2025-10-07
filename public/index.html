@@ -502,7 +502,13 @@
                     }
                 }
             } catch (error) {
-                console.error("呼叫 AI 失敗:", error);
+    // === 以下是為了除錯新增的詳細日誌 ===
+                console.error("呼叫 AI 失敗，這是詳細的錯誤物件:", error); 
+                console.log("詳細錯誤碼 (Code):", error.code);
+                console.log("詳細錯誤訊息 (Message):", error.message);
+                console.log("詳細錯誤內容 (Details):", error.details);
+    // === 除錯日誌結束 ===
+
                 addMessageToChat('ai', "抱歉，我好像遇到了一點問題，請稍後再試。");
             } finally {
                 isAwaitingAIResponse = false;
@@ -515,6 +521,8 @@
                 sendChatMessage();
             }
         });
+
+            
         // === AI 聊天功能 END ===
 
 
