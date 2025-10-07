@@ -464,24 +464,18 @@
             const messageText = chatInput.value.trim();
             if (!messageText || isAwaitingAIResponse) return;
 
-            addMessageToChat('user', messageText);
-            conversationHistory.push({ role: 'user', parts: [{ text: messageText }] });
-            chatInput.value = '';
-            isAwaitingAIResponse = true;
-    
-    // 增加一個讀取中的提示
-            addMessageToChat('ai', "思考中...");
 
-            try {
-                console.log("準備傳送給後端的資料:", { history: conversationHistory }); // <-- 新增這一行來檢查包裹內容
-                 // const result = await askGemini({ history: conversationHistory });
-                const result = await askGemini({ historyJSON: JSON.stringify(conversationHistory) });
+                addMessageToChat('user', messageText);
+                conversationHistory.push({ role: 'user', parts: [{ text: messageText }] });
+                chatInput.value = '';
+                isAwaitingAIResponse = true;
 
-        // 從 chatWindow 中移除 "思考中..." 的提示
+                addMessageToChat('ai', "思考中...");
+
+                // 直接送 history 陣列
+                const result = await askGemini({ history: conversationHistory });
+
                 chatWindow.removeChild(chatWindow.lastChild);
-
-        // --- 強化點 START ---
-        // 進行防禦性檢查，確保 result 和它內部的結構都存在
                 const aiResponseText = result?.data?.text;
 
                 if (!aiResponseText) {
