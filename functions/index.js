@@ -1,3 +1,8 @@
+
+
+
+
+
 const functions = require("firebase-functions");
 const { VertexAI } = require("@google-cloud/vertexai");
 
@@ -15,11 +20,13 @@ const generativeModel = vertex_ai.getGenerativeModel({
 });
 
 exports.askGemini = functions.https.onCall(async (data, context) => {
-  // 檢查使用者是否已登入
+  // === 為了除錯，暫時將以下幾行註解掉 ===
+  /*
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
   }
-
+  */
+  // === 除錯結束後，若有需要可以再打開 ===
   const conversationHistory = data.history || [];
   if (conversationHistory.length === 0) {
       throw new functions.https.HttpsError("invalid-argument", "Conversation history cannot be empty.");
