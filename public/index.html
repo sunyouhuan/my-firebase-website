@@ -354,7 +354,7 @@
         const db = getFirestore(app);
 
         // === AI 聊天機器人 START: 初始化 Functions，並建立可呼叫的函式 ===
-        const functions = getFunctions(app, 'asia-east1'); // 建議指定您的專案區域，例如台灣 'asia-east1'
+        const functions = getFunctions(app, 'us-central1'); // 建議指定您的專案區域，例如台灣 'asia-east1'
         const generateContentWithGemini = httpsCallable(functions, 'generateContentWithGemini');
         // === AI 聊天機器人 END ===
         
