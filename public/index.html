@@ -473,7 +473,8 @@
 
             try {
                 console.log("準備傳送給後端的資料:", { history: conversationHistory }); // <-- 新增這一行來檢查包裹內容
-                const result = await askGemini({ history: conversationHistory });
+                 // const result = await askGemini({ history: conversationHistory });
+                const result = await askGemini({ historyJSON: JSON.stringify(conversationHistory) });
 
         // 從 chatWindow 中移除 "思考中..." 的提示
                 chatWindow.removeChild(chatWindow.lastChild);

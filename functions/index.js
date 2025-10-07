@@ -27,7 +27,8 @@ exports.askGemini = functions.https.onCall(async (data, context) => {
   }
   */
   // === 除錯結束後，若有需要可以再打開 ===
-  const conversationHistory = data.history || [];
+  //const conversationHistory = data.history || [];
+  const conversationHistory = JSON.parse(data.historyJSON || '[]');
   if (conversationHistory.length === 0) {
       throw new functions.https.HttpsError("invalid-argument", "Conversation history cannot be empty.");
   }
