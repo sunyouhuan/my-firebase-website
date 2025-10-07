@@ -132,10 +132,8 @@
                                 <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">平均 ROAS</h3><p class="text-3xl font-bold text-green-500 mt-2">350%</p></div>
                                 <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">進行中活動</h3><p class="text-3xl font-bold text-slate-800 mt-2">3</p></div>
                             </div>
-                            <div class="bg-slate-700 text-white rounded-xl p-8 flex justify-between items-center">
-                                <h2 class="text-2xl font-bold">準備好發起新的行銷活動了嗎？</h2>
-                                <button onclick="openAIChat()" class="bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-600 transition-transform hover:scale-105">與 AI 顧問開始</button>
-                            </div>
+                            <div class="bg-slate-700 text-white rounded-xl p-8 flex justify-between items-center"><h2 class="text-2xl font-bold">準備好發起新的行銷活動了嗎？</h2><button onclick="openAIChat()" class="bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-600 transition-transform hover:scale-105">與 AI 顧問開始</button></div>
+                        </div>
                         
                         <div id="merchant-campaign-detail-content" class="dashboard-content"></div>
 
@@ -278,7 +276,6 @@
     </div>
 
     <script type="module">
-         alert("這是 2025年10月7日晚上7點的最新版本！");
     // --- 1. Firebase 初始化 (這部分不變) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { 
@@ -308,14 +305,6 @@
             onSnapshot,      // 新增：用於即時監聽資料變化
             orderBy          // 新增：用於排序查詢結果
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-
-        import { 
-            getFunctions, 
-            httpsCallable 
-        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-functions.js";
-
-
     // === 修改部分 END ===
 
         const firebaseConfig = {
@@ -331,10 +320,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        const functions = getFunctions(app, "us-central1");
-
-
 
         getRedirectResult(auth)
             .then((result) => {
@@ -420,110 +405,6 @@
                 }, 300);
             }
         }
-
-
-        // === AI 聊天功能 START ===
-        let conversationHistory = [];
-        let isAwaitingAIResponse = false;
-        const chatWindow = document.getElementById('chat-window');
-        const chatInput = document.getElementById('chat-input');
-
-        function addMessageToChat(role, text) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('p-3', 'rounded-lg', 'max-w-xs', 'break-words');
-            if (role === 'user') {
-                messageDiv.classList.add('bg-slate-700', 'text-white', 'self-end', 'ml-auto');
-            } else {
-                messageDiv.classList.add('bg-slate-100', 'text-slate-800', 'self-start', 'mr-auto');
-            }
-            messageDiv.textContent = text;
-            chatWindow.appendChild(messageDiv);
-            chatWindow.scrollTop = chatWindow.scrollHeight; // 自動滾動到底部
-        }
-
-        // 將我們後端的函式掛載到前端
-        const askGemini = httpsCallable(functions, 'askGemini');
-
-        window.openAIChat = function() {
-            openModal('ai-chat-modal');
-            chatWindow.innerHTML = '';
-            conversationHistory = [];
-            isAwaitingAIResponse = false;
-            // AI 的第一句話
-            addMessageToChat('ai', "您好！我是您的專屬行銷顧問 MatchAI。請問您今天想推廣什麼好產品呢？");
-        }
-
-        window.closeAIChat = function() {
-            closeModal('ai-chat-modal');
-        }
-
-
-
-// ====== 這是強化版的 sendChatMessage 函式 ======
-        window.sendChatMessage = async function() {
-            const messageText = chatInput.value.trim();
-            if (!messageText || isAwaitingAIResponse) return;
-
-
-                addMessageToChat('user', messageText);
-                conversationHistory.push({ role: 'user', parts: [{ text: messageText }] });
-                chatInput.value = '';
-                isAwaitingAIResponse = true;
-
-                addMessageToChat('ai', "思考中...");
-
-                // 直接送 history 陣列
-                const result = await askGemini({ history: conversationHistory });
-
-                chatWindow.removeChild(chatWindow.lastChild);
-                const aiResponseText = result?.data?.text;
-
-                if (!aiResponseText) {
-            // 如果沒有有效的文字回覆，就顯示錯誤訊息
-                    console.error("收到了無效的回覆:", result);
-                    addMessageToChat('ai', "抱歉，我收到了一個無效的回覆，請稍後再試。");
-                    return; // 提前結束函式
-        }
-        // --- 強化點 END ---
-
-                addMessageToChat('ai', aiResponseText);
-                conversationHistory.push({ role: 'model', parts: [{ text: aiResponseText }] });
-
-        // ... (後續檢查 JSON 的部分維持不變) ...
-                const jsonMatch = aiResponseText.match(/```json([\s\S]*?)```/);
-                if (jsonMatch && jsonMatch[1]) {
-            // ...
-                }
-
-            } catch (error) {
-        // 從 chatWindow 中移除 "思考中..." 的提示
-                chatWindow.removeChild(chatWindow.lastChild);
-        
-                console.error("呼叫 AI 失敗，這是詳細的錯誤物件:", error); 
-                console.log("詳細錯誤碼 (Code):", error.code);
-                console.log("詳細錯誤訊息 (Message):", error.message);
-                console.log("詳細錯誤內容 (Details):", error.details);
-
-                addMessageToChat('ai', "抱歉，我好像遇到了一點問題，請稍後再試。錯誤：" + error.message);
-            } finally {
-                isAwaitingAIResponse = false;
-            }
-        }
-
-
-
-        // 讓 Enter 鍵也可以發送訊息
-        chatInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage();
-            }
-        });
-
-            
-        // === AI 聊天功能 END ===
-
-
-
 
     // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
 
