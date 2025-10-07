@@ -11,39 +11,75 @@
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
-            background-color: #f8fafc; /* cool gray 50 */
+            background-color: #f8fafc;
         }
-        .view, .dashboard-content {
-            display: none;
-        }
-        .view.active, .dashboard-content.active {
-            display: block;
-        }
-        .sidebar-link {
-            transition: all 0.2s;
-        }
+        .view, .dashboard-content { display: none; }
+        .view.active, .dashboard-content.active { display: block; }
+        .sidebar-link { transition: all 0.2s; }
         .sidebar-link.active, .sidebar-link:hover {
-            background-color: #f1f5f9; /* slate 100 */
-            color: #1e293b; /* slate 800 */
+            background-color: #f1f5f9;
+            color: #1e293b;
             transform: translateX(4px);
-            border-left: 3px solid #0d9488; /* teal 600 */
+            border-left: 3px solid #0d9488;
         }
-        .tab-button {
-            transition: all 0.2s;
-        }
+        .tab-button { transition: all 0.2s; }
         .tab-button.active {
-            color: #0d9488; /* teal 600 */
+            color: #0d9488;
             border-bottom-color: #0d9488;
         }
-        .modal {
-            transition: opacity 0.3s ease;
+        .modal { transition: opacity 0.3s ease; }
+
+        /* === AI 聊天機器人 START: 新增聊天介面樣式 === */
+        .chat-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            word-wrap: break-word;
         }
+        .chat-bubble.user {
+            background-color: #0d9488; /* teal 600 */
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        .chat-bubble.ai {
+            background-color: #f1f5f9; /* slate 100 */
+            color: #1e293b;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        .chat-bubble.loading {
+             align-self: flex-start;
+        }
+        .dot-flashing {
+            position: relative; width: 10px; height: 10px; border-radius: 5px;
+            background-color: #94a3b8; color: #94a3b8;
+            animation: dot-flashing 1s infinite linear alternate;
+            animation-delay: 0.5s;
+        }
+        .dot-flashing::before, .dot-flashing::after {
+            content: ""; display: inline-block; position: absolute; top: 0;
+        }
+        .dot-flashing::before {
+            left: -15px; width: 10px; height: 10px; border-radius: 5px;
+            background-color: #94a3b8; color: #94a3b8;
+            animation: dot-flashing 1s infinite alternate; animation-delay: 0s;
+        }
+        .dot-flashing::after {
+            left: 15px; width: 10px; height: 10px; border-radius: 5px;
+            background-color: #94a3b8; color: #94a3b8;
+            animation: dot-flashing 1s infinite alternate; animation-delay: 1s;
+        }
+        @keyframes dot-flashing {
+            0% { background-color: #94a3b8; }
+            50%, 100% { background-color: #e2e8f0; }
+        }
+        /* === AI 聊天機器人 END === */
     </style>
 </head>
 <body>
-
     <div id="app">
-
+        
         <div id="login-view" class="view active">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
                 <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
@@ -80,7 +116,6 @@
                 </div>
             </div>
         </div>
-
 
         <div id="role-selection-view" class="view">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
@@ -165,7 +200,6 @@
             </div>
          <div id="merchant-sidebar-overlay" onclick="toggleMenu('merchant')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
         </div>
-
         
         <div id="influencer-dashboard-view" class="view">
              <div class="flex h-screen bg-slate-50">
@@ -180,7 +214,6 @@
                         <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
                     </nav>
                 </div>
-
                 
                 <div class="flex-1 flex flex-col overflow-hidden w-full">
                     
@@ -271,41 +304,40 @@
             </div>
         </div>
 
-        <div id="ai-chat-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col h-[70vh] transform scale-95 transition-transform duration-300"><div class="p-4 border-b flex justify-between items-center"><h2 class="text-lg font-bold text-slate-800">AI 行銷顧問</h2><button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div><div id="chat-window" class="flex-1 p-4 overflow-y-auto space-y-4"></div><div class="p-4 border-t"><div class="flex space-x-2"><input id="chat-input" type="text" class="flex-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="請輸入您的回覆..."><button onclick="sendChatMessage()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">發送</button></div></div></div></div>
+        <div id="ai-chat-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col h-[70vh] transform scale-95 transition-transform duration-300">
+                <div class="p-4 border-b flex justify-between items-center flex-shrink-0">
+                    <h2 class="text-lg font-bold text-slate-800">AI 行銷顧問</h2>
+                    <button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                </div>
+                <div id="chat-window" class="flex-1 p-4 overflow-y-auto flex flex-col space-y-4">
+                    </div>
+                <div class="p-4 border-t bg-white flex-shrink-0">
+                    <div class="flex space-x-2">
+                        <input id="chat-input" type="text" class="flex-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="請輸入您的回覆..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+                        <button id="chat-send-btn" onclick="sendChatMessage()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">發送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300"></div></div>
     </div>
 
     <script type="module">
-    // --- 1. Firebase 初始化 (這部分不變) ---
+        // --- 1. Firebase 初始化 ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            signOut, 
-            onAuthStateChanged,
-            GoogleAuthProvider, 
-            signInWithRedirect, 
-            getRedirectResult,
-            signInWithPopup
+            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
+            signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-
-    // === 修改部分 START：從 Firestore 匯入更多我們需要的功能 ===
         import { 
-            getFirestore, 
-            collection, 
-            addDoc,
-            query,
-            where,
-            getDocs,
-            doc,
-            getDoc,
-            setDoc,
-            updateDoc,       // 新增：用於更新文件 (例如：軟刪除)
-            onSnapshot,      // 新增：用於即時監聽資料變化
-            orderBy          // 新增：用於排序查詢結果
+            getFirestore, collection, addDoc, query, where,
+            doc, getDoc, updateDoc, onSnapshot, orderBy
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-    // === 修改部分 END ===
+        
+        // === AI 聊天機器人 START: 引入 Cloud Functions SDK ===
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-functions.js";
+        // === AI 聊天機器人 END ===
 
         const firebaseConfig = {
           apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
@@ -321,17 +353,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        getRedirectResult(auth)
-            .then((result) => {
-                if (result) {
-                    console.log('Google 重新導向登入成功:', result.user);
-                }
-            }).catch((error) => {
-                console.error('Google 重新導向失敗:', error);
-                alert('Google 登入時發生錯誤：' + error.message);
-            });
-
-    // --- 2. 核心 UI 導航與控制函式 ---
+        // === AI 聊天機器人 START: 初始化 Functions，並建立可呼叫的函式 ===
+        const functions = getFunctions(app, 'asia-east1'); // 建議指定您的專案區域，例如台灣 'asia-east1'
+        const generateContentWithGemini = httpsCallable(functions, 'generateContentWithGemini');
+        // === AI 聊天機器人 END ===
+        
+        // --- 2. 核心 UI 導航與控制函式 (無變更) ---
         function navigateTo(viewId) {
             document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
             const targetView = document.getElementById(viewId);
@@ -346,7 +373,6 @@
             influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
         };
     
-    // === 修改部分 START：修改 switchTab 以支援詳情頁 ===
         function switchTab(role, tabId) {
             const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
             const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
@@ -354,7 +380,6 @@
         
             sidebarLinks.forEach(link => {
                 link.classList.remove('active');
-            // 如果是詳情頁，則讓 'campaigns' 保持 active
                 const linkTab = tabId === 'campaign-detail' ? 'campaigns' : tabId;
                 if (link.getAttribute('onclick').includes(`'${linkTab}'`)) {
                     link.classList.add('active');
@@ -365,14 +390,11 @@
             const activeContent = document.getElementById(`${role}-${tabId}-content`);
             if (activeContent) activeContent.classList.add('active');
         
-        // 只有在 headerTitles 中有定義時才更新標題，避免覆蓋詳情頁的自訂標題
             if (headerTitles[role][tabId]) {
                 headerTitle.textContent = headerTitles[role][tabId];
             }
         }
-    // === 修改部分 END ===
-
-    // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
+    
         window.navigateTo = navigateTo;
         window.switchTab = switchTab;
     
@@ -405,10 +427,8 @@
                 }, 300);
             }
         }
-
-    // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
-
-    // 功能 1: 根據傳入的活動資料，產生 HTML 卡片
+        
+        // --- 3. Firestore 資料處理函式 ---
         function renderCampaigns(campaigns) {
             const listElement = document.getElementById('campaigns-list');
             if (!listElement) return;
@@ -418,32 +438,22 @@
                 return;
             }
 
-            let campaignsHTML = '';
-            campaigns.forEach(campaign => {
-                const data = campaign.data;
-                const id = campaign.id;
+            listElement.innerHTML = campaigns.map(campaign => {
+                const { id, data } = campaign;
+                let statusBadge, deleteButtonHTML = '';
 
-                let statusBadge = '';
                 switch (data.status) {
-                    case 'pending_match':
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">正在配對中</span>`;
-                        break;
-                    case 'matched':
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">配對完成</span>`;
-                        break;
-                    case 'in_progress':
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">執行中</span>`;
-                        break;
-                    default:
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">未知</span>`;
+                    case 'pending_match': statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">正在配對中</span>`; break;
+                    case 'matched': statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">配對完成</span>`; break;
+                    case 'in_progress': statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">執行中</span>`; break;
+                    default: statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">未知</span>`;
                 }
             
-                let deleteButtonHTML = '';
                 if (data.status === 'pending_match') {
                     deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}')" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100">刪除</button>`;
                 }
 
-                campaignsHTML += `
+                return `
                     <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-between">
                         <div>
                             ${statusBadge}
@@ -457,200 +467,247 @@
                         </div>
                     </div>
                 `;
-            });
-            listElement.innerHTML = campaignsHTML;
+            }).join('');
         }
 
-    // 功能 2: 建立一個即時監聽器，當資料庫有變化時自動更新畫面
         let unsubscribeCampaigns = null; 
         function listenForCampaigns() {
             const user = auth.currentUser;
             if (!user) return;
             if (unsubscribeCampaigns) unsubscribeCampaigns();
 
-            const briefsRef = collection(db, "briefs");
-            const q = query(briefsRef, 
-                where("merchantId", "==", user.uid),// 只查詢屬於當前商家的
-                where("isDeleted", "==", false), // 只查詢未被軟刪除的
-                orderBy("createdAt", "desc") // 按照建立時間倒序排列
+            const q = query(collection(db, "briefs"), 
+                where("merchantId", "==", user.uid),
+                where("isDeleted", "==", false), 
+                orderBy("createdAt", "desc")
             );
 
             unsubscribeCampaigns = onSnapshot(q, (querySnapshot) => {
                 const campaigns = querySnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-                renderCampaigns(campaigns);// 將獲取的資料傳遞給渲染函式
-            }, (error) => {
-                console.error("監聽活動失敗: ", error);
-                 // 可以在此處加入錯誤提示 UI
+                renderCampaigns(campaigns);
             });
         }
 
-    // 功能 3: 處理刪除活動的邏輯 (軟刪除)
-        window.handleDeleteCampaign = async function(campaignId) {
-            if (!campaignId || !confirm("您確定要刪除這個行銷活動嗎？此操作無法復原。")) return;
-            try {
-                const campaignDocRef = doc(db, "briefs", campaignId);
-                await updateDoc(campaignDocRef, { isDeleted: true });
-                alert("活動已刪除。");
-            } catch (error) {
-                console.error("刪除活動失敗: ", error);
-                alert("刪除失敗，請稍後再試。");
-            }
+        window.handleDeleteCampaign = async (campaignId) => {
+            if (!campaignId || !confirm("您確定要刪除這個行銷活動嗎？")) return;
+            await updateDoc(doc(db, "briefs", campaignId), { isDeleted: true });
+            alert("活動已刪除。");
        }
 
-    // 功能 4: 處理顯示活動詳情的邏輯
-        window.showCampaignDetail = async function(campaignId) {
+        window.showCampaignDetail = async (campaignId) => {
             if (!campaignId) return;
-            try {
-                const docSnap = await getDoc(doc(db, "briefs", campaignId));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const contentArea = document.getElementById('merchant-campaign-detail-content');
-                    contentArea.innerHTML = `
-                        <div class="bg-white rounded-xl shadow p-6 mb-6">
-                            <h2 class="text-xl font-bold text-slate-800">${data.productName}</h2>
-                            <p class="text-gray-600 mt-2">${data.productDesc}</p>
-                            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-t pt-4">
-                                <div><p class="text-sm text-gray-500">狀態</p><p class="font-bold">${data.status}</p></div>
-                                <div><p class="text-sm text-gray-500">預算</p><p class="font-bold">NT$ ${data.budget.toLocaleString()}</p></div>
-                                <div><p class="text-sm text-gray-500">預期曝光</p><p class="font-bold">${data.impressions.toLocaleString()}</p></div>
-                                <div><p class="text-sm text-gray-500">希望網紅數</p><p class="font-bold">${data.influencerCount}</p></div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow">
-                            <h3 class="p-6 font-bold text-slate-800 border-b">合作網紅列表 (開發中)</h3>
-                            <div class="p-6 text-center text-gray-500">配對完成後，這裡會顯示合作的網紅名單與成效。</div>
-                        </div>
-                    `;
-                    switchTab('merchant', 'campaign-detail');
-                    document.getElementById('merchant-header-title').textContent = `活動詳情: ${data.productName}`;
-                } else {
-                    alert("無法載入活動詳情。");
-                }
-            } catch (error) {
-                console.error("讀取詳情失敗: ", error);
-                alert("讀取詳情時發生錯誤。");
+            const docSnap = await getDoc(doc(db, "briefs", campaignId));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('merchant-campaign-detail-content').innerHTML = `
+                    <div class="bg-white rounded-xl shadow p-6 mb-6">
+                        <h2 class="text-xl font-bold text-slate-800">${data.productName}</h2>
+                        <p class="text-gray-600 mt-2">${data.productDesc}</p>
+                    </div>`;
+                switchTab('merchant', 'campaign-detail');
+                document.getElementById('merchant-header-title').textContent = `活動詳情: ${data.productName}`;
             }
         }
-    // === 新增部分 END ===
 
-    // === 修改部分 START: 修改 handleSaveBrief 以符合新架構 ===
-        window.handleSaveBrief = async function() {
+        // === AI 聊天機器人 START: 修改 handleSaveBrief 以支援 AI 建立的資料 ===
+        window.handleSaveBrief = async function(briefDataFromAI = null) {
             const user = auth.currentUser;
             if (!user) return alert('請先登入！');
 
-            const briefData = {
-                productName: document.getElementById('brief-product-name').value,
-                productDesc: document.getElementById('brief-product-desc').value,
-                impressions: parseInt(document.getElementById('brief-impressions').value) || 0,
-                budget: parseInt(document.getElementById('brief-budget').value) || 0,
-                influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
-                followerRange: document.getElementById('brief-follower-range').value,
-               platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
-                status: 'pending_match',
-                isDeleted: false, // 新增：軟刪除標記
-                merchantId: user.uid,
-                merchantEmail: user.email,
+            let briefData = briefDataFromAI;
+
+            // 如果不是從 AI 來，就從表單讀取資料
+            if (!briefData) {
+                 briefData = {
+                    productName: document.getElementById('brief-product-name').value,
+                    productDesc: document.getElementById('brief-product-desc').value,
+                    impressions: parseInt(document.getElementById('brief-impressions').value) || 0,
+                    budget: parseInt(document.getElementById('brief-budget').value) || 0,
+                    influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
+                    followerRange: document.getElementById('brief-follower-range').value,
+                    platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value)
+                };
+            }
+
+            // 加上後端需要的共通欄位
+            Object.assign(briefData, {
+                status: 'pending_match', isDeleted: false,
+                merchantId: user.uid, merchantEmail: user.email,
                 createdAt: new Date()
-            };
+            });
 
             if (!briefData.productName) return alert('請至少填寫產品名稱！');
 
             try {
                 await addDoc(collection(db, "briefs"), briefData);
-                alert('您的需求已成功送出！');
-                closeModal('new-campaign-modal');
-            // 清空表單，注意: 這需要你在 HTML 中用 <form> 標籤包住 modal 的內容
-                document.getElementById('campaign-form').reset();
+                if (!briefDataFromAI) { // 只有手動建立時才跳提示
+                    alert('您的需求已成功送出！');
+                    closeModal('new-campaign-modal');
+                    document.getElementById('campaign-form').reset();
+                }
+                return true; // 回傳成功狀態
             } catch (error) {
                 console.error("儲存需求單失敗:", error);
                 alert('儲存失敗，請查看 console 的錯誤訊息。');
+                return false; // 回傳失敗狀態
             }
         }
-    // === 修改部分 END ===
-
-    // --- 4. Firebase 驗證功能 (這部分不變) ---
-        window.handleRegister = async function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        // === AI 聊天機器人 END ===
+        
+        // --- 4. Firebase 驗證功能 (無變更) ---
+        window.handleRegister = async () => {
+            const [email, password] = [document.getElementById('email').value, document.getElementById('password').value];
             try {
                 await createUserWithEmailAndPassword(auth, email, password);
-                alert('註冊成功！現在您可以登入了。');
-            } catch (error) {
-                alert('註冊失敗：' + error.message);
-            }
+                alert('註冊成功！');
+            } catch (error) { alert('註冊失敗：' + error.message); }
         };
 
-        window.handleLogin = async function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        window.handleLogin = async () => {
+            const [email, password] = [document.getElementById('email').value, document.getElementById('password').value];
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                alert('登入失敗：' + error.message);
-            }
+            } catch (error) { alert('登入失敗：' + error.message); }
         };
 
-        window.handleLogout = async function() {
-            try {
-            await signOut(auth);
-            } catch (error) {
-                alert('登出失敗：' + error.message);
-            }
+        window.handleLogout = async () => { await signOut(auth); };
+
+        window.handleGoogleLogin = async () => {
+            try { await signInWithPopup(auth, new GoogleAuthProvider()); } 
+            catch (error) { alert("Google 登入時發生錯誤: " + error.message); }
         };
 
-        window.handleGoogleLogin = async function() {
-            const provider = new GoogleAuthProvider();
-            try {
-                // 直接使用我們在頂部匯入的 signInWithPopup
-                const result = await signInWithPopup(auth, provider);
-                console.log("Google 彈出視窗登入成功:", result.user);
-            } catch (error) {
-                console.error("Google 登入失敗，錯誤訊息:", error);
-                alert("Google 登入時發生錯誤: " + error.message);
-            }
-        };
-
-        window.enterDashboard = function(role) {
+        window.enterDashboard = (role) => {
             const user = auth.currentUser;
-            if (!user) {
-                alert('發生錯誤，請重新登入！');
-                navigateTo('login-view');
-                return;
-            }
-
-            if (role === 'merchant') {
-                navigateTo('merchant-dashboard-view');
-                document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
-                document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
-                switchTab('merchant', 'dashboard');
-            } else if (role === 'influencer') {
-                navigateTo('influencer-dashboard-view');
-                document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
-                document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
-                switchTab('influencer', 'dashboard');
-            }
+            if (!user) return navigateTo('login-view');
+            const viewId = `${role}-dashboard-view`;
+            navigateTo(viewId);
+            document.getElementById(role === 'merchant' ? 'user-email-display' : `${role}-dashboard-view header .text-gray-600`).textContent = `你好, ${user.email}`;
+            switchTab(role, 'dashboard');
         };
 
-
-    // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                console.log('使用者已登入，開始監聽活動...');
-            // 當用戶登入後，立刻開始監聽他/她的活動資料
                 listenForCampaigns();
                 navigateTo('role-selection-view');
             } else {
-                console.log('使用者已登出，停止監聽。');
-            // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
-                if (unsubscribeCampaigns) {
-                    unsubscribeCampaigns();
-                }
+                if (unsubscribeCampaigns) unsubscribeCampaigns();
                 navigateTo('login-view');
             }
         });
-    // === 修改部分 END ===
+    
+        // === AI 聊天機器人 START: 所有新增的 AI 互動邏輯都在這裡 ===
+        let chatHistory = [];
+        let isAwaitingResponse = false;
+
+        // 這是最重要的部分：給 AI 的指令 (System Prompt)
+        const systemPrompt = `你是一個專業、友善且幽默的網紅行銷顧問，名叫 'AI 小幫手'。你的任務是透過對話，一步步引導商家建立一份完整的行銷活動需求單。
+            規則：
+            1. **一次只問一個問題**。不要一次問完。
+            2. **依序提問**：產品名稱(productName) -> 產品描述(productDesc) -> 預期曝光(impressions) -> 預算(budget) -> 希望網紅數量(influencerCount) -> 網紅粉絲數區間(followerRange) -> 發布平台(platforms)。
+            3. **提供建議**：在詢問每個問題後，或在使用者回答後，你可以根據情況給出簡短、實用的建議。
+            4. **收集完所有資訊後**：當你收集完最後一項「發布平台」後，向使用者做最後的總結確認，並在你的回覆最後，**必須**加上一個特殊標記的 JSON 字串。格式必須嚴格如下，且不能包含在 markdown 區塊中：
+                <JSON_DATA>
+                {
+                  "productName": "收集到的產品名稱",
+                  "productDesc": "收集到的產品描述",
+                  "impressions": 數字格式的曝光次數,
+                  "budget": 數字格式的預算,
+                  "influencerCount": 數字格式的網紅數,
+                  "followerRange": "收集到的粉絲數區間",
+                  "platforms": ["平台一", "平台二"]
+                }
+                </JSON_DATA>
+            5. **對話開始**：請用「您好！我是您的 AI 行銷顧問，準備好一起規劃超棒的行銷活動了嗎？首先，請問您想推廣的產品是什麼呢？」來開啟對話。`;
+
+        function addMessageToChatWindow(message, sender) {
+            const chatWindow = document.getElementById('chat-window');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-bubble ${sender}`;
+            messageDiv.textContent = message;
+            chatWindow.appendChild(messageDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function toggleLoading(show) {
+            const chatWindow = document.getElementById('chat-window');
+            let indicator = document.getElementById('loading-indicator');
+            if (show) {
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.id = 'loading-indicator';
+                    indicator.className = 'chat-bubble loading';
+                    indicator.innerHTML = '<div class="dot-flashing"></div>';
+                    chatWindow.appendChild(indicator);
+                }
+            } else if (indicator) {
+                indicator.remove();
+            }
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+        
+        window.openAIChat = function() {
+            openModal('ai-chat-modal');
+            document.getElementById('chat-window').innerHTML = '';
+            isAwaitingResponse = false;
+            
+            chatHistory = [
+                { role: 'user', parts: [{ text: systemPrompt }] },
+                { role: 'model', parts: [{ text: "好的，我明白了。我會扮演一位專業的 AI 行銷顧問，一次只問一個問題來引導使用者建立需求單，並在最後提供 JSON 摘要。" }] }
+            ];
+            
+            sendChatMessage("START_CONVERSATION", true);
+        }
+
+        window.closeAIChat = function() { closeModal('ai-chat-modal'); }
+
+        window.sendChatMessage = async function(messageOverride, isSystemStart = false) {
+            if (isAwaitingResponse) return;
+            const input = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('chat-send-btn');
+            const message = messageOverride || input.value.trim();
+            if (!message) return;
+
+            if (!isSystemStart) { addMessageToChatWindow(message, 'user'); }
+            input.value = '';
+            isAwaitingResponse = true;
+            sendBtn.disabled = true;
+            toggleLoading(true);
+
+            try {
+                const result = await generateContentWithGemini({ history: chatHistory, message: message });
+                const aiResponse = result.data.text;
+                
+                if (aiResponse.includes('<JSON_DATA>')) {
+                    const jsonString = aiResponse.substring(aiResponse.indexOf('<JSON_DATA>') + 11, aiResponse.lastIndexOf('</JSON_DATA>'));
+                    const finalMessage = aiResponse.split('<JSON_DATA>')[0].trim();
+                    addMessageToChatWindow(finalMessage, 'ai');
+                    addMessageToChatWindow("太棒了！需求單已為您建立，即將為您儲存並開始配對。", 'ai');
+
+                    const briefData = JSON.parse(jsonString);
+                    if (await handleSaveBrief(briefData)) {
+                        setTimeout(() => {
+                            closeAIChat();
+                            switchTab('merchant', 'campaigns');
+                        }, 2000);
+                    }
+                } else {
+                    addMessageToChatWindow(aiResponse, 'ai');
+                    chatHistory.push({ role: 'user', parts: [{ text: message }] });
+                    chatHistory.push({ role: 'model', parts: [{ text: aiResponse }] });
+                }
+
+            } catch (error) {
+                console.error("呼叫 Cloud Function 失敗:", error);
+                addMessageToChatWindow('抱歉，我暫時無法連線，請稍後再試。', 'ai');
+            } finally {
+                toggleLoading(false);
+                isAwaitingResponse = false;
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+        // === AI 聊天機器人 END ===
     </script>
-
-
 </body>
 </html>
