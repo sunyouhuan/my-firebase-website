@@ -1,62 +1,32 @@
+const functions = require("firebase-functions");
+const { VertexAI } = require("@google-cloud/vertexai");
 
+// 初始化 Vertex AI，它會自動使用函式的內建權限
+const vertex_ai = new VertexAI({
+  project: process.env.GCLOUD_PROJECT,
+  location: "us-central1",
+});
 
-//old
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+const model = "gemini-1.0-pro-001"; // 使用一個穩定的模型版本
 
-//const {setGlobalOptions} = require("firebase-functions");
-//const {onRequest} = require("firebase-functions/https");
-//const logger = require("firebase-functions/logger");
+// 建立生成模型實例
+const generativeModel = vertex_ai.getGenerativeModel({
+  model: model,
+});
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-//setGlobalOptions({ maxInstances: 10 });
+exports.askGemini = functions.https.onCall(async (data, context) => {
+  // 檢查使用者是否已登入
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
+  }
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+  const conversationHistory = data.history || [];
+  if (conversationHistory.length === 0) {
+      throw new functions.https.HttpsError("invalid-argument", "Conversation history cannot be empty.");
+  }
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
-
-
-
-
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-// 讓函式可以存取我們設定的秘密金鑰
-const geminiApiKey = defineSecret("GEMINI_API_KEY");
-
-exports.askGemini = onCall({ secrets: [geminiApiKey] }, async (request) => {
-    // 從前端請求中獲取對話歷史
-    const conversationHistory = request.data.history || [];
-
-
-    const genAI = new GoogleGenerativeAI(geminiApiKey.value());
-
-
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-
-    // 這是最重要的部分：給 AI 的指令 (Prompt Engineering)
-    const systemInstruction = `
+  // 您的系統指令 (Prompt Engineering)
+  const systemInstruction = `
         你是一個名為 "MatchAI" 的專業網紅行銷顧問。
         你的任務是透過對話，協助商家客戶定義他們的需求，並最終生成一個結構化的 JSON 物件來建立行銷活動。
         同時，你必須根據客戶的回答提供專業建議。
@@ -93,17 +63,44 @@ exports.askGemini = onCall({ secrets: [geminiApiKey] }, async (request) => {
         風格：專業、友善、循循善誘。不要一次問太多問題。
     `;
 
-    const chat = model.startChat({
-        history: [
-            { role: "user", parts: [{ text: systemInstruction }] },
-            { role: "model", parts: [{ text: "好的，我明白了。我將扮演 MatchAI 行銷顧問的角色。請問您今天想推廣什麼好產品呢？" }] },
-            ...conversationHistory // 接上之前的對話
-        ],
+  // 將歷史紀錄轉換為 Vertex AI 需要的格式
+  const contents = conversationHistory.map(turn => ({
+      role: turn.role === 'model' ? 'model' : 'user',
+      parts: turn.parts,
+  }));
+
+  // 將系統指令融入第一次對話
+  const firstUserMessage = contents.find(c => c.role === 'user');
+  if (firstUserMessage) {
+      firstUserMessage.parts[0].text = systemInstruction + "\n\n" + firstUserMessage.parts[0].text;
+  }
+  
+  try {
+    const chat = generativeModel.startChat({
+        history: contents.slice(0, -1), // 傳入不包含最新訊息的歷史
     });
 
-    const latestUserMessage = conversationHistory.pop().parts[0].text;
-    const result = await chat.sendMessage(latestUserMessage);
-    const response = await result.response;
+    const latestMessage = contents[contents.length - 1].parts[0].text;
+    
+    const result = await chat.sendMessage(latestMessage);
+    const response = result.response;
 
-    return { text: response.text() };
+    // 加上保護機制，確保 response.candidates 是有效的
+    if (!response.candidates || response.candidates.length === 0 || !response.candidates[0].content || !response.candidates[0].content.parts || response.candidates[0].content.parts.length === 0) {
+        console.error("Invalid AI response structure:", JSON.stringify(response, null, 2));
+        throw new functions.https.HttpsError("internal", "Received an invalid response from the AI service.");
+    }
+    
+    const text = response.candidates[0].content.parts[0].text;
+
+    return { text: text };
+
+  } catch (error) {
+    console.error("Vertex AI 呼叫失敗:", error);
+    // 如果錯誤不是 HttpsError，則包裝成 HttpsError
+    if (error.code && error.message) {
+        throw error; // 如果已經是 HttpsError，直接拋出
+    }
+    throw new functions.https.HttpsError("internal", "呼叫 AI 服務時發生錯誤。");
+  }
 });
