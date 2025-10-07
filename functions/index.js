@@ -50,7 +50,7 @@ exports.askGemini = onCall({ secrets: [geminiApiKey] }, async (request) => {
 
     // 初始化 Gemini
     const genAI = new GoogleGenerativeAI(geminiApiKey.value());
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     // 這是最重要的部分：給 AI 的指令 (Prompt Engineering)
     const systemInstruction = `
