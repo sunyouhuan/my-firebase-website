@@ -2,318 +2,33 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MatchAI - AI 驅動的網紅行銷平台</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Chatbot 測試</title>
     <style>
-        body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
-            background-color: #f8fafc; /* cool gray 50 */
-        }
-        .view, .dashboard-content {
-            display: none;
-        }
-        .view.active, .dashboard-content.active {
-            display: block;
-        }
-        .sidebar-link {
-            transition: all 0.2s;
-        }
-        .sidebar-link.active, .sidebar-link:hover {
-            background-color: #f1f5f9; /* slate 100 */
-            color: #1e293b; /* slate 800 */
-            transform: translateX(4px);
-            border-left: 3px solid #0d9488; /* teal 600 */
-        }
-        .tab-button {
-            transition: all 0.2s;
-        }
-        .tab-button.active {
-            color: #0d9488; /* teal 600 */
-            border-bottom-color: #0d9488;
-        }
-        .modal {
-            transition: opacity 0.3s ease;
-        }
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; background: #f4f4f4; }
+        #chat-container { border: 1px solid #ccc; padding: 20px; background: #fff; height: 400px; overflow-y: scroll; }
+        .message { margin-bottom: 15px; padding: 10px; border-radius: 10px; }
+        .user-message { background: #0084ff; color: white; text-align: right; }
+        .bot-message { background: #e5e5ea; color: black; text-align: left; }
+        #input-area { display: flex; margin-top: 10px; }
+        #message-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; }
+        #send-button { padding: 10px 20px; border: none; background: #0084ff; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="app">
-
-        <div id="login-view" class="view active">
-            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
-                <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
-                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
-                    <h2 class="text-2xl font-bold text-center text-slate-800">登入您的帳號</h2>
-                    <form id="login-form" class="space-y-4" onsubmit="return false;">
-                        <div>
-                            <label for="email" class="text-sm font-medium text-gray-700">電子郵件</label>
-                            <input id="email" name="email" type="email" autocomplete="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
-                        </div>
-                        <div>
-                            <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
-                            <input id="password" name="password" type="password" autocomplete="current-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
-                        </div>
-                        <div class="flex flex-col space-y-2">
-                            <button type="button" onclick="handleLogin()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">登入</button>
-                            <button type="button" onclick="handleRegister()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">註冊新帳號</button>
-                        </div>
-                        <div class="relative flex py-3 items-center">
-                            <div class="flex-grow border-t border-gray-300"></div>
-                            <span class="flex-shrink mx-4 text-gray-400 text-sm">或</span>
-                            <div class="flex-grow border-t border-gray-300"></div>
-                        </div>
-
-                        <button type="button" onclick="handleGoogleLogin()" class="w-full flex justify-center items-center bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.021,35.592,44,30.138,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                            </svg>
-                            使用 Google 帳號登入
-                        </button>
-                    </form>
-
-                </div>
-            </div>
-        </div>
-
-
-        <div id="role-selection-view" class="view">
-            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
-                <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
-                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
-                    <h2 class="text-2xl font-bold text-center text-slate-800">請選擇您的身分</h2>
-                    <div class="flex flex-col space-y-4">
-                        <button onclick="enterDashboard('merchant')" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">我是商家</button>
-                        <button onclick="enterDashboard('influencer')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">我是網紅</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="merchant-dashboard-view" class="view">
-            <div class="flex h-screen bg-slate-50">
-                <div id="merchant-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
-                    <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
-                    <nav class="mt-6">
-                        <a href="#" onclick="switchTab('merchant', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
-                        <a href="#" onclick="switchTab('merchant', 'campaigns')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">行銷活動</a>
-                        <a href="#" onclick="switchTab('merchant', 'reports')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">成效報告</a>
-                        <a href="#" onclick="switchTab('merchant', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
-                        <a href="#" onclick="switchTab('merchant', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
-                        <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
-                    </nav>
-                </div>
-
-                <div class="flex-1 flex flex-col overflow-hidden w-full">
-                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
-                        <button onclick="toggleMenu('merchant')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                                </svg>
-                            </button>
-                        <h1 id="merchant-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
-                        <div class="flex items-center space-x-4">
-                            <span id="user-email-display" class="text-gray-600"></span>
-                            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
-                        </div>
-                    </header>
-
-                    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
-                        <div id="merchant-dashboard-content" class="dashboard-content active">
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總花費</h3><p class="text-3xl font-bold text-slate-800 mt-2">NT$ 150,000</p></div>
-                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總曝光數</h3><p class="text-3xl font-bold text-slate-800 mt-2">1.2M</p></div>
-                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">平均 ROAS</h3><p class="text-3xl font-bold text-green-500 mt-2">350%</p></div>
-                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">進行中活動</h3><p class="text-3xl font-bold text-slate-800 mt-2">3</p></div>
-                            </div>
-                            <div class="bg-slate-700 text-white rounded-xl p-8 flex justify-between items-center"><h2 class="text-2xl font-bold">準備好發起新的行銷活動了嗎？</h2><button onclick="openAIChat()" class="bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-600 transition-transform hover:scale-105">與 AI 顧問開始</button></div>
-                        </div>
-                        
-                        <div id="merchant-campaign-detail-content" class="dashboard-content"></div>
-
-                        <div id="merchant-campaigns-content" class="dashboard-content">
-                            <div class="flex justify-between items-center mb-6">
-                                <h2 class="text-xl font-bold text-slate-800">所有行銷活動</h2>
-                                <button onclick="openModal('new-campaign-modal')" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors flex items-center space-x-2">
-                                <span>+</span>
-                                <span>建立新活動</span>
-                            </button>                           
-                            </div>
-                          
-                            <div id="campaigns-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            </div>
-                        </div>                        
-
-                        <div id="merchant-reports-content" class="dashboard-content">
-                            <div class="bg-white rounded-xl shadow p-6"><h3 class="font-bold text-slate-800 mb-4">曝光 & 點擊趨勢</h3><div class="h-80"><canvas id="performanceLineChart"></canvas></div></div>
-                        </div>
-                        
-                        <div id="merchant-finance-content" class="dashboard-content">
-                             <div class="bg-white rounded-xl shadow p-6 mb-6"><h3 class="text-lg font-medium text-gray-500">帳戶餘額</h3><p class="text-4xl font-bold text-slate-800 mt-2">NT$ 88,500</p></div>
-                             <div class="bg-white rounded-xl shadow p-8"><h2 class="text-xl font-bold text-slate-800 mb-4">線上儲值 (入金)</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><button class="border-2 border-teal-500 text-teal-500 font-bold p-4 rounded-lg">信用卡</button><button class="border border-gray-300 p-4 rounded-lg">銀行轉帳</button><button class="border border-gray-300 p-4 rounded-lg">電子支付</button></div><div class="space-y-4"><div><label class="text-sm font-medium">儲值金額</label><input type="number" placeholder="NT$ 10,000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><button class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800">確認儲值</button></div></div>
-                        </div>
-
-                        <div id="merchant-settings-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto"><h2 class="text-xl font-bold text-slate-800">公司設定</h2></div></div>
-                    </main>
-                </div>
-            </div>
-         <div id="merchant-sidebar-overlay" onclick="toggleMenu('merchant')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
-        </div>
-
-        
-        <div id="influencer-dashboard-view" class="view">
-             <div class="flex h-screen bg-slate-50">
-                <div id="influencer-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
-                    <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
-                    <nav class="mt-6">
-                        <a href="#" onclick="switchTab('influencer', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
-                        <a href="#" onclick="switchTab('influencer', 'value')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">我的價值</a>
-                        <a href="#" onclick="switchTab('influencer', 'invitations')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">合作邀請</a>
-                        <a href="#" onclick="switchTab('influencer', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
-                        <a href="#" onclick="switchTab('influencer', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
-                        <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
-                    </nav>
-                </div>
-
-                
-                <div class="flex-1 flex flex-col overflow-hidden w-full">
-                    
-                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
-                        <button onclick="toggleMenu('influencer')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                             </svg>
-                         </button>
-
-                        <h1 id="influencer-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
-                        <div class="flex items-center space-x-4">
-                            <span class="text-gray-600"></span>
-                            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
-                        </div>
-                    </header>
-
-                    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
-                        <div id="influencer-dashboard-content" class="dashboard-content active"><div class="h-80"><canvas id="valueRadarChart"></canvas></div></div>
-                        <div id="influencer-value-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6"><h3 class="text-lg font-bold text-slate-800 mb-4">點擊社群平台查看詳細分析報告</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><div onclick="showPlatformDetail('instagram')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/E1306C/FFFFFF?text=IG" class="rounded-full" /><div><p class="font-bold">hsi_daily</p><p class="text-sm text-gray-500">Instagram</p></div></div><div onclick="showPlatformDetail('youtube')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/FF0000/FFFFFF?text=YT" class="rounded-full" /><div><p class="font-bold">小希的探索頻道</p><p class="text-sm text-gray-500">YouTube</p></div></div><div class="p-4 border border-dashed rounded-lg flex items-center space-x-4 text-gray-400"><img src="https://placehold.co/48x48/000000/FFFFFF?text=TK" class="rounded-full" /><div><p class="font-bold">連結 TikTok</p><p class="text-sm">尚未連結</p></div></div></div></div></div>
-                        <div id="influencer-invitations-content" class="dashboard-content"><div class="space-y-6"><div class="bg-white rounded-xl shadow p-6"><div class="flex flex-col md:flex-row justify-between"><div><p class="font-bold text-sm text-teal-600">A 公司</p><h3 class="font-bold text-xl mt-1 text-slate-800">聯名無線耳機預熱</h3><p class="text-sm text-gray-500 mt-2">內容形式: 1 則 Instagram 圖文 + 3 則限時動態</p></div><div class="mt-4 md:mt-0 text-left md:text-right"><p class="font-bold text-xl text-slate-800">NT$ 8,000 - 12,000</p><p class="text-sm text-gray-500">預算範圍</p></div></div><div class="mt-4 pt-4 border-t flex flex-col md:flex-row items-center justify-between"><p class="text-sm text-gray-500">截止日期: 2025-10-15</p><div class="flex space-x-2 mt-3 md:mt-0"><button class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">婉拒</button><button class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">查看詳情並接受</button></div></div></div></div></div>
-                        <div id="influencer-finance-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6 mb-6"><h3 class="text-lg font-medium text-gray-500">可提領金額</h3><p class="text-4xl font-bold text-green-500 mt-2">NT$ 25,600</p></div><div class="bg-white rounded-xl shadow p-8"><h2 class="text-xl font-bold text-slate-800 mb-4">申請提領 (出金)</h2><div class="space-y-4"><div><label class="text-sm font-medium">提領銀行</label><select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option>中國信託 (822)</option><option>國泰世華 (013)</option></select></div><div><label class="text-sm font-medium">銀行帳號</label><input type="text" value="1234-5678-9012-3456" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><div><label class="text-sm font-medium">提領金額</label><input type="number" placeholder="最高可提領 NT$ 25,600" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><button class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">確認提領</button></div></div></div>
-                        <div id="influencer-settings-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto"><h2 class="text-xl font-bold text-slate-800">個人設定</h2></div></div>
-                    </main>
-                </div>
-            </div>
-        <div id="influencer-sidebar-overlay" onclick="toggleMenu('influencer')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
-        </div>
-
-        <div id="new-campaign-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col h-[90vh] transform scale-95 transition-transform duration-300">
-                <div class="p-5 border-b flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-slate-800">建立新的行銷需求</h2>
-                    <button onclick="closeModal('new-campaign-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                </div>
-
-                <form id="campaign-form">
-                    <div class="flex-1 p-6 overflow-y-auto space-y-6">
-                        <div>
-                            <label for="brief-product-name" class="block text-sm font-medium text-gray-700">產品名稱</label>
-                            <input type="text" id="brief-product-name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：我的酷炫無線耳機">
-                        </div>
-                        <div>
-                            <label for="brief-product-desc" class="block text-sm font-medium text-gray-700">產品描述與特色</label>
-                            <textarea id="brief-product-desc" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="描述您的產品，以及希望網紅強調的賣點"></textarea>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="brief-impressions" class="block text-sm font-medium text-gray-700">預期曝光次數</label>
-                                <input type="number" id="brief-impressions" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：100000">
-                            </div>
-                            <div>
-                                <label for="brief-budget" class="block text-sm font-medium text-gray-700">預算範圍 (NT$)</label>
-                                <input type="number" id="brief-budget" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：50000">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="brief-influencer-count" class="block text-sm font-medium text-gray-700">希望網紅數量</label>
-                                <input type="number" id="brief-influencer-count" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：10">
-                            </div>
-                            <div>
-                                <label for="brief-follower-range" class="block text-sm font-medium text-gray-700">網紅粉絲數區間</label>
-                                <select id="brief-follower-range" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                    <option>不限</option>
-                                    <option>1萬 - 5萬</option>
-                                    <option>5萬 - 10萬</option>
-                                    <option>10萬以上</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">希望發布平台</label>
-                            <div id="brief-platforms" class="mt-2 flex flex-wrap gap-4">
-                                <label class="inline-flex items-center"><input type="checkbox" value="Instagram" class="rounded border-gray-300"> <span class="ml-2">Instagram</span></label>
-                                <label class="inline-flex items-center"><input type="checkbox" value="YouTube" class="rounded border-gray-300"> <span class="ml-2">YouTube</span></label>
-                                <label class="inline-flex items-center"><input type="checkbox" value="Facebook" class="rounded border-gray-300"> <span class="ml-2">Facebook</span></label>
-                                        <label class="inline-flex items-center"><input type="checkbox" value="TikTok" class="rounded border-gray-300"> <span class="ml-2">TikTok</span></label>
-                                <label class="inline-flex items-center"><input type="checkbox" value="XiaoHongShu" class="rounded border-gray-300"> <span class="ml-2">小紅書</span></label>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-
-                <div class="p-5 border-t bg-slate-50">
-                    <button onclick="handleSaveBrief()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">儲存需求並開始配對</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="ai-chat-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col h-[70vh] transform scale-95 transition-transform duration-300"><div class="p-4 border-b flex justify-between items-center"><h2 class="text-lg font-bold text-slate-800">AI 行銷顧問</h2><button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div><div id="chat-window" class="flex-1 p-4 overflow-y-auto space-y-4"></div><div class="p-4 border-t"><div class="flex space-x-2"><input id="chat-input" type="text" class="flex-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="請輸入您的回覆..."><button onclick="sendChatMessage()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">發送</button></div></div></div></div>
-        <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300"></div></div>
+    <h1>Gemini Chatbot 測試</h1>
+    <div id="chat-container"></div>
+    <div id="input-area">
+        <input type="text" id="message-input" placeholder="在這裡輸入訊息...">
+        <button id="send-button">送出</button>
     </div>
 
-    <script type="module">
-    // --- 1. Firebase 初始化 (這部分不變) ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-        import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            signOut, 
-            onAuthStateChanged,
-            GoogleAuthProvider, 
-            signInWithRedirect, 
-            getRedirectResult,
-            signInWithPopup
-        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firestore-compat.js"></script>
 
-    // === 修改部分 START：從 Firestore 匯入更多我們需要的功能 ===
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc,
-            query,
-            where,
-            getDocs,
-            doc,
-            getDoc,
-            setDoc,
-            updateDoc,       // 新增：用於更新文件 (例如：軟刪除)
-            onSnapshot,      // 新增：用於即時監聽資料變化
-            orderBy          // 新增：用於排序查詢結果
-        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-    // === 修改部分 END ===
-
-
-        import {
-            getFunctions,
-            httpsCallable
-        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-functions.js";
-
-
+    <script>
+        // TODO: 在下方貼上你的 Firebase 設定物件
         const firebaseConfig = {
           apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
           authDomain: "test-b493a.firebaseapp.com",
@@ -324,437 +39,80 @@
           measurementId: "G-1GY922PWL9"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const functions = getFunctions(app); 
 
-        getRedirectResult(auth)
-            .then((result) => {
-                if (result) {
-                    console.log('Google 重新導向登入成功:', result.user);
-                }
-            }).catch((error) => {
-                console.error('Google 重新導向失敗:', error);
-                alert('Google 登入時發生錯誤：' + error.message);
-            });
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-    // --- 2. 核心 UI 導航與控制函式 ---
-        function navigateTo(viewId) {
-            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-            const targetView = document.getElementById(viewId);
-            if (targetView) {
-                targetView.classList.add('active');
-            }
-            window.scrollTo(0, 0);
-        }
+        // 為了測試，我們先寫死一個使用者ID。
+        // 這個 ID 就是你在 Firestore 截圖中看到的那個 `GUvBeM2b0e...`
+        // 你也可以用任何自訂的字串來代表一個新的使用者。
+        const USER_ID = "GUvBeM2b0eQLXNKSNW10"; // 直接使用你截圖中的ID
 
-        const headerTitles = {
-            merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
-            influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
-        };
-    
-    // === 修改部分 START：修改 switchTab 以支援詳情頁 ===
-        function switchTab(role, tabId) {
-            const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
-            const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
-            const headerTitle = document.getElementById(`${role}-header-title`);
+        // 取得 HTML 元素
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        // 這是 "魔法" 發生的地方：監聽資料庫的變化
+        // 這個路徑必須跟你的擴充功能設定完全一樣
+        const messagesRef = db.collection('users').doc(USER_ID).collection('messages');
         
-            sidebarLinks.forEach(link => {
-                link.classList.remove('active');
-            // 如果是詳情頁，則讓 'campaigns' 保持 active
-                const linkTab = tabId === 'campaign-detail' ? 'campaigns' : tabId;
-                if (link.getAttribute('onclick').includes(`'${linkTab}'`)) {
-                    link.classList.add('active');
+        messagesRef.orderBy('createTime', 'asc').onSnapshot(snapshot => {
+            chatContainer.innerHTML = ''; // 清空聊天室，重新渲染
+            snapshot.forEach(doc => {
+                const data = doc.data();
+
+                // 顯示使用者自己的訊息
+                if (data.prompt) {
+                    displayMessage(data.prompt, 'user-message');
                 }
-            });
-
-            contents.forEach(content => content.classList.remove('active'));
-            const activeContent = document.getElementById(`${role}-${tabId}-content`);
-            if (activeContent) activeContent.classList.add('active');
-        
-        // 只有在 headerTitles 中有定義時才更新標題，避免覆蓋詳情頁的自訂標題
-            if (headerTitles[role][tabId]) {
-                headerTitle.textContent = headerTitles[role][tabId];
-            }
-        }
-    // === 修改部分 END ===
-
-    // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
-        window.navigateTo = navigateTo;
-        window.switchTab = switchTab;
-    
-        window.toggleMenu = function(role) {
-            const sidebar = document.getElementById(`${role}-sidebar`);
-            const overlay = document.getElementById(`${role}-sidebar-overlay`);
-            if (sidebar && overlay) {
-                sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            }
-        }
-
-        window.openModal = function(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.classList.remove('opacity-0');
-                    modal.querySelector('div > div').classList.remove('scale-95');
-                }, 10);
-            }
-        }
-        window.closeModal = function(modalId) {
-            const modal = document.getElementById(modalId);
-            if(modal) {
-                modal.classList.add('opacity-0');
-                modal.querySelector('div > div').classList.add('scale-95');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                }, 300);
-            }
-        }
-
-
-        // +++ 以下是新增的完整聊天功能 +++
-
-        /**
-         * 將訊息新增到聊天視窗中
-         * @param {string} sender - 'user' 代表使用者, 'ai' 代表 AI
-         * @param {string} message - 要顯示的訊息內容
-         */
-        function addMessageToChat(sender, message) {
-            const chatWindow = document.getElementById('chat-window');
-            if (!chatWindow) return;
-
-            const messageContainer = document.createElement('div');
-            const messageBubble = document.createElement('div');
-
-            messageBubble.textContent = message;
-            messageBubble.className = 'p-3 rounded-lg max-w-xs break-words';
-        
-            if (sender === 'user') {
-                messageContainer.className = 'flex justify-end mb-2';
-                messageBubble.classList.add('bg-slate-700', 'text-white');
-            } else { // AI 或系統訊息
-                messageContainer.className = 'flex justify-start mb-2';
-                messageBubble.classList.add('bg-gray-200', 'text-slate-800');
-            }
-
-            messageContainer.appendChild(messageBubble);
-            chatWindow.appendChild(messageContainer);
-            // 自動捲動到最新的訊息
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }
-
-        // 開啟 AI 聊天室
-        window.openAIChat = function() {
-            openModal('ai-chat-modal');
-            const chatWindow = document.getElementById('chat-window');
-            // 如果是第一次打開，顯示歡迎訊息
-            if (chatWindow && chatWindow.children.length === 0) {
-                const welcomeMsg = "你好！我是您的 AI 行銷顧問，有什麼可以協助您的嗎？例如，您可以問我：『我想推廣無線耳機，該找什麼樣的網紅？』";
-                addMessageToChat('ai', welcomeMsg);
-            }
-        }        
-
-        // 關閉 AI 聊天室
-        window.closeAIChat = function() {
-            closeModal('ai-chat-modal');
-        }
-
-        // 發送訊息給 AI (Cloud Function)
-        window.sendChatMessage = async function() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-
-            if (message === '') return; // 如果沒輸入內容，就不執行
-
-            // 1. 在畫面上顯示使用者自己的訊息
-            addMessageToChat('user', message);
-            const originalMessage = message; // 保存原始訊息
-            input.value = ''; // 清空輸入框
-
-            // 2. 顯示 "思考中..." 的提示訊息
-            const thinkingMessageId = 'thinking-message';
-            addMessageToChat('ai', '思考中...');
-            const chatWindow = document.getElementById('chat-window');
-            const thinkingBubble = chatWindow.lastChild; // 取得 "思考中..." 的訊息元素
-    
-            try {
-                // 3. 呼叫您在後端部署的 Cloud Function (假設函式名稱為 'callGemini')
-                const callGemini = httpsCallable(functions, 'callGemini');
-                const result = await callGemini({ message: originalMessage });
-
-                // 4. 用 AI 的真正回覆更新 "思考中..." 的訊息
-                const aiResponse = result.data.response || result.data.error || "抱歉，我沒有得到有效的回覆。";
-                const bubbleContent = thinkingBubble.querySelector('div');
-                if(bubbleContent) {
-                    bubbleContent.textContent = aiResponse;
-                }
-
-            } catch (error) {
-                // 5. 如果呼叫失敗，也要更新訊息
-                console.error("呼叫 Cloud Function 失敗:", error);
-                const bubbleContent = thinkingBubble.querySelector('div');
-                if(bubbleContent) {
-                    bubbleContent.textContent = '抱歉，連線好像出了點問題，請稍後再試。';
-                }
-            }
-        }
-
-        // 讓使用者可以按 Enter 鍵發送訊息
-        document.getElementById('chat-input').addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // 防止換行
-                sendChatMessage();
-            }
-        });
-
-    // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
-
-    // 功能 1: 根據傳入的活動資料，產生 HTML 卡片
-        function renderCampaigns(campaigns) {
-            const listElement = document.getElementById('campaigns-list');
-            if (!listElement) return;
-
-            if (campaigns.length === 0) {
-                listElement.innerHTML = `<p class="col-span-full text-center text-gray-500">目前沒有任何行銷活動，點擊右上角建立一個吧！</p>`;
-                return;
-            }
-
-            let campaignsHTML = '';
-            campaigns.forEach(campaign => {
-                const data = campaign.data;
-                const id = campaign.id;
-
-                let statusBadge = '';
-                switch (data.status) {
-                    case 'pending_match':
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">正在配對中</span>`;
-                        break;
-                    case 'matched':
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">配對完成</span>`;
-                        break;
-                    case 'in_progress':
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">執行中</span>`;
-                        break;
-                    default:
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">未知</span>`;
-                }
-            
-                let deleteButtonHTML = '';
-                if (data.status === 'pending_match') {
-                    deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}')" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100">刪除</button>`;
-                }
-
-                campaignsHTML += `
-                    <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-between">
-                        <div>
-                            ${statusBadge}
-                            <h3 class="font-bold text-lg mt-2 text-slate-800">${data.productName}</h3>
-                            <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
-                            <p class="text-sm text-gray-500 mt-1">希望網紅數: ${data.influencerCount} 位</p>
-                        </div>
-                        <div class="mt-4 flex space-x-2">
-                            <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200">查看詳情</button>
-                            ${deleteButtonHTML}
-                        </div>
-                    </div>
-                `;
-            });
-            listElement.innerHTML = campaignsHTML;
-        }
-
-    // 功能 2: 建立一個即時監聽器，當資料庫有變化時自動更新畫面
-        let unsubscribeCampaigns = null; 
-        function listenForCampaigns() {
-            const user = auth.currentUser;
-            if (!user) return;
-            if (unsubscribeCampaigns) unsubscribeCampaigns();
-
-            const briefsRef = collection(db, "briefs");
-            const q = query(briefsRef, 
-                where("merchantId", "==", user.uid),// 只查詢屬於當前商家的
-                where("isDeleted", "==", false), // 只查詢未被軟刪除的
-                orderBy("createdAt", "desc") // 按照建立時間倒序排列
-            );
-
-            unsubscribeCampaigns = onSnapshot(q, (querySnapshot) => {
-                const campaigns = querySnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-                renderCampaigns(campaigns);// 將獲取的資料傳遞給渲染函式
-            }, (error) => {
-                console.error("監聽活動失敗: ", error);
-                 // 可以在此處加入錯誤提示 UI
-            });
-        }
-
-    // 功能 3: 處理刪除活動的邏輯 (軟刪除)
-        window.handleDeleteCampaign = async function(campaignId) {
-            if (!campaignId || !confirm("您確定要刪除這個行銷活動嗎？此操作無法復原。")) return;
-            try {
-                const campaignDocRef = doc(db, "briefs", campaignId);
-                await updateDoc(campaignDocRef, { isDeleted: true });
-                alert("活動已刪除。");
-            } catch (error) {
-                console.error("刪除活動失敗: ", error);
-                alert("刪除失敗，請稍後再試。");
-            }
-       }
-
-    // 功能 4: 處理顯示活動詳情的邏輯
-        window.showCampaignDetail = async function(campaignId) {
-            if (!campaignId) return;
-            try {
-                const docSnap = await getDoc(doc(db, "briefs", campaignId));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const contentArea = document.getElementById('merchant-campaign-detail-content');
-                    contentArea.innerHTML = `
-                        <div class="bg-white rounded-xl shadow p-6 mb-6">
-                            <h2 class="text-xl font-bold text-slate-800">${data.productName}</h2>
-                            <p class="text-gray-600 mt-2">${data.productDesc}</p>
-                            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-t pt-4">
-                                <div><p class="text-sm text-gray-500">狀態</p><p class="font-bold">${data.status}</p></div>
-                                <div><p class="text-sm text-gray-500">預算</p><p class="font-bold">NT$ ${data.budget.toLocaleString()}</p></div>
-                                <div><p class="text-sm text-gray-500">預期曝光</p><p class="font-bold">${data.impressions.toLocaleString()}</p></div>
-                                <div><p class="text-sm text-gray-500">希望網紅數</p><p class="font-bold">${data.influencerCount}</p></div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow">
-                            <h3 class="p-6 font-bold text-slate-800 border-b">合作網紅列表 (開發中)</h3>
-                            <div class="p-6 text-center text-gray-500">配對完成後，這裡會顯示合作的網紅名單與成效。</div>
-                        </div>
-                    `;
-                    switchTab('merchant', 'campaign-detail');
-                    document.getElementById('merchant-header-title').textContent = `活動詳情: ${data.productName}`;
+                
+                // 檢查 Gemini 的回覆是否已經寫入
+                if (data.response) {
+                    displayMessage(data.response, 'bot-message');
                 } else {
-                    alert("無法載入活動詳情。");
+                    // 如果還沒有回覆，可以顯示一個 "思考中..." 的提示
+                    displayMessage("思考中...", 'bot-message');
                 }
-            } catch (error) {
-                console.error("讀取詳情失敗: ", error);
-                alert("讀取詳情時發生錯誤。");
-            }
+            });
+            // 捲動到最下面
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+
+        // 用來在畫面上顯示訊息的函式
+        function displayMessage(text, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + className;
+            messageDiv.innerText = text;
+            chatContainer.appendChild(messageDiv);
         }
-    // === 新增部分 END ===
 
-    // === 修改部分 START: 修改 handleSaveBrief 以符合新架構 ===
-        window.handleSaveBrief = async function() {
-            const user = auth.currentUser;
-            if (!user) return alert('請先登入！');
+        // 送出訊息的函式
+        async function sendMessage() {
+            const promptText = messageInput.value.trim();
+            if (promptText === '') return;
 
-            const briefData = {
-                productName: document.getElementById('brief-product-name').value,
-                productDesc: document.getElementById('brief-product-desc').value,
-                impressions: parseInt(document.getElementById('brief-impressions').value) || 0,
-                budget: parseInt(document.getElementById('brief-budget').value) || 0,
-                influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
-                followerRange: document.getElementById('brief-follower-range').value,
-               platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
-                status: 'pending_match',
-                isDeleted: false, // 新增：軟刪除標記
-                merchantId: user.uid,
-                merchantEmail: user.email,
-                createdAt: new Date()
-            };
+            messageInput.value = ''; // 清空輸入框
 
-            if (!briefData.productName) return alert('請至少填寫產品名稱！');
-
-            try {
-                await addDoc(collection(db, "briefs"), briefData);
-                alert('您的需求已成功送出！');
-                closeModal('new-campaign-modal');
-            // 清空表單，注意: 這需要你在 HTML 中用 <form> 標籤包住 modal 的內容
-                document.getElementById('campaign-form').reset();
-            } catch (error) {
-                console.error("儲存需求單失敗:", error);
-                alert('儲存失敗，請查看 console 的錯誤訊息。');
-            }
+            // 這就是 "寫入資料" 的動作！
+            // 我們把使用者的訊息寫入 Firestore
+            // 擴充功能會自動偵測到這個新文件
+            await messagesRef.add({
+                prompt: promptText,
+                createTime: firebase.firestore.FieldValue.serverTimestamp()
+            });
         }
-    // === 修改部分 END ===
 
-    // --- 4. Firebase 驗證功能 (這部分不變) ---
-        window.handleRegister = async function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                alert('註冊成功！現在您可以登入了。');
-            } catch (error) {
-                alert('註冊失敗：' + error.message);
-            }
-        };
-
-        window.handleLogin = async function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                alert('登入失敗：' + error.message);
-            }
-        };
-
-        window.handleLogout = async function() {
-            try {
-            await signOut(auth);
-            } catch (error) {
-                alert('登出失敗：' + error.message);
-            }
-        };
-
-        window.handleGoogleLogin = async function() {
-            const provider = new GoogleAuthProvider();
-            try {
-                // 直接使用我們在頂部匯入的 signInWithPopup
-                const result = await signInWithPopup(auth, provider);
-                console.log("Google 彈出視窗登入成功:", result.user);
-            } catch (error) {
-                console.error("Google 登入失敗，錯誤訊息:", error);
-                alert("Google 登入時發生錯誤: " + error.message);
-            }
-        };
-
-        window.enterDashboard = function(role) {
-            const user = auth.currentUser;
-            if (!user) {
-                alert('發生錯誤，請重新登入！');
-                navigateTo('login-view');
-                return;
-            }
-
-            if (role === 'merchant') {
-                navigateTo('merchant-dashboard-view');
-                document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
-                document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
-                switchTab('merchant', 'dashboard');
-            } else if (role === 'influencer') {
-                navigateTo('influencer-dashboard-view');
-                document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
-                document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
-                switchTab('influencer', 'dashboard');
-            }
-        };
-
-
-    // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log('使用者已登入，開始監聽活動...');
-            // 當用戶登入後，立刻開始監聽他/她的活動資料
-                listenForCampaigns();
-                navigateTo('role-selection-view');
-            } else {
-                console.log('使用者已登出，停止監聽。');
-            // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
-                if (unsubscribeCampaigns) {
-                    unsubscribeCampaigns();
-                }
-                navigateTo('login-view');
+        // 綁定事件
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
             }
         });
-    // === 修改部分 END ===
+
     </script>
-
-
 </body>
 </html>
+
