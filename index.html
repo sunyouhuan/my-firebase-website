@@ -447,88 +447,63 @@
         }
                 
 
-        // === 新增部分 START: AI 聊天機器人核心功能 ===
-
-        // 功能 1: 打開 AI 聊天視窗，並建立一個帶有 Context 的新對話
+            // 功能 1: 打開 AI 聊天視窗 (邏輯簡化)
         window.openAIChat = async function() {
             const user = auth.currentUser;
             if (!user) return alert("請先登入才能使用 AI 顧問！");
 
-            // 每次打開都是一個全新的對話
-            // 先清空舊的對話內容
-            document.getElementById('chat-window').innerHTML = '';
+    // 將當前登入的 user ID 作為我們的聊天 ID
+            currentChatId = user.uid; 
 
-            // 1. 定義這個聊天機器人的角色指令 (Context)
-            const contextPrompt = `
-                你是一個名為 "MatchAI 小幫手" 的專業網紅行銷顧問。
-                你的任務是協助商家 (使用者) 構思與規劃網紅行銷活動。
-                你的回答應該：
-                1. 專業、友善且具有啟發性。
-                2. 針對使用者模糊的想法，提出具體的問題來引導他們。例如，詢問他們的「產品類型」、「目標客群」、「預算範圍」。
-                3. 當使用者提供足夠資訊後，幫他們總結成一個清晰的「行銷活動摘要」。
-                4. 語氣要像一個經驗豐富的行銷策略師。
-            `;
+    // 清空舊的對話內容並顯示歡迎訊息
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.innerHTML = '';
+            appendChatMessage('bot', '您好！我是您的 AI 行銷顧問，有什麼可以協助您規劃行銷活動的嗎？');
 
-            try {
-                // 2. 在 Firestore 的 "chats" collection 中建立一個新文件
-                const chatDocRef = await addDoc(collection(db, "chats"), {
-                    context: contextPrompt,
-                    userId: user.uid,
-                    createdAt: new Date(),
-                    status: 'INITIALIZED' // 可以自訂狀態
-                });
-
-                currentChatId = chatDocRef.id; // 儲存這個新對話的 ID
-
-                // 3. 開始監聽這個對話的回覆
-                listenForChatMessages(currentChatId);
-
-                // 4. 顯示歡迎訊息並打開 Modal
-                appendChatMessage('bot', '您好！我是您的 AI 行銷顧問，有什麼可以協助您規劃行銷活動的嗎？');
-                openModal('ai-chat-modal');
-
-            } catch (error) {
-                console.error("建立 AI 對話失敗:", error);
-                alert("抱歉，AI 顧問目前無法連線，請稍後再試。");
-            }
+    // 開始監聽這個使用者的 messages 子集合
+            listenForChatMessages(currentChatId);
+    
+    // 打開 Modal
+            openModal('ai-chat-modal');
         }
 
-        // 功能 2: 關閉 AI 聊天視窗，並取消監聽
+// 功能 2: 關閉 AI 聊天視窗 (邏輯不變)
         window.closeAIChat = function() {
             closeModal('ai-chat-modal');
-            
-            // 如果有正在執行的監聽器，就取消它
             if (unsubscribeChatListener) {
                 unsubscribeChatListener();
                 unsubscribeChatListener = null;
-                console.log(`已取消對話 ${currentChatId} 的監聽。`);
             }
-            
-            // 重設變數
             currentChatId = null; 
         }
 
-        // 功能 3: 發送訊息
+// 功能 3: 發送訊息 (修改 Firestore 路徑)
         window.sendChatMessage = async function() {
             const chatInput = document.getElementById('chat-input');
             const messageText = chatInput.value.trim();
+            const user = auth.currentUser;
 
-            if (messageText === '' || !currentChatId) return;
+    // 檢查 user 和 currentChatId 是否存在
+            if (messageText === '' || !user || !currentChatId) return;
+    
+    // 因為路徑是 users/{uid}/messages，所以 currentChatId 必須等於 user.uid
+            if (currentChatId !== user.uid) {
+                console.error("錯誤：聊天ID與使用者ID不匹配！");
+                return;
+            }
 
-            // 立即在畫面上顯示使用者訊息
             appendChatMessage('user', messageText);
             chatInput.value = '';
 
             try {
-                // 在 /chats/{chatId}/messages 子集合中新增一筆使用者的提問
-                const messagesColRef = collection(db, "chats", currentChatId, "messages");
+        // 【核心修改】將訊息寫入到 users/{uid}/messages 這個正確的路徑
+                const messagesColRef = collection(db, "users", user.uid, "messages");
                 await addDoc(messagesColRef, {
-                    prompt: messageText,
+                    prompt: messageText, // prompt 欄位名稱要跟 Extension 設定的一樣
                     createTime: new Date()
                 });
-                
-                // 可以在這裡加上 "正在輸入中..." 的提示
-                appendChatMessage('bot', '...', true); // true 表示這是 "思考中" 提示
+        
+                appendChatMessage('bot', '...', true);
 
             } catch (error) {
                 console.error("發送訊息失敗:", error);
@@ -536,22 +511,21 @@
             }
         }
 
-        // 功能 4: 監聽 Firestore 的回覆並更新 UI
-        function listenForChatMessages(chatId) {
-            const messagesColRef = collection(db, "chats", chatId, "messages");
+// 功能 4: 監聽回覆 (修改 Firestore 路徑)
+        function listenForChatMessages(userId) {
+    // 【核心修改】監聽 users/{uid}/messages 這個正確的路徑
+            const messagesColRef = collection(db, "users", userId, "messages");
             const q = query(messagesColRef, orderBy("createTime"));
 
-            // onSnapshot 會在子集合有任何變動時觸發
             unsubscribeChatListener = onSnapshot(q, (snapshot) => {
-                // 先移除 "正在輸入中" 的提示
                 const thinkingIndicator = document.getElementById('chat-window').querySelector('.thinking-indicator');
                 if(thinkingIndicator) thinkingIndicator.parentElement.remove();
 
                 snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") { // 只處理新增加的訊息
+                    if (change.type === "added") {
                         const data = change.doc.data();
-                        
-                        // Extension 的回覆會包含 "response" 欄位
+                
+                // Extension 的回覆會寫在 "response" 欄位
                         if (data.response) {
                              appendChatMessage('bot', data.response);
                         }
@@ -561,29 +535,25 @@
                  console.error("監聽聊天訊息失敗:", error);
             });
         }
-        
-        // 功能 5: 將訊息新增到聊天視窗的輔助函式
+
+// 功能 5: 附加訊息到視窗 (邏輯不變)
         function appendChatMessage(sender, text, isThinking = false) {
+    // ... 這個函式無需任何修改 ...
             const chatWindow = document.getElementById('chat-window');
-            
             const messageWrapper = document.createElement('div');
             messageWrapper.classList.add(sender === 'user' ? 'user-message' : 'bot-message', 'mb-2');
-
             const messageBubble = document.createElement('div');
             messageBubble.classList.add('message-bubble');
             messageBubble.textContent = text;
-            
             if(isThinking) {
                  messageBubble.classList.add('thinking-indicator');
             }
-
             messageWrapper.appendChild(messageBubble);
             chatWindow.appendChild(messageWrapper);
-            
-            // 自動滾動到最底部
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
+// === 替換部分 END ===
 
 
 
