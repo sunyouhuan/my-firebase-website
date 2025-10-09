@@ -1,64 +1,59 @@
-// functions/index.js
-
-const { onCall } = require("firebase-functions/v2/https");
-const { initializeApp } = require("firebase-admin/app");
-const { VertexAI } = require("@google-cloud/vertexai");
+// 引入所有需要的模組
+const functions = require("firebase-functions");
+const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// 初始化 Firebase Admin SDK
-initializeApp();
+// ✅ 使用新的 process.env 方法讀取 API Key
+const API_KEY = process.env.GOOGLE_APIKEY;
 
-// 在這裡定義 AI 模型的初始化設定
-const project = "test-b493a"; // 換成您的 Project ID
-const location = "us-central1"; // 或是您使用的地區
-const textModel = "gemini-1.0-pro"; // 您可以選用 Gemini 模型
+// 初始化 Google AI SDK
+const genAI = new GoogleGenerativeAI(API_KEY);
 
-const vertex_ai = new VertexAI({ project: project, location: location });
-const generativeModel = vertex_ai.getGenerativeModel({
-    model: textModel,
-    generation_config: {
-        "max_output_tokens": 2048,
-        "temperature": 0.5, // 調整溫度可改變創意程度，0-1 之間
-        "top_p": 1,
-    },
-    // 設定安全過濾，可以根據需求調整
-    safety_settings: [
-        { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-        { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-        { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-        { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }
-    ],
-});
+// 這就是我們的後端 API，取名為 askGemini
+exports.askGemini = onCall(async (request) => {
+  // 驗證使用者是否是從你的 App 登入後才呼叫，增加安全性
+  if (!request.auth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated.",
+    );
+  }
 
-// 建立一個可呼叫的 Cloud Function，名稱為 "callGemini"
-exports.callGemini = onCall(async (request) => {
-    // 從前端請求中獲取使用者傳來的訊息
-    const userMessage = request.data.message || "";
-    logger.info("收到的訊息:", userMessage);
+  // 從前端接收傳來的訊息 (prompt)
+  const userMessage = request.data.prompt;
 
-    if (!userMessage) {
-        logger.error("錯誤：沒有收到訊息");
-        return { error: "錯誤：訊息內容不得為空。" };
-    }
+  if (!userMessage || typeof userMessage !== "string") {
+    throw new HttpsError(
+      "invalid-argument",
+      "The function must be called with a `prompt` argument.",
+    );
+  }
 
-    // 幫 AI 設定一個角色，讓它的回覆更專業
-    const systemPrompt = "你是一位專業的網紅行銷顧問，在一個名為 MatchAI 的平台上服務。你的任務是協助商家（使用者）構思、規劃並優化他們的網紅行銷活動。請用繁體中文、親切且專業的語氣回答問題。";
+  logger.info(`收到來自 ${request.auth.uid} 的訊息: ${userMessage}`);
 
-    const prompt = `${systemPrompt}\n\n使用者問：${userMessage}`;
+  try {
+    // 選擇你要使用的 Google AI 模型
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    try {
-        // 將 prompt 送給 Vertex AI
-        const resp = await generativeModel.generateContent(prompt);
-        const modelResponse = resp.response;
-        const aiText = modelResponse.candidates[0].content.parts[0].text;
+    // 這裡可以定義 AI 的角色，讓它的回答更符合你的需求
+    const fullPrompt = `你是一個專業的網紅行銷顧問，名叫 'MatchAI 顧問'。你的任務是協助品牌主（商家）發想、規劃、並優化他們的網紅行銷活動。請用繁體中文、友善且專業的語氣回答以下用戶的問題：\n\n用戶問題：${userMessage}`;
 
-        logger.info("AI 回覆:", aiText);
+    const result = await model.generateContent(fullPrompt);
+    const response = result.response;
+    const text = response.text();
 
-        // 將 AI 的回覆傳回給前端
-        return { response: aiText };
+    logger.info("成功從 Gemini 取得回覆。");
 
-    } catch (error) {
-        logger.error("Vertex AI 呼叫失敗:", error);
-        return { error: "抱歉，AI 顧問現在有點忙，請稍後再試。" };
-    }
+    // 將 AI 的回覆傳回給前端
+    return { response: text };
+
+  } catch (error) {
+    logger.error("呼叫 Gemini API 時發生錯誤:", error);
+    throw new HttpsError(
+      "internal",
+      "呼叫 Gemini API 失敗。",
+      error,
+    );
+  }
 });

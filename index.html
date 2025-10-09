@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MatchAI - AI 驅動的網紅行銷平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -38,33 +38,102 @@
         .modal {
             transition: opacity 0.3s ease;
         }
+
+
+        /* === 新增聊天室樣式 START === */
+        .message-bubble {
+            max-width: 80%;
+            padding: 10px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        .user-message .message-bubble {
+            background-color: #1e293b; /* slate-800 */
+            color: white;
+        }
+        .bot-message .message-bubble {
+            background-color: #f1f5f9; /* slate-100 */
+            color: #1e293b; /* slate-800 */
+        }
+        .user-message {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .bot-message {
+            display: flex;
+            justify-content: flex-start;
+        }
+        .thinking-indicator {
+            color: #94a3b8; /* slate-400 */
+            font-style: italic;
+        }
+       /* === 新增聊天室樣式 END === */
+
     </style>
 </head>
+
+
+
+
 <body>
 
-    <!-- 主應用程式容器 -->
     <div id="app">
 
-        <!-- 登入頁面 -->
         <div id="login-view" class="view active">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
                 <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
                 <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
                 <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
                     <h2 class="text-2xl font-bold text-center text-slate-800">登入您的帳號</h2>
+                    <form id="login-form" class="space-y-4" onsubmit="return false;">
+                        <div>
+                            <label for="email" class="text-sm font-medium text-gray-700">電子郵件</label>
+                            <input id="email" name="email" type="email" autocomplete="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div>
+                            <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
+                            <input id="password" name="password" type="password" autocomplete="current-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            <button type="button" onclick="handleLogin()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">登入</button>
+                            <button type="button" onclick="handleRegister()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">註冊新帳號</button>
+                        </div>
+                        <div class="relative flex py-3 items-center">
+                            <div class="flex-grow border-t border-gray-300"></div>
+                            <span class="flex-shrink mx-4 text-gray-400 text-sm">或</span>
+                            <div class="flex-grow border-t border-gray-300"></div>
+                        </div>
+
+                        <button type="button" onclick="handleGoogleLogin()" class="w-full flex justify-center items-center bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.021,35.592,44,30.138,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                            </svg>
+                            使用 Google 帳號登入
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div id="role-selection-view" class="view">
+            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
+                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
+                <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
+                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
+                    <h2 class="text-2xl font-bold text-center text-slate-800">請選擇您的身分</h2>
                     <div class="flex flex-col space-y-4">
-                        <button onclick="loginAs('merchant')" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">商家登入</button>
-                        <button onclick="loginAs('influencer')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">網紅登入</button>
+                        <button onclick="enterDashboard('merchant')" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">我是商家</button>
+                        <button onclick="enterDashboard('influencer')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">我是網紅</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 商家儀表板 -->
         <div id="merchant-dashboard-view" class="view">
             <div class="flex h-screen bg-slate-50">
-                <!-- 側邊欄 -->
-                <div class="w-64 bg-white shadow-md flex-shrink-0">
+                <div id="merchant-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
                     <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
                     <nav class="mt-6">
                         <a href="#" onclick="switchTab('merchant', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
@@ -72,13 +141,24 @@
                         <a href="#" onclick="switchTab('merchant', 'reports')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">成效報告</a>
                         <a href="#" onclick="switchTab('merchant', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
                         <a href="#" onclick="switchTab('merchant', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
-                        <a href="#" onclick="logout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
+                        <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
                     </nav>
                 </div>
 
-                <!-- 主內容區 -->
-                <div class="flex-1 flex flex-col overflow-hidden">
-                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0"><h1 id="merchant-header-title" class="text-2xl font-bold text-slate-800">總覽</h1><div class="flex items-center space-x-4"><span class="text-gray-600">你好, A 公司</span><img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/E2E8F0/4A5568?text=A" alt="公司 Logo"></div></header>
+                <div class="flex-1 flex flex-col overflow-hidden w-full">
+                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
+                        <button onclick="toggleMenu('merchant')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                                </svg>
+                            </button>
+                        <h1 id="merchant-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
+                        <div class="flex items-center space-x-4">
+                            <span id="user-email-display" class="text-gray-600"></span>
+                            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
+                        </div>
+                    </header>
+
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
                         <div id="merchant-dashboard-content" class="dashboard-content active">
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -93,14 +173,17 @@
                         <div id="merchant-campaign-detail-content" class="dashboard-content"></div>
 
                         <div id="merchant-campaigns-content" class="dashboard-content">
-                             <div class="flex justify-between items-center mb-6">
+                            <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-bold text-slate-800">所有行銷活動</h2>
-                                <button onclick="openAIChat()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors flex items-center space-x-2"><span>+</span><span>建立新活動</span></button>
+                                <button onclick="openModal('new-campaign-modal')" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors flex items-center space-x-2">
+                                <span>+</span>
+                                <span>建立新活動</span>
+                            </button>                           
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-between"><div><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">進行中</span><h3 class="font-bold text-lg mt-2 text-slate-800">聯名無線耳機預熱</h3><p class="text-sm text-gray-500 mt-1">合作網紅: 5 位</p></div><div class="mt-4"><div class="flex justify-between text-sm text-gray-600"><span>進度</span><span>60%</span></div><div class="w-full bg-gray-200 rounded-full h-2 mt-1"><div class="bg-yellow-400 h-2 rounded-full" style="width: 60%"></div></div><button onclick="showCampaignDetail('聯名無線耳機預熱')" class="w-full mt-4 text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200">查看詳情</button></div></div>
+                          
+                            <div id="campaigns-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             </div>
-                        </div>
+                        </div>                        
 
                         <div id="merchant-reports-content" class="dashboard-content">
                             <div class="bg-white rounded-xl shadow p-6"><h3 class="font-bold text-slate-800 mb-4">曝光 & 點擊趨勢</h3><div class="h-80"><canvas id="performanceLineChart"></canvas></div></div>
@@ -115,11 +198,13 @@
                     </main>
                 </div>
             </div>
+         <div id="merchant-sidebar-overlay" onclick="toggleMenu('merchant')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
         </div>
+
         
         <div id="influencer-dashboard-view" class="view">
              <div class="flex h-screen bg-slate-50">
-                <div class="w-64 bg-white shadow-md flex-shrink-0">
+                <div id="influencer-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
                     <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
                     <nav class="mt-6">
                         <a href="#" onclick="switchTab('influencer', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
@@ -127,11 +212,27 @@
                         <a href="#" onclick="switchTab('influencer', 'invitations')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">合作邀請</a>
                         <a href="#" onclick="switchTab('influencer', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
                         <a href="#" onclick="switchTab('influencer', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
-                        <a href="#" onclick="logout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
+                        <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
                     </nav>
                 </div>
-                <div class="flex-1 flex flex-col overflow-hidden">
-                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0"><h1 id="influencer-header-title" class="text-2xl font-bold text-slate-800">總覽</h1><div class="flex items-center space-x-4"><span class="text-gray-600">你好, 小希</span><img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/FEFBF6/4A5568?text=希" alt="網紅頭像"></div></header>
+
+                
+                <div class="flex-1 flex flex-col overflow-hidden w-full">
+                    
+                    <header class="flex justify-between items-center p-4 bg-white border-b flex-shrink-0">
+                        <button onclick="toggleMenu('influencer')" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-800 z-40">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                             </svg>
+                         </button>
+
+                        <h1 id="influencer-header-title" class="text-2xl font-bold text-slate-800">總覽</h1>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-600"></span>
+                            <button onclick="handleLogout()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 hidden">登出</button>
+                        </div>
+                    </header>
+
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
                         <div id="influencer-dashboard-content" class="dashboard-content active"><div class="h-80"><canvas id="valueRadarChart"></canvas></div></div>
                         <div id="influencer-value-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6"><h3 class="text-lg font-bold text-slate-800 mb-4">點擊社群平台查看詳細分析報告</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><div onclick="showPlatformDetail('instagram')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/E1306C/FFFFFF?text=IG" class="rounded-full" /><div><p class="font-bold">hsi_daily</p><p class="text-sm text-gray-500">Instagram</p></div></div><div onclick="showPlatformDetail('youtube')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/FF0000/FFFFFF?text=YT" class="rounded-full" /><div><p class="font-bold">小希的探索頻道</p><p class="text-sm text-gray-500">YouTube</p></div></div><div class="p-4 border border-dashed rounded-lg flex items-center space-x-4 text-gray-400"><img src="https://placehold.co/48x48/000000/FFFFFF?text=TK" class="rounded-full" /><div><p class="font-bold">連結 TikTok</p><p class="text-sm">尚未連結</p></div></div></div></div></div>
@@ -141,146 +242,596 @@
                     </main>
                 </div>
             </div>
+        <div id="influencer-sidebar-overlay" onclick="toggleMenu('influencer')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
         </div>
 
-        <div id="ai-chat-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col h-[70vh] transform scale-95 transition-transform duration-300"><div class="p-4 border-b flex justify-between items-center"><h2 class="text-lg font-bold text-slate-800">AI 行銷顧問</h2><button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div><div id="chat-window" class="flex-1 p-4 overflow-y-auto space-y-4"></div><div class="p-4 border-t"><div class="flex space-x-2"><input id="chat-input" type="text" class="flex-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="請輸入您的回覆..."><button onclick="sendChatMessage()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">發送</button></div></div></div></div>
+        <div id="new-campaign-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col h-[90vh] transform scale-95 transition-transform duration-300">
+                <div class="p-5 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-slate-800">建立新的行銷需求</h2>
+                    <button onclick="closeModal('new-campaign-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                </div>
+
+                <form id="campaign-form">
+                    <div class="flex-1 p-6 overflow-y-auto space-y-6">
+                        <div>
+                            <label for="brief-product-name" class="block text-sm font-medium text-gray-700">產品名稱</label>
+                            <input type="text" id="brief-product-name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：我的酷炫無線耳機">
+                        </div>
+                        <div>
+                            <label for="brief-product-desc" class="block text-sm font-medium text-gray-700">產品描述與特色</label>
+                            <textarea id="brief-product-desc" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="描述您的產品，以及希望網紅強調的賣點"></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="brief-impressions" class="block text-sm font-medium text-gray-700">預期曝光次數</label>
+                                <input type="number" id="brief-impressions" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：100000">
+                            </div>
+                            <div>
+                                <label for="brief-budget" class="block text-sm font-medium text-gray-700">預算範圍 (NT$)</label>
+                                <input type="number" id="brief-budget" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：50000">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="brief-influencer-count" class="block text-sm font-medium text-gray-700">希望網紅數量</label>
+                                <input type="number" id="brief-influencer-count" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：10">
+                            </div>
+                            <div>
+                                <label for="brief-follower-range" class="block text-sm font-medium text-gray-700">網紅粉絲數區間</label>
+                                <select id="brief-follower-range" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                    <option>不限</option>
+                                    <option>1萬 - 5萬</option>
+                                    <option>5萬 - 10萬</option>
+                                    <option>10萬以上</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">希望發布平台</label>
+                            <div id="brief-platforms" class="mt-2 flex flex-wrap gap-4">
+                                <label class="inline-flex items-center"><input type="checkbox" value="Instagram" class="rounded border-gray-300"> <span class="ml-2">Instagram</span></label>
+                                <label class="inline-flex items-center"><input type="checkbox" value="YouTube" class="rounded border-gray-300"> <span class="ml-2">YouTube</span></label>
+                                <label class="inline-flex items-center"><input type="checkbox" value="Facebook" class="rounded border-gray-300"> <span class="ml-2">Facebook</span></label>
+                                        <label class="inline-flex items-center"><input type="checkbox" value="TikTok" class="rounded border-gray-300"> <span class="ml-2">TikTok</span></label>
+                                <label class="inline-flex items-center"><input type="checkbox" value="XiaoHongShu" class="rounded border-gray-300"> <span class="ml-2">小紅書</span></label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="p-5 border-t bg-slate-50">
+                    <button onclick="handleSaveBrief()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">儲存需求並開始配對</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="ai-chat-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col h-[70vh] transform scale-95 transition-transform duration-300"><div class="p-4 border-b flex justify-between items-center"><h2 class="text-lg font-bold text-slate-800">AI 行銷顧問</h2><button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div><div id="chat-window" class="flex-1 p-4 overflow-y-auto space-y-4"></div><div class="p-4 border-t"><div class="flex space-x-2"><input id="chat-input" type="text" onkeydown="if(event.key === 'Enter') sendChatMessage()" class="flex-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="請輸入您的回覆..."><button onclick="sendChatMessage()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">發送</button></div></div></div></div>
         <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300"></div></div>
     </div>
 
-    <script>
-        // --- 全域變數與模擬數據 ---
-        let currentOpenModal = null;
-        const platformData = {
-            instagram: { name: "Instagram", handle: "hsi_daily", followers: "15.2k", price: "NT$ 8,000 - 15,000", tags: ["#美食", "#旅遊", "#生活"], genderData: [78, 22], ageData: [15, 55, 25, 5] },
-            youtube: { name: "YouTube", handle: "小希的探索頻道", followers: "8.9k", price: "NT$ 20,000 - 35,000", tags: ["#開箱", "#VLOG", "#評測"], genderData: [40, 60], ageData: [20, 50, 20, 10] },
-        };
-        const campaignDetailData = { };
+    <script type="module">
+    // --- 1. Firebase 初始化 (這部分不變) ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged,
+            GoogleAuthProvider, 
+            signInWithRedirect, 
+            getRedirectResult,
+            signInWithPopup
+        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
-        // --- 核心導航邏輯 ---
+    // === 修改部分 START：從 Firestore 匯入更多我們需要的功能 ===
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc,
+            query,
+            where,
+            getDocs,
+            doc,
+            getDoc,
+            setDoc,
+            updateDoc,       // 新增：用於更新文件 (例如：軟刪除)
+            onSnapshot,      // 新增：用於即時監聽資料變化
+            orderBy          // 新增：用於排序查詢結果
+        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+    // === 修改部分 END ===
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
+          authDomain: "test-b493a.firebaseapp.com",
+          projectId: "test-b493a",
+          storageBucket: "test-b493a.firebasestorage.app",
+          messagingSenderId: "1089014108157",
+          appId: "1:1089014108157:web:2ac36c728f861795909394",
+          measurementId: "G-1GY922PWL9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // === 新增部分 START: 定義聊天相關的全域變數 ===
+        let currentChatId = null; // 儲存目前對話的 Document ID
+        let unsubscribeChatListener = null; // 儲存監聽器，以便在關閉時取消
+        // === 新增部分 END ===
+
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result) {
+                    console.log('Google 重新導向登入成功:', result.user);
+                }
+            }).catch((error) => {
+                console.error('Google 重新導向失敗:', error);
+                alert('Google 登入時發生錯誤：' + error.message);
+            });
+
+    // --- 2. 核心 UI 導航與控制函式 ---
         function navigateTo(viewId) {
             document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
+            const targetView = document.getElementById(viewId);
+            if (targetView) {
+                targetView.classList.add('active');
+            }
             window.scrollTo(0, 0);
         }
 
-        function loginAs(role) {
-            if (role === 'merchant') {
-                navigateTo('merchant-dashboard-view');
-                switchTab('merchant', 'dashboard');
-            } else if (role === 'influencer') {
-                navigateTo('influencer-dashboard-view');
-                switchTab('influencer', 'dashboard');
-            }
-        }
-
-        function logout() {
-            navigateTo('login-view');
-        }
-
         const headerTitles = {
-            merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定', campaignDetail: '活動詳情' },
+            merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
             influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
         };
-
-        function switchTab(role, tabId, titleOverride = null) {
+    
+    // === 修改部分 START：修改 switchTab 以支援詳情頁 ===
+        function switchTab(role, tabId) {
             const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
             const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
             const headerTitle = document.getElementById(`${role}-header-title`);
-            
+        
             sidebarLinks.forEach(link => {
                 link.classList.remove('active');
-                if (link.getAttribute('onclick').includes(`'${tabId}'`)) link.classList.add('active');
+            // 如果是詳情頁，則讓 'campaigns' 保持 active
+                const linkTab = tabId === 'campaign-detail' ? 'campaigns' : tabId;
+                if (link.getAttribute('onclick').includes(`'${linkTab}'`)) {
+                    link.classList.add('active');
+                }
             });
 
             contents.forEach(content => content.classList.remove('active'));
             const activeContent = document.getElementById(`${role}-${tabId}-content`);
             if (activeContent) activeContent.classList.add('active');
-            
-            headerTitle.textContent = titleOverride || headerTitles[role][tabId];
-
-            // 動態渲染圖表
-            if (role === 'influencer' && tabId === 'dashboard') setTimeout(renderRadarChart, 50);
-            if (role === 'merchant' && tabId === 'reports') setTimeout(renderMerchantReportCharts, 50);
-        }
-
-        function showCampaignDetail(campaignName) {
-            switchTab('merchant', 'campaign-detail', `活動詳情: ${campaignName}`);
-            const contentArea = document.getElementById('merchant-campaign-detail-content');
-            contentArea.innerHTML = `
-                <div class="bg-white rounded-xl shadow p-6 mb-6">
-                    <h2 class="text-xl font-bold text-slate-800">${campaignName}</h2>
-                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div><p class="text-sm text-gray-500">狀態</p><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">進行中</span></div>
-                        <div><p class="text-sm text-gray-500">預算</p><p class="font-bold">NT$ 80,000</p></div>
-                        <div><p class="text-sm text-gray-500">總曝光</p><p class="font-bold">350k</p></div>
-                        <div><p class="text-sm text-gray-500">總點擊</p><p class="font-bold">8,230</p></div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow">
-                    <h3 class="p-6 font-bold text-slate-800 border-b">合作網紅列表</h3>
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50"><tr><th class="p-4 text-left text-xs font-medium text-gray-500">網紅</th><th class="p-4 text-left text-xs font-medium text-gray-500">進度</th><th class="p-4 text-left text-xs font-medium text-gray-500">成效</th><th class="p-4 text-left text-xs font-medium text-gray-500">操作</th></tr></thead>
-                        <tbody class="divide-y">
-                            <tr>
-                                <td class="p-4 flex items-center"><img src="https://placehold.co/40x40/ECC94B/4A5568?text=C" class="rounded-full mr-3"/>Celia</td>
-                                <td class="p-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">審核中</span></td>
-                                <td class="p-4 text-sm text-gray-500">曝光: 80k, 點擊: 1.5k</td>
-                                <td class="p-4"><button class="text-teal-600 font-semibold text-sm">審核內容</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
         
-        function showPlatformDetail(platform) {
-            const data = platformData[platform];
-            const modalContent = document.getElementById('platform-detail-content');
-            modalContent.innerHTML = `
-                <div class="p-6 border-b flex justify-between items-center flex-shrink-0">
-                    <div class="flex items-center space-x-4"><img src="https://placehold.co/48x48/${platform === 'instagram' ? 'E1306C' : 'FF0000'}/FFFFFF?text=${platform.substring(0,2).toUpperCase()}" class="rounded-full" /><div><h2 class="text-xl font-bold text-slate-800">${data.handle}</h2><p class="text-sm text-gray-500">${data.name}</p></div></div>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                </div>
-                <div class="p-6 overflow-y-auto">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="bg-white p-4 rounded-lg text-center"><p class="text-sm text-gray-500">粉絲數</p><p class="text-2xl font-bold">${data.followers}</p></div><div class="bg-white p-4 rounded-lg text-center"><p class="text-sm text-gray-500">互動率</p><p class="text-2xl font-bold">${platform === 'instagram' ? '5.2%' : '3.8%'}</p></div><div class="bg-white p-4 rounded-lg text-center"><p class="text-sm text-gray-500">預估業配價值</p><p class="text-2xl font-bold text-teal-600">${data.price}</p></div></div>
-                    <div class="bg-white p-6 rounded-lg mb-6"><h3 class="font-bold text-slate-800 mb-2">內容風格標籤</h3><div class="flex flex-wrap gap-2">${data.tags.map(tag => `<span class="bg-slate-200 text-slate-700 text-xs font-medium px-2.5 py-0.5 rounded-full">${tag}</span>`).join('')}</div></div>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white rounded-lg p-6"><h3 class="font-bold text-slate-800 mb-4">粉絲性別分佈</h3><div class="h-64"><canvas id="detailGenderChart"></canvas></div></div><div class="bg-white rounded-lg p-6"><h3 class="font-bold text-slate-800 mb-4">粉絲年齡分佈</h3><div class="h-64"><canvas id="detailAgeChart"></canvas></div></div></div>
-                </div>`;
-            openModal('platform-detail-modal');
-            setTimeout(() => {
-                const genderCtx = document.getElementById('detailGenderChart')?.getContext('2d');
-                if(genderCtx) new Chart(genderCtx, { type: 'doughnut', data: { labels: ['女性', '男性'], datasets: [{ data: data.genderData, backgroundColor: ['#fb7185', '#60a5fa'] }] }, options: { responsive: true, maintainAspectRatio: false } });
-                const ageCtx = document.getElementById('detailAgeChart')?.getContext('2d');
-                if(ageCtx) new Chart(ageCtx, { type: 'bar', data: { labels: ['18-24', '25-34', '35-44', '45+'], datasets: [{ label: '年齡分佈 (%)', data: data.ageData, backgroundColor: '#818cf8' }] }, options: { responsive: true, maintainAspectRatio: false } });
-            }, 100);
-        }
-        
-        function openModal(modalId) { const modal = document.getElementById(modalId); currentOpenModal = modal; modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div > div').classList.remove('scale-95'); }, 10); }
-        function closeModal() { if (!currentOpenModal) return; currentOpenModal.classList.add('opacity-0'); currentOpenModal.querySelector('div > div').classList.add('scale-95'); setTimeout(() => { currentOpenModal.classList.add('hidden'); currentOpenModal = null; }, 300); }
-        
-        function openAIChat() {
-            openModal('ai-chat-modal');
-            const chatWindow = document.getElementById('chat-window');
-            chatWindow.innerHTML = '';
-            addMessage('ai', "您好！我是您的專屬行銷顧問。今天想推廣什麼好產品呢？");
-        }
-        function closeAIChat() { closeModal(); }
-        function sendChatMessage() { /* ... */ }
-
-        function renderRadarChart() {
-            const ctx = document.getElementById('valueRadarChart')?.getContext('2d');
-            if(!ctx) return;
-            if(window.myRadarChart) window.myRadarChart.destroy();
-            window.myRadarChart = new Chart(ctx, { type: 'radar', data: { labels: ['影響力廣度', '互動深度', '受眾商業價值', '品牌安全度', '轉換潛力'], datasets: [{ label: '綜合價值評估', data: [85, 90, 75, 95, 70], fill: true, backgroundColor: 'rgba(56, 178, 172, 0.2)', borderColor: 'rgb(56, 178, 172)' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { suggestedMin: 0, suggestedMax: 100 } } } });
-        }
-         function renderMerchantReportCharts() {
-            const lineCtx = document.getElementById('performanceLineChart')?.getContext('2d');
-            if(lineCtx) {
-                if(window.myLineChart) window.myLineChart.destroy();
-                window.myLineChart = new Chart(lineCtx, { type: 'line', data: { labels: ['一月', '二月', '三月', '四月', '五月'], datasets: [{ label: '曝光', data: [120, 190, 300, 500, 220], borderColor: '#3b82f6', tension: 0.1 }, { label: '點擊', data: [12, 19, 30, 50, 22], borderColor: '#14b8a6', tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        // 只有在 headerTitles 中有定義時才更新標題，避免覆蓋詳情頁的自訂標題
+            if (headerTitles[role][tabId]) {
+                headerTitle.textContent = headerTitles[role][tabId];
             }
         }
+    // === 修改部分 END ===
+
+    // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
+        window.navigateTo = navigateTo;
+        window.switchTab = switchTab;
+    
+        window.toggleMenu = function(role) {
+            const sidebar = document.getElementById(`${role}-sidebar`);
+            const overlay = document.getElementById(`${role}-sidebar-overlay`);
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+        }
+
+        window.openModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.querySelector('div > div').classList.remove('scale-95');
+                }, 10);
+            }
+        }
+        window.closeModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            if(modal) {
+                modal.classList.add('opacity-0');
+                modal.querySelector('div > div').classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+                
+
+        // === 新增部分 START: AI 聊天機器人核心功能 ===
+
+        // 功能 1: 打開 AI 聊天視窗，並建立一個帶有 Context 的新對話
+        window.openAIChat = async function() {
+            const user = auth.currentUser;
+            if (!user) return alert("請先登入才能使用 AI 顧問！");
+
+            // 每次打開都是一個全新的對話
+            // 先清空舊的對話內容
+            document.getElementById('chat-window').innerHTML = '';
+
+            // 1. 定義這個聊天機器人的角色指令 (Context)
+            const contextPrompt = `
+                你是一個名為 "MatchAI 小幫手" 的專業網紅行銷顧問。
+                你的任務是協助商家 (使用者) 構思與規劃網紅行銷活動。
+                你的回答應該：
+                1. 專業、友善且具有啟發性。
+                2. 針對使用者模糊的想法，提出具體的問題來引導他們。例如，詢問他們的「產品類型」、「目標客群」、「預算範圍」。
+                3. 當使用者提供足夠資訊後，幫他們總結成一個清晰的「行銷活動摘要」。
+                4. 語氣要像一個經驗豐富的行銷策略師。
+            `;
+
+            try {
+                // 2. 在 Firestore 的 "chats" collection 中建立一個新文件
+                const chatDocRef = await addDoc(collection(db, "chats"), {
+                    context: contextPrompt,
+                    userId: user.uid,
+                    createdAt: new Date(),
+                    status: 'INITIALIZED' // 可以自訂狀態
+                });
+
+                currentChatId = chatDocRef.id; // 儲存這個新對話的 ID
+
+                // 3. 開始監聽這個對話的回覆
+                listenForChatMessages(currentChatId);
+
+                // 4. 顯示歡迎訊息並打開 Modal
+                appendChatMessage('bot', '您好！我是您的 AI 行銷顧問，有什麼可以協助您規劃行銷活動的嗎？');
+                openModal('ai-chat-modal');
+
+            } catch (error) {
+                console.error("建立 AI 對話失敗:", error);
+                alert("抱歉，AI 顧問目前無法連線，請稍後再試。");
+            }
+        }
+
+        // 功能 2: 關閉 AI 聊天視窗，並取消監聽
+        window.closeAIChat = function() {
+            closeModal('ai-chat-modal');
+            
+            // 如果有正在執行的監聽器，就取消它
+            if (unsubscribeChatListener) {
+                unsubscribeChatListener();
+                unsubscribeChatListener = null;
+                console.log(`已取消對話 ${currentChatId} 的監聽。`);
+            }
+            
+            // 重設變數
+            currentChatId = null; 
+        }
+
+        // 功能 3: 發送訊息
+        window.sendChatMessage = async function() {
+            const chatInput = document.getElementById('chat-input');
+            const messageText = chatInput.value.trim();
+
+            if (messageText === '' || !currentChatId) return;
+
+            // 立即在畫面上顯示使用者訊息
+            appendChatMessage('user', messageText);
+            chatInput.value = '';
+
+            try {
+                // 在 /chats/{chatId}/messages 子集合中新增一筆使用者的提問
+                const messagesColRef = collection(db, "chats", currentChatId, "messages");
+                await addDoc(messagesColRef, {
+                    prompt: messageText,
+                    createTime: new Date()
+                });
+                
+                // 可以在這裡加上 "正在輸入中..." 的提示
+                appendChatMessage('bot', '...', true); // true 表示這是 "思考中" 提示
+
+            } catch (error) {
+                console.error("發送訊息失敗:", error);
+                appendChatMessage('bot', '抱歉，訊息發送失敗。');
+            }
+        }
+
+        // 功能 4: 監聽 Firestore 的回覆並更新 UI
+        function listenForChatMessages(chatId) {
+            const messagesColRef = collection(db, "chats", chatId, "messages");
+            const q = query(messagesColRef, orderBy("createTime"));
+
+            // onSnapshot 會在子集合有任何變動時觸發
+            unsubscribeChatListener = onSnapshot(q, (snapshot) => {
+                // 先移除 "正在輸入中" 的提示
+                const thinkingIndicator = document.getElementById('chat-window').querySelector('.thinking-indicator');
+                if(thinkingIndicator) thinkingIndicator.parentElement.remove();
+
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") { // 只處理新增加的訊息
+                        const data = change.doc.data();
+                        
+                        // Extension 的回覆會包含 "response" 欄位
+                        if (data.response) {
+                             appendChatMessage('bot', data.response);
+                        }
+                    }
+                });
+            }, (error) => {
+                 console.error("監聽聊天訊息失敗:", error);
+            });
+        }
+        
+        // 功能 5: 將訊息新增到聊天視窗的輔助函式
+        function appendChatMessage(sender, text, isThinking = false) {
+            const chatWindow = document.getElementById('chat-window');
+            
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add(sender === 'user' ? 'user-message' : 'bot-message', 'mb-2');
+
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message-bubble');
+            messageBubble.textContent = text;
+            
+            if(isThinking) {
+                 messageBubble.classList.add('thinking-indicator');
+            }
+
+            messageWrapper.appendChild(messageBubble);
+            chatWindow.appendChild(messageWrapper);
+            
+            // 自動滾動到最底部
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+
+
+
+    // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
+
+    // 功能 1: 根據傳入的活動資料，產生 HTML 卡片
+        function renderCampaigns(campaigns) {
+            const listElement = document.getElementById('campaigns-list');
+            if (!listElement) return;
+
+            if (campaigns.length === 0) {
+                listElement.innerHTML = `<p class="col-span-full text-center text-gray-500">目前沒有任何行銷活動，點擊右上角建立一個吧！</p>`;
+                return;
+            }
+
+            let campaignsHTML = '';
+            campaigns.forEach(campaign => {
+                const data = campaign.data;
+                const id = campaign.id;
+
+                let statusBadge = '';
+                switch (data.status) {
+                    case 'pending_match':
+                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">正在配對中</span>`;
+                        break;
+                    case 'matched':
+                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">配對完成</span>`;
+                        break;
+                    case 'in_progress':
+                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">執行中</span>`;
+                        break;
+                    default:
+                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">未知</span>`;
+                }
+            
+                let deleteButtonHTML = '';
+                if (data.status === 'pending_match') {
+                    deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}')" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100">刪除</button>`;
+                }
+
+                campaignsHTML += `
+                    <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-between">
+                        <div>
+                            ${statusBadge}
+                            <h3 class="font-bold text-lg mt-2 text-slate-800">${data.productName}</h3>
+                            <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
+                            <p class="text-sm text-gray-500 mt-1">希望網紅數: ${data.influencerCount} 位</p>
+                        </div>
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200">查看詳情</button>
+                            ${deleteButtonHTML}
+                        </div>
+                    </div>
+                `;
+            });
+            listElement.innerHTML = campaignsHTML;
+        }
+
+    // 功能 2: 建立一個即時監聽器，當資料庫有變化時自動更新畫面
+        let unsubscribeCampaigns = null; 
+        function listenForCampaigns() {
+            const user = auth.currentUser;
+            if (!user) return;
+            if (unsubscribeCampaigns) unsubscribeCampaigns();
+
+            const briefsRef = collection(db, "briefs");
+            const q = query(briefsRef, 
+                where("merchantId", "==", user.uid),// 只查詢屬於當前商家的
+                where("isDeleted", "==", false), // 只查詢未被軟刪除的
+                orderBy("createdAt", "desc") // 按照建立時間倒序排列
+            );
+
+            unsubscribeCampaigns = onSnapshot(q, (querySnapshot) => {
+                const campaigns = querySnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+                renderCampaigns(campaigns);// 將獲取的資料傳遞給渲染函式
+            }, (error) => {
+                console.error("監聽活動失敗: ", error);
+                 // 可以在此處加入錯誤提示 UI
+            });
+        }
+
+    // 功能 3: 處理刪除活動的邏輯 (軟刪除)
+        window.handleDeleteCampaign = async function(campaignId) {
+            if (!campaignId || !confirm("您確定要刪除這個行銷活動嗎？此操作無法復原。")) return;
+            try {
+                const campaignDocRef = doc(db, "briefs", campaignId);
+                await updateDoc(campaignDocRef, { isDeleted: true });
+                alert("活動已刪除。");
+            } catch (error) {
+                console.error("刪除活動失敗: ", error);
+                alert("刪除失敗，請稍後再試。");
+            }
+       }
+
+    // 功能 4: 處理顯示活動詳情的邏輯
+        window.showCampaignDetail = async function(campaignId) {
+            if (!campaignId) return;
+            try {
+                const docSnap = await getDoc(doc(db, "briefs", campaignId));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const contentArea = document.getElementById('merchant-campaign-detail-content');
+                    contentArea.innerHTML = `
+                        <div class="bg-white rounded-xl shadow p-6 mb-6">
+                            <h2 class="text-xl font-bold text-slate-800">${data.productName}</h2>
+                            <p class="text-gray-600 mt-2">${data.productDesc}</p>
+                            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-t pt-4">
+                                <div><p class="text-sm text-gray-500">狀態</p><p class="font-bold">${data.status}</p></div>
+                                <div><p class="text-sm text-gray-500">預算</p><p class="font-bold">NT$ ${data.budget.toLocaleString()}</p></div>
+                                <div><p class="text-sm text-gray-500">預期曝光</p><p class="font-bold">${data.impressions.toLocaleString()}</p></div>
+                                <div><p class="text-sm text-gray-500">希望網紅數</p><p class="font-bold">${data.influencerCount}</p></div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow">
+                            <h3 class="p-6 font-bold text-slate-800 border-b">合作網紅列表 (開發中)</h3>
+                            <div class="p-6 text-center text-gray-500">配對完成後，這裡會顯示合作的網紅名單與成效。</div>
+                        </div>
+                    `;
+                    switchTab('merchant', 'campaign-detail');
+                    document.getElementById('merchant-header-title').textContent = `活動詳情: ${data.productName}`;
+                } else {
+                    alert("無法載入活動詳情。");
+                }
+            } catch (error) {
+                console.error("讀取詳情失敗: ", error);
+                alert("讀取詳情時發生錯誤。");
+            }
+        }
+    // === 新增部分 END ===
+
+    // === 修改部分 START: 修改 handleSaveBrief 以符合新架構 ===
+        window.handleSaveBrief = async function() {
+            const user = auth.currentUser;
+            if (!user) return alert('請先登入！');
+
+            const briefData = {
+                productName: document.getElementById('brief-product-name').value,
+                productDesc: document.getElementById('brief-product-desc').value,
+                impressions: parseInt(document.getElementById('brief-impressions').value) || 0,
+                budget: parseInt(document.getElementById('brief-budget').value) || 0,
+                influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
+                followerRange: document.getElementById('brief-follower-range').value,
+               platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
+                status: 'pending_match',
+                isDeleted: false, // 新增：軟刪除標記
+                merchantId: user.uid,
+                merchantEmail: user.email,
+                createdAt: new Date()
+            };
+
+            if (!briefData.productName) return alert('請至少填寫產品名稱！');
+
+            try {
+                await addDoc(collection(db, "briefs"), briefData);
+                alert('您的需求已成功送出！');
+                closeModal('new-campaign-modal');
+            // 清空表單，注意: 這需要你在 HTML 中用 <form> 標籤包住 modal 的內容
+                document.getElementById('campaign-form').reset();
+            } catch (error) {
+                console.error("儲存需求單失敗:", error);
+                alert('儲存失敗，請查看 console 的錯誤訊息。');
+            }
+        }
+    // === 修改部分 END ===
+
+    // --- 4. Firebase 驗證功能 (這部分不變) ---
+        window.handleRegister = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert('註冊成功！現在您可以登入了。');
+            } catch (error) {
+                alert('註冊失敗：' + error.message);
+            }
+        };
+
+        window.handleLogin = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert('登入失敗：' + error.message);
+            }
+        };
+
+        window.handleLogout = async function() {
+            try {
+            await signOut(auth);
+            } catch (error) {
+                alert('登出失敗：' + error.message);
+            }
+        };
+
+        window.handleGoogleLogin = async function() {
+            const provider = new GoogleAuthProvider();
+            try {
+                // 直接使用我們在頂部匯入的 signInWithPopup
+                const result = await signInWithPopup(auth, provider);
+                console.log("Google 彈出視窗登入成功:", result.user);
+            } catch (error) {
+                console.error("Google 登入失敗，錯誤訊息:", error);
+                alert("Google 登入時發生錯誤: " + error.message);
+            }
+        };
+
+        window.enterDashboard = function(role) {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('發生錯誤，請重新登入！');
+                navigateTo('login-view');
+                return;
+            }
+
+            if (role === 'merchant') {
+                navigateTo('merchant-dashboard-view');
+                document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
+                document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
+                switchTab('merchant', 'dashboard');
+            } else if (role === 'influencer') {
+                navigateTo('influencer-dashboard-view');
+                document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
+                document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
+                switchTab('influencer', 'dashboard');
+            }
+        };
+
+
+    // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('使用者已登入，開始監聽活動...');
+            // 當用戶登入後，立刻開始監聽他/她的活動資料
+                listenForCampaigns();
+                navigateTo('role-selection-view');
+            } else {
+                console.log('使用者已登出，停止監聽。');
+            // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
+                if (unsubscribeCampaigns) {
+                    unsubscribeCampaigns();
+                }
+                navigateTo('login-view');
+            }
+        });
+    // === 修改部分 END ===
     </script>
+
+
 </body>
 </html>
-
