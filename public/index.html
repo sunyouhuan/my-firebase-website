@@ -438,36 +438,34 @@ function resetChatWindow() {
 
 // 啟動監聽：依 createTime 由小到大顯示最新 100 則
 function startChatListener(uid) {
-  if (chatUnsub) chatUnsub(); // 保險：重啟前先關閉舊監聽
+  if (chatUnsub) chatUnsub(); // 先關舊監聽，避免重複
 
   const msgsRef = collection(db, 'users', uid, 'messages');
-  const q = query(msgsRef, orderBy('createTime', 'asc'), limit(100));
-
-  // 我們用「已輸出消息集合」避免重覆渲染（快照每次全部回來）
-  const rendered = new Set();
+  // ✅ 用 createTimeMs 排序，立即穩定
+  const q = query(msgsRef, orderBy('createTimeMs', 'asc'), limit(100));
 
   chatUnsub = onSnapshot(q, (snap) => {
-    snap.docChanges().forEach(change => {
-      const id = change.doc.id;
-      if (rendered.has(id)) return;
-      const d = change.doc.data();
+    // ✅ 全量重繪，永遠會吃到 modified 後的 response
+    const $chat = document.getElementById('chat-window');
+    if (!$chat) return;
+    $chat.innerHTML = '';
 
-      // 先畫使用者的 prompt
+    snap.docs.forEach(docSnap => {
+      const d = docSnap.data();
       if (d.prompt) appendChatBubble(d.prompt, 'me');
-
-      // 若擴充程式已寫回 response，就畫機器人
       if (d.response) appendChatBubble(d.response, 'bot');
-
-      // 還沒有 response 時，給個狀態提示（選擇性）
-      if (!d.response && d.status) appendChatBubble(`（狀態：${d.status}）`, 'bot');
-
-      rendered.add(id);
+      else if (d.status) appendChatBubble(`（狀態：${d.status}）`, 'bot');
     });
+
+    $chat.scrollTop = $chat.scrollHeight;
   }, (err) => {
     console.error('聊天監聽失敗：', err);
     appendChatBubble('系統：監聽訊息時發生錯誤，請稍後重試。', 'bot');
   });
 }
+
+
+
 
 // === 給 HTML 呼叫的 3 個函式 ===
 window.openAIChat = function openAIChat() {
@@ -518,6 +516,7 @@ window.sendChatMessage = async function sendChatMessage() {
     await addDoc(msgsRef, {
       prompt: text,              // 擴充程式讀這個欄位
       createTime: serverTimestamp(),
+      createTimeMs: Date.now() 
       // 你也可在這裡嘗試擴充程式支援的參數（若版本支援）：
       // temperature: 0.4, topP: 0.95, topK: 32,
     });
