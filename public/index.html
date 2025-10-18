@@ -207,7 +207,17 @@
         <div>
           <label class="block text-sm font-medium text-gray-700">Logo 圖片 URL</label>
           <input id="company-logo" type="url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="https://…/logo.png">
-          <p class="text-xs text-gray-500 mt-1">（之後可改用 Firebase Storage 上傳）</p>
+          <p class="text-xs text-gray-500 mt-1">你也可以直接上傳檔案（如下），完成後會自動填入這個欄位。</p>
+        </div>
+        <div class="mt-3">
+          <label class="block text-sm font-medium text-gray-700">或上傳 Logo 檔案</label>
+          <input id="company-logo-file" type="file" accept="image/*" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+          <div class="flex items-center gap-3 mt-2">
+            <button id="upload-logo-btn" class="bg-teal-600 text-white font-semibold py-1.5 px-3 rounded hover:bg-teal-700" onclick="uploadCompanyLogo()">上傳 Logo</button>
+            <progress id="logo-upload-progress" value="0" max="100" class="w-40"></progress>
+            <span id="logo-upload-status" class="text-xs text-gray-600"></span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">上傳完成後，會自動把下載連結填入上面的「Logo 圖片 URL」。</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700">公司描述</label>
@@ -354,7 +364,8 @@
         <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300"></div></div>
     </div>
 
-    <script type="module">
+    <script type="module">import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-storage.js';
+
     // --- 1. Firebase 初始化 (這部分不變) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { 
@@ -861,51 +872,50 @@ window.sendChatMessage = async function sendChatMessage() {
     // === 修改部分 END ===
     
 
-
-// === 公司設定：Firestore doc 位置（沿用 users/{uid}/company/profile） ===
+// === 公司設定：Firestore 文件位置 ===
 const companyDocRef = (uid) => doc(db, 'users', uid, 'company', 'profile');
 
-// === 公司設定：渲染「總覽」公司卡片 ===
+// === Firebase Storage 初始化 ===
+const storage = getStorage(app);
+
+// === 公司卡片渲染 ===
 function renderCompanyCard(data) {
   const card = document.getElementById('company-card');
   if (!card) return;
   if (!data) { card.classList.add('hidden'); return; }
-
-  const { name, regNo, phone, address, website, logoUrl } = data;
   const S = (id) => document.getElementById(id);
-
-  const setText = (id, text) => { const el = S(id); if (el) el.textContent = text || ''; };
-
-  const logo = S('company-card-logo');
-  if (logo) logo.src = logoUrl || '';
-
-  setText('company-card-name', name || '(未命名公司)');
-  setText('company-card-regno', regNo ? `統編：${regNo}` : '');
-  setText('company-card-phone', phone || '');
-  setText('company-card-address', address || '');
-  const site = S('company-card-website');
-  if (site) { site.textContent = website || ''; site.href = website || '#'; }
-
+  const { name, regNo, phone, address, website, logoUrl } = data;
+  if (S('company-card-logo')) S('company-card-logo').src = logoUrl || '';
+  if (S('company-card-name')) S('company-card-name').textContent = name || '(未命名公司)';
+  if (S('company-card-regno')) S('company-card-regno').textContent = regNo ? `統編：${regNo}` : '';
+  if (S('company-card-phone')) S('company-card-phone').textContent = phone || '';
+  if (S('company-card-address')) S('company-card-address').textContent = address || '';
+  if (S('company-card-website')) { S('company-card-website').textContent = website || ''; S('company-card-website').href = website || '#'; }
   card.classList.remove('hidden');
 }
 
-// === 公司設定：渲染「設定頁」預覽 ===
+// === 設定頁預覽渲染 ===
 function renderCompanyPreview(data) {
   const S = (id) => document.getElementById(id);
-  const setText = (id, text) => { const el = S(id); if (el) el.textContent = text || ''; };
-
-  const logo = S('company-preview-logo');
-  if (logo) logo.src = (data && data.logoUrl) ? data.logoUrl : '';
-
-  setText('company-preview-name', data?.name || '（尚未設定）');
-  setText('preview-line-phone', data?.phone ? `電話：${data.phone}` : '');
-  setText('preview-line-address', data?.address ? `地址：${data.address}` : '');
-  const w = S('preview-line-website');
-  if (w) { w.textContent = data?.website || ''; w.href = data?.website || '#'; }
-  setText('company-preview-desc', data?.description || '');
+  if (!data) {
+    if (S('company-preview-logo')) S('company-preview-logo').src = '';
+    if (S('company-preview-name')) S('company-preview-name').textContent = '（尚未設定）';
+    if (S('preview-line-phone')) S('preview-line-phone').textContent = '';
+    if (S('preview-line-address')) S('preview-line-address').textContent = '';
+    if (S('preview-line-website')) { S('preview-line-website').textContent = ''; S('preview-line-website').href = '#'; }
+    if (S('company-preview-desc')) S('company-preview-desc').textContent = '';
+    return;
+  }
+  const { name, phone, address, website, logoUrl, description } = data;
+  if (S('company-preview-logo')) S('company-preview-logo').src = logoUrl || '';
+  if (S('company-preview-name')) S('company-preview-name').textContent = name || '（尚未設定）';
+  if (S('preview-line-phone')) S('preview-line-phone').textContent = phone ? `電話：${phone}` : '';
+  if (S('preview-line-address')) S('preview-line-address').textContent = address ? `地址：${address}` : '';
+  if (S('preview-line-website')) { S('preview-line-website').textContent = website || ''; S('preview-line-website').href = website || '#'; }
+  if (S('company-preview-desc')) S('company-preview-desc').textContent = description || '';
 }
 
-// === 公司設定：帶入表單 ===
+// === 帶入表單 ===
 function fillCompanyForm(data) {
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
   set('company-name', data?.name);
@@ -917,77 +927,95 @@ function fillCompanyForm(data) {
   set('company-desc', data?.description);
 }
 
-// === 公司設定：重設表單 ===
-window.resetCompanyForm = function resetCompanyForm() {
-  fillCompanyForm({});
-  renderCompanyPreview(null);
+// === 上傳 Logo 到 Storage ===
+window.uploadCompanyLogo = function uploadCompanyLogo() {
+  try { if (!auth || !auth.currentUser) { alert('請先登入'); return; } } catch (e) { alert('請先登入'); return; }
+  const fileEl = document.getElementById('company-logo-file');
+  if (!fileEl?.files?.[0]) { alert('請先選擇圖片檔'); return; }
+  const file = fileEl.files[0];
+  const uid = auth.currentUser.uid;
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+  const path = `logos/${uid}/company_logo_${Date.now()}.${ext}`;
+  const refObj = storageRef(storage, path);
+
+  const progressEl = document.getElementById('logo-upload-progress');
+  const statusEl = document.getElementById('logo-upload-status');
+
+  const task = uploadBytesResumable(refObj, file, { cacheControl: 'public,max-age=31536000' });
+  task.on('state_changed',
+    snap => {
+      const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+      if (progressEl) progressEl.value = pct;
+      if (statusEl) statusEl.textContent = `上傳中… ${pct}%`;
+    },
+    err => {
+      console.error('上傳失敗：', err);
+      if (statusEl) statusEl.textContent = '上傳失敗';
+      alert('上傳失敗，請重試');
+    },
+    async () => {
+      try {
+        const url = await getDownloadURL(task.snapshot.ref);
+        const urlInput = document.getElementById('company-logo');
+        if (urlInput) urlInput.value = url;
+        const prevImg = document.getElementById('company-preview-logo');
+        if (prevImg) prevImg.src = url;
+        if (statusEl) statusEl.textContent = '上傳完成';
+        alert('上傳完成！已自動填入 Logo URL，請按「儲存」。');
+      } catch (e) {
+        console.error('取得下載連結失敗：', e);
+        alert('取得下載連結失敗');
+      }
+    }
+  );
 };
 
-// === 公司設定：儲存到 Firestore ===
+// === 儲存公司資料到 Firestore ===
 window.handleSaveCompany = async function handleSaveCompany() {
-  try {
-    if (!auth || !auth.currentUser) { alert('請先登入！'); return; }
-  } catch (e) {
-    alert('請先登入！'); return;
-  }
-
+  const user = auth?.currentUser;
+  if (!user) { alert('請先登入！'); return; }
   const data = {
-    name: (document.getElementById('company-name')?.value || '').trim(),
-    regNo: (document.getElementById('company-regno')?.value || '').trim(),
-    phone: (document.getElementById('company-phone')?.value || '').trim(),
-    address: (document.getElementById('company-address')?.value || '').trim(),
-    website: (document.getElementById('company-website')?.value || '').trim(),
-    logoUrl: (document.getElementById('company-logo')?.value || '').trim(),
-    description: (document.getElementById('company-desc')?.value || '').trim(),
+    name: document.getElementById('company-name')?.value.trim() || '',
+    regNo: document.getElementById('company-regno')?.value.trim() || '',
+    phone: document.getElementById('company-phone')?.value.trim() || '',
+    address: document.getElementById('company-address')?.value.trim() || '',
+    website: document.getElementById('company-website')?.value.trim() || '',
+    logoUrl: document.getElementById('company-logo')?.value.trim() || '',
+    description: document.getElementById('company-desc')?.value.trim() || '',
     updatedAt: serverTimestamp(),
   };
   if (!data.name) { alert('請至少填寫「公司名稱」'); return; }
-
   try {
-    const ref = companyDocRef(auth.currentUser.uid);
+    const ref = companyDocRef(user.uid);
     const snap = await getDoc(ref);
     await setDoc(ref, { ...(snap.exists() ? {} : { createdAt: serverTimestamp() }), ...data }, { merge: true });
-
     const hint = document.getElementById('company-save-hint');
-    if (hint) {
-      hint.classList.remove('hidden');
-      setTimeout(() => hint.classList.add('hidden'), 1500);
-    }
-  } catch (err) {
-    console.error('儲存公司資料失敗：', err);
-    alert('儲存失敗，請稍後再試或查看 console。');
+    if (hint) { hint.classList.remove('hidden'); setTimeout(() => hint.classList.add('hidden'), 1500); }
+  } catch (e) {
+    console.error('儲存公司資料失敗：', e);
+    alert('儲存失敗，請稍後再試');
   }
 };
 
-// === 公司設定：額外掛一個 onAuthStateChanged 只負責公司文件 ===
-// 這樣不需要動到你原本的登入流程；多一個監聽即可。
+// === 登入後監聽公司文件 ===
 try {
-  if (typeof onAuthStateChanged === 'function') {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        try {
-          if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
-          const unsub = onSnapshot(companyDocRef(user.uid), (snap) => {
-            const data = snap.exists() ? snap.data() : null;
-            renderCompanyCard(data);
-            renderCompanyPreview(data);
-            fillCompanyForm(data || {});
-          }, (err) => console.error('公司資料監聽失敗：', err));
-          window.__unsubCompany = unsub;
-        } catch (e) {
-          console.error('公司資料初始化監聽錯誤：', e);
-        }
-      } else {
-        if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
-        renderCompanyCard(null);
-        renderCompanyPreview(null);
-        fillCompanyForm({});
-      }
-    });
-  }
-} catch (e) {
-  console.warn('onAuthStateChanged 尚未可用，稍後再嘗試。', e);
-}
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
+      window.__unsubCompany = onSnapshot(companyDocRef(user.uid), (snap) => {
+        const data = snap.exists() ? snap.data() : null;
+        renderCompanyCard(data);
+        renderCompanyPreview(data);
+        fillCompanyForm(data || {});
+      }, (err) => console.error('公司資料監聽失敗：', err));
+    } else {
+      if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
+      renderCompanyCard(null);
+      renderCompanyPreview(null);
+      fillCompanyForm({});
+    }
+  });
+} catch (e) { console.warn('onAuthStateChanged 尚未可用'); }
 
 </script>
 
