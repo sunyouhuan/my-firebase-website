@@ -126,6 +126,23 @@
 
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
                         <div id="merchant-dashboard-content" class="dashboard-content active">
+<div id="company-card" class="bg-white p-6 rounded-xl shadow mb-6 hidden">
+  <div class="flex items-start gap-4">
+    <img id="company-card-logo" class="w-14 h-14 rounded-lg object-cover bg-slate-100" src="" alt="">
+    <div class="flex-1">
+      <div class="flex items-center gap-3">
+        <h3 id="company-card-name" class="text-xl font-bold text-slate-800">公司名稱</h3>
+        <span id="company-card-regno" class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600"></span>
+      </div>
+      <div id="company-card-lines" class="text-sm text-gray-600 flex flex-wrap gap-x-4 mt-1">
+        <span id="company-card-phone"></span>
+        <span id="company-card-address"></span>
+        <a id="company-card-website" class="text-teal-600 hover:underline" target="_blank" rel="noopener"></a>
+      </div>
+    </div>
+  </div>
+</div>
+
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                                 <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總花費</h3><p class="text-3xl font-bold text-slate-800 mt-2">NT$ 150,000</p></div>
                                 <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總曝光數</h3><p class="text-3xl font-bold text-slate-800 mt-2">1.2M</p></div>
@@ -159,7 +176,69 @@
                              <div class="bg-white rounded-xl shadow p-8"><h2 class="text-xl font-bold text-slate-800 mb-4">線上儲值 (入金)</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><button class="border-2 border-teal-500 text-teal-500 font-bold p-4 rounded-lg">信用卡</button><button class="border border-gray-300 p-4 rounded-lg">銀行轉帳</button><button class="border border-gray-300 p-4 rounded-lg">電子支付</button></div><div class="space-y-4"><div><label class="text-sm font-medium">儲值金額</label><input type="number" placeholder="NT$ 10,000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><button class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800">確認儲值</button></div></div>
                         </div>
 
-                        <div id="merchant-settings-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto"><h2 class="text-xl font-bold text-slate-800">公司設定</h2></div></div>
+                        <div id="merchant-settings-content" class="dashboard-content">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 表單 -->
+    <div class="bg-white rounded-xl shadow p-8 lg:col-span-2">
+      <h2 class="text-xl font-bold text-slate-800 mb-6">公司設定</h2>
+      <form id="company-form" class="space-y-5" onsubmit="return false;">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">公司名稱</label>
+          <input id="company-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：MatchAI Inc.">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">統一編號</label>
+            <input id="company-regno" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：12345678">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">聯絡電話</label>
+            <input id="company-phone" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：02-1234-5678">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">公司地址</label>
+          <input id="company-address" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：台北市大安區…">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">公司官網</label>
+          <input id="company-website" type="url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="https://example.com">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Logo 圖片 URL</label>
+          <input id="company-logo" type="url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="https://…/logo.png">
+          <p class="text-xs text-gray-500 mt-1">（之後可改用 Firebase Storage 上傳）</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">公司描述</label>
+          <textarea id="company-desc" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="簡述你的品牌與產品…"></textarea>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button id="company-save-btn" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800" onclick="handleSaveCompany()">儲存</button>
+          <button class="bg-gray-100 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-200" onclick="resetCompanyForm()">重設</button>
+          <span id="company-save-hint" class="text-sm text-gray-500 self-center hidden">已儲存！</span>
+        </div>
+      </form>
+    </div>
+
+    <!-- 預覽 -->
+    <div class="bg-white rounded-xl shadow p-8">
+      <h3 class="font-bold text-slate-800 mb-4">即時預覽</h3>
+      <div id="company-preview" class="border rounded-lg p-4 flex items-start gap-4">
+        <img id="company-preview-logo" class="w-16 h-16 rounded-lg object-cover bg-slate-100" src="" alt="">
+        <div>
+          <div id="company-preview-name" class="text-lg font-bold text-slate-800">（尚未設定）</div>
+          <div id="company-preview-lines" class="text-sm text-gray-600 space-y-0.5">
+            <div id="preview-line-phone"></div>
+            <div id="preview-line-address"></div>
+            <a id="preview-line-website" class="text-teal-600 hover:underline" target="_blank" rel="noopener"></a>
+          </div>
+          <p id="company-preview-desc" class="text-sm text-gray-600 mt-2"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
                     </main>
                 </div>
             </div>
@@ -780,7 +859,137 @@ window.sendChatMessage = async function sendChatMessage() {
             }
         });
     // === 修改部分 END ===
-    </script>
+    
+
+
+// === 公司設定：Firestore doc 位置（沿用 users/{uid}/company/profile） ===
+const companyDocRef = (uid) => doc(db, 'users', uid, 'company', 'profile');
+
+// === 公司設定：渲染「總覽」公司卡片 ===
+function renderCompanyCard(data) {
+  const card = document.getElementById('company-card');
+  if (!card) return;
+  if (!data) { card.classList.add('hidden'); return; }
+
+  const { name, regNo, phone, address, website, logoUrl } = data;
+  const S = (id) => document.getElementById(id);
+
+  const setText = (id, text) => { const el = S(id); if (el) el.textContent = text || ''; };
+
+  const logo = S('company-card-logo');
+  if (logo) logo.src = logoUrl || '';
+
+  setText('company-card-name', name || '(未命名公司)');
+  setText('company-card-regno', regNo ? `統編：${regNo}` : '');
+  setText('company-card-phone', phone || '');
+  setText('company-card-address', address || '');
+  const site = S('company-card-website');
+  if (site) { site.textContent = website || ''; site.href = website || '#'; }
+
+  card.classList.remove('hidden');
+}
+
+// === 公司設定：渲染「設定頁」預覽 ===
+function renderCompanyPreview(data) {
+  const S = (id) => document.getElementById(id);
+  const setText = (id, text) => { const el = S(id); if (el) el.textContent = text || ''; };
+
+  const logo = S('company-preview-logo');
+  if (logo) logo.src = (data && data.logoUrl) ? data.logoUrl : '';
+
+  setText('company-preview-name', data?.name || '（尚未設定）');
+  setText('preview-line-phone', data?.phone ? `電話：${data.phone}` : '');
+  setText('preview-line-address', data?.address ? `地址：${data.address}` : '');
+  const w = S('preview-line-website');
+  if (w) { w.textContent = data?.website || ''; w.href = data?.website || '#'; }
+  setText('company-preview-desc', data?.description || '');
+}
+
+// === 公司設定：帶入表單 ===
+function fillCompanyForm(data) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+  set('company-name', data?.name);
+  set('company-regno', data?.regNo);
+  set('company-phone', data?.phone);
+  set('company-address', data?.address);
+  set('company-website', data?.website);
+  set('company-logo', data?.logoUrl);
+  set('company-desc', data?.description);
+}
+
+// === 公司設定：重設表單 ===
+window.resetCompanyForm = function resetCompanyForm() {
+  fillCompanyForm({});
+  renderCompanyPreview(null);
+};
+
+// === 公司設定：儲存到 Firestore ===
+window.handleSaveCompany = async function handleSaveCompany() {
+  try {
+    if (!auth || !auth.currentUser) { alert('請先登入！'); return; }
+  } catch (e) {
+    alert('請先登入！'); return;
+  }
+
+  const data = {
+    name: (document.getElementById('company-name')?.value || '').trim(),
+    regNo: (document.getElementById('company-regno')?.value || '').trim(),
+    phone: (document.getElementById('company-phone')?.value || '').trim(),
+    address: (document.getElementById('company-address')?.value || '').trim(),
+    website: (document.getElementById('company-website')?.value || '').trim(),
+    logoUrl: (document.getElementById('company-logo')?.value || '').trim(),
+    description: (document.getElementById('company-desc')?.value || '').trim(),
+    updatedAt: serverTimestamp(),
+  };
+  if (!data.name) { alert('請至少填寫「公司名稱」'); return; }
+
+  try {
+    const ref = companyDocRef(auth.currentUser.uid);
+    const snap = await getDoc(ref);
+    await setDoc(ref, { ...(snap.exists() ? {} : { createdAt: serverTimestamp() }), ...data }, { merge: true });
+
+    const hint = document.getElementById('company-save-hint');
+    if (hint) {
+      hint.classList.remove('hidden');
+      setTimeout(() => hint.classList.add('hidden'), 1500);
+    }
+  } catch (err) {
+    console.error('儲存公司資料失敗：', err);
+    alert('儲存失敗，請稍後再試或查看 console。');
+  }
+};
+
+// === 公司設定：額外掛一個 onAuthStateChanged 只負責公司文件 ===
+// 這樣不需要動到你原本的登入流程；多一個監聽即可。
+try {
+  if (typeof onAuthStateChanged === 'function') {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        try {
+          if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
+          const unsub = onSnapshot(companyDocRef(user.uid), (snap) => {
+            const data = snap.exists() ? snap.data() : null;
+            renderCompanyCard(data);
+            renderCompanyPreview(data);
+            fillCompanyForm(data || {});
+          }, (err) => console.error('公司資料監聽失敗：', err));
+          window.__unsubCompany = unsub;
+        } catch (e) {
+          console.error('公司資料初始化監聽錯誤：', e);
+        }
+      } else {
+        if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
+        renderCompanyCard(null);
+        renderCompanyPreview(null);
+        fillCompanyForm({});
+      }
+    });
+  }
+} catch (e) {
+  console.warn('onAuthStateChanged 尚未可用，稍後再嘗試。', e);
+}
+
+</script>
 
 
 </body>
