@@ -365,6 +365,7 @@
     </div>
 
     <script type="module">import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app-check.js';
 
     // --- 1. Firebase 初始化 (這部分不變) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
@@ -411,6 +412,13 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+// --- App Check (reCAPTCHA v3) 初始化 ---
+self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; // 開發期使用；上線前請移除
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LeoS-8rAAAAAFAuUEUfFmAmf0LbI_ypG58RKzaU'),
+  isTokenAutoRefreshEnabled: true,
+});
+
 window.auth = auth; // expose for console
         const db = getFirestore(app);
 
