@@ -213,7 +213,7 @@
           <label class="block text-sm font-medium text-gray-700">或上傳 Logo 檔案</label>
           <input id="company-logo-file" type="file" accept="image/*" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
           <div class="flex items-center gap-3 mt-2">
-            <button id="upload-logo-btn" class="bg-teal-600 text-white font-semibold py-1.5 px-3 rounded hover:bg-teal-700" onclick="uploadCompanyLogo()">上傳 Logo</button>
+            <button id="upload-logo-btn" type="button" class="bg-teal-600 text-white font-semibold py-1.5 px-3 rounded hover:bg-teal-700" onclick="uploadCompanyLogo()">上傳 Logo</button>
             <progress id="logo-upload-progress" value="0" max="100" class="w-40"></progress>
             <span id="logo-upload-status" class="text-xs text-gray-600"></span>
           </div>
@@ -224,7 +224,7 @@
           <textarea id="company-desc" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="簡述你的品牌與產品…"></textarea>
         </div>
         <div class="flex gap-3 pt-2">
-          <button id="company-save-btn" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800" onclick="handleSaveCompany()">儲存</button>
+          <button id="company-save-btn" type="button" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800" onclick="handleSaveCompany()">儲存</button>
           <button class="bg-gray-100 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-200" onclick="resetCompanyForm()">重設</button>
           <span id="company-save-hint" class="text-sm text-gray-500 self-center hidden">已儲存！</span>
         </div>
@@ -364,7 +364,7 @@
         <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300"></div></div>
     </div>
 
-    <script type="module">import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-storage.js';
+    <script type="module">import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js';
 
     // --- 1. Firebase 初始化 (這部分不變) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
@@ -403,7 +403,7 @@
           apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
           authDomain: "test-b493a.firebaseapp.com",
           projectId: "test-b493a",
-          storageBucket: "test-b493a.firebasestorage.app",
+          storageBucket: "test-b493a.appspot.com",
           messagingSenderId: "1089014108157",
           appId: "1:1089014108157:web:2ac36c728f861795909394",
           measurementId: "G-1GY922PWL9"
@@ -411,6 +411,7 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+window.auth = auth; // expose for console
         const db = getFirestore(app);
 
         getRedirectResult(auth)
