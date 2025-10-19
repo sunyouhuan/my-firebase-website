@@ -81,7 +81,6 @@
             </div>
         </div>
 
-
         <div id="role-selection-view" class="view">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
                 <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
@@ -499,7 +498,6 @@ window.auth = auth; // expose for console
             }
         }
 
-
 // ========== Gemini Chat（Firestore 擴充程式）整合 ==========
 
 // 讓聊天快取目前的監聽器，關閉視窗時取消監聽
@@ -554,9 +552,6 @@ function startChatListener(uid) {
     appendChatBubble('系統：監聽訊息時發生錯誤，請稍後重試。', 'bot');
   });
 }
-
-
-
 
 // === 給 HTML 呼叫的 3 個函式 ===
 window.openAIChat = function openAIChat() {
@@ -620,13 +615,6 @@ window.sendChatMessage = async function sendChatMessage() {
     $input.focus();
   }
 };
-
-
-
-
-
-
-
 
     // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
 
@@ -853,7 +841,6 @@ window.sendChatMessage = async function sendChatMessage() {
             }
         };
 
-
     // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -1019,7 +1006,6 @@ try {
 } catch (e) { console.warn('onAuthStateChanged 尚未可用'); }
 
 </script>
-
 
 </body>
 </html>
