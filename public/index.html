@@ -413,7 +413,8 @@ import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 // --- App Check (reCAPTCHA v3) 初始化 ---
-self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; // 開發期使用；上線前請移除
+
+// App Check（reCAPTCHA v3）- 正式環境
 const appCheck = initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider('6LeoS-8rAAAAAFAuUEUfFmAmf0LbI_ypG58RKzaU'),
   isTokenAutoRefreshEnabled: true,
