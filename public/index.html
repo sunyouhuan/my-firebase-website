@@ -581,7 +581,7 @@ html.dark .global-glow {
 @keyframes rotateGlowV15 { to { transform: rotate(360deg); } }
 
 /* Keep all content above glow */
-html.dark.has-global-glow body > :not(.global-glow) { position: relative; z-index: 1; }
+html.dark.has-global-glow body > :not(.global-glow):not(.theme-toggle) { position: relative; z-index: 1; }
 
 /* Ensure login-view's ::before never blocks clicks; keep its look if you still want it */
 html.dark #login-view::before { pointer-events: none !important; z-index: 0 !important; }
@@ -601,6 +601,33 @@ html.dark #role-selection-view .logo-accent {
   color: var(--lavender) !important;
   text-shadow: 0 0 10px rgba(196,181,253,.28);
 }
+
+/* v16 fix: keep theme toggle fixed even under dark + global glow */
+html.dark.has-global-glow .theme-toggle{
+  position: fixed !important;
+  right: 16px !important;
+  bottom: 16px !important;
+  z-index: 1060 !important;
+}
+
+/* v17: Make role-selection page use the same full-page gradient/glow as login */
+html.dark #role-selection-view { position: relative !important; overflow: hidden; background: #111827 !important; }
+html.dark #role-selection-view .min-h-screen { background: transparent !important; }
+
+/* v17: Role-selection gets the same animated purple overlay as login */
+html.dark #role-selection-view::before {
+  content: ""; position: absolute; width: 200%; height: 200%;
+  top: -50%; left: -50%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(99,102,241,0.40) 0%, rgba(99,102,241,0.00) 60%),
+    radial-gradient(circle at top right, rgba(139,92,246,0.50) 0%, rgba(139,92,246,0.00) 50%);
+  animation: rotateBG_ref 25s linear infinite;
+  filter: saturate(120%) contrast(105%) brightness(108%);
+}
+html.dark #role-selection-view > * { position: relative; z-index: 1; }
+
+/* v17 safety: keep content above overlays on role-selection */
+html.dark.has-global-glow #role-selection-view > * { position: relative; z-index: 1; }
 </style>
 
 <script>
