@@ -565,53 +565,126 @@
 
 
 <style>
-/* ===== v12: Safari-consistent purple + guaranteed lavender AI in dark mode ===== */
+/* ===== v15: Dark-mode global glow for login + role select; lavender AI; auto-hide after choice ===== */
 
-/* 1) Single authoritative glow (override previous duplicates) */
-html.dark #login-view { position: relative !important; overflow: hidden; background: #111827 !important; }
-html.dark #login-view::before {
-  content:""; position:absolute; inset:-60% -60%; width:220%; height:220%;
-  z-index:0; pointer-events:none;
+/* Glow layer reused across views */
+html.dark .global-glow {
+  position: fixed; inset: -60% -60%; width: 220%; height: 220%;
+  z-index: 0; pointer-events: none;
   background:
     radial-gradient(circle, rgba(99,102,241,0.60) 0%, rgba(99,102,241,0) 60%),
     radial-gradient(circle at top right, rgba(139,92,246,0.70) 0%, rgba(139,92,246,0) 50%);
-  opacity: .8;
+  opacity: .80;
   filter: saturate(145%) brightness(122%) contrast(112%);
-  animation: rotateBGv12 20s linear infinite;
-  will-change: transform, opacity; transform: translateZ(0);
+  animation: rotateGlowV15 22s linear infinite;
 }
-@keyframes rotateBGv12 { to { transform: rotate(360deg); } }
-html.dark #login-view > * { position: relative; z-index: 1; }
+@keyframes rotateGlowV15 { to { transform: rotate(360deg); } }
 
-/* 2) Display-P3 override for Safari on wide-gamut displays */
-@supports (color: color(display-p3 1 1 1)) {
-  html.dark #login-view::before{
-    background:
-      radial-gradient(circle, color(display-p3 0.43 0.45 0.98 / 0.60) 0%, color(display-p3 0.43 0.45 0.98 / 0) 60%),
-      radial-gradient(circle at top right, color(display-p3 0.62 0.46 0.98 / 0.70) 0%, color(display-p3 0.62 0.46 0.98 / 0) 50%);
-    /* Slightly lower filter in P3 to avoid clipping */
-    filter: saturate(130%) brightness(115%) contrast(108%);
-  }
-}
+/* Keep all content above glow */
+html.dark.has-global-glow body > :not(.global-glow) { position: relative; z-index: 1; }
 
-/* 3) Force lavender accent for AI in dark mode, whatever Tailwind class it has */
-html.dark #login-view h1 .text-teal-500,
-html.dark #login-view h1 .text-teal-600,
-html.dark #login-view h1 .text-green-500,
-html.dark #login-view h1 .text-emerald-500,
-html.dark #login-view h1 .logo-accent,
-html.dark header h1 .text-teal-500,
-html.dark header h1 .text-teal-600,
-html.dark header h1 .text-green-500,
-html.dark header h1 .text-emerald-500,
-html.dark header h1 .logo-accent {
-  color: #c4b5fd !important; /* lavender */
+/* Ensure login-view's ::before never blocks clicks; keep its look if you still want it */
+html.dark #login-view::before { pointer-events: none !important; z-index: 0 !important; }
+
+/* Lavender AI in dark mode regardless of original Tailwind classes */
+:root { --lavender: #c4b5fd; }
+html.dark #login-view .text-teal-500,
+html.dark #login-view .text-teal-600,
+html.dark #login-view .text-green-500,
+html.dark #login-view .text-emerald-500,
+html.dark #login-view .logo-accent,
+html.dark #role-selection-view .text-teal-500,
+html.dark #role-selection-view .text-teal-600,
+html.dark #role-selection-view .text-green-500,
+html.dark #role-selection-view .text-emerald-500,
+html.dark #role-selection-view .logo-accent {
+  color: var(--lavender) !important;
   text-shadow: 0 0 10px rgba(196,181,253,.28);
 }
-
-/* 4) Optional: when theme toggles at runtime, ensure repaint */
-html.dark .force-repaint { transform: translateZ(0); }
 </style>
+
+<script>
+/* v15 runtime: manage glow on login + role selection; remove glow after role chosen */
+(function(){
+  function ensureGlow(){
+    if(!document.documentElement.classList.contains('dark')) return removeGlow();
+    var onLogin = isVisible(document.getElementById('login-view'));
+    var onRole  = isVisible(document.getElementById('role-selection-view'));
+    if(onLogin || onRole){
+      if(!document.querySelector('.global-glow')){
+        var g = document.createElement('div'); g.className='global-glow';
+        document.body.prepend(g);
+      }
+      document.documentElement.classList.add('has-global-glow');
+    } else {
+      removeGlow();
+    }
+  }
+  function removeGlow(){
+    var g = document.querySelector('.global-glow'); if(g) g.remove();
+    document.documentElement.classList.remove('has-global-glow');
+  }
+  function isVisible(el){
+    if(!el) return false;
+    var s = getComputedStyle(el);
+    return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed');
+  }
+
+  // Hook navigateTo if it exists
+  var _navigateTo = window.navigateTo;
+  window.navigateTo = function(viewId){
+    if(_navigateTo) _navigateTo(viewId);
+    setTimeout(ensureGlow, 0);
+  };
+
+  // Hook enterDashboard to remove glow once role chosen
+  var _enterDashboard = window.enterDashboard;
+  window.enterDashboard = function(role){
+    removeGlow();
+    if(_enterDashboard) return _enterDashboard(role);
+  };
+
+  // Also attach to obvious role buttons just in case
+  function bindRoleButtons(){
+    var sels = [
+      '#merchant-login', '#influencer-login',
+      '[data-role="merchant"]', '[data-role="influencer"]'
+    ];
+    sels.forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(el){
+        el.addEventListener('click', removeGlow, { once:true });
+      });
+    });
+    // Fallback by text content
+    Array.from(document.querySelectorAll('button, a')).forEach(function(el){
+      var t=(el.textContent||'').trim();
+      if(/商家/.test(t) || /網紅/.test(t)){
+        el.addEventListener('click', removeGlow, { once:true });
+      }
+    });
+  }
+
+  // Theme toggle wrapper (if your app defines one)
+  var _toggle = window.toggleTheme;
+  window.toggleTheme = function(){
+    if(_toggle) _toggle();
+    setTimeout(ensureGlow, 0);
+  };
+
+  // Initial run
+  document.addEventListener('DOMContentLoaded', function(){
+    ensureGlow(); bindRoleButtons();
+    setTimeout(function(){ ensureGlow(); bindRoleButtons(); }, 250);
+  });
+
+  // Respond to SPA changes
+  window.addEventListener('hashchange', function(){ setTimeout(ensureGlow, 0); });
+  window.addEventListener('popstate', function(){ setTimeout(ensureGlow, 0); });
+
+  // Observe DOM changes (views swapping)
+  new MutationObserver(function(){ setTimeout(ensureGlow, 0); }).observe(document.body, {childList:true, subtree:true});
+})();
+</script>
 
 </head>
 <body>
