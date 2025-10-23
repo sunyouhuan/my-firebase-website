@@ -628,6 +628,140 @@ html.dark #role-selection-view > * { position: relative; z-index: 1; }
 
 /* v17 safety: keep content above overlays on role-selection */
 html.dark.has-global-glow #role-selection-view > * { position: relative; z-index: 1; }
+
+
+/* v18: Login intro scroll section (glassy marketing hero + features), stays under same background/glow */
+html.dark #login-view .intro-wrap { max-width: 1200px; margin: 0 auto; padding: 32px 16px 56px; }
+html.dark #login-view .hero-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center; }
+@media (max-width: 980px){ html.dark #login-view .hero-grid { grid-template-columns: 1fr; } }
+
+html.dark #login-view .badge { display:inline-flex; gap:8px; align-items:center; padding:8px 12px;
+  border-radius:999px; border:1px solid rgba(148,163,184,.35); background: rgba(15,23,42,.35); color:#cbd5ff; }
+html.dark #login-view .hero-title { font-size: 44px; line-height: 1.06; font-weight: 800; margin: 10px 0 12px; color:#e6ecff; }
+html.dark #login-view .hero-sub { color:#9aa3b2; font-size: 18px; }
+html.dark #login-view .chips { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+html.dark #login-view .chip { display:inline-block; padding:8px 12px; border-radius:999px; border:1px solid rgba(148,163,184,.35); background: rgba(15,23,42,.35); color:#cbd5ff; }
+
+html.dark #login-view .glass-card { background: rgba(31,41,59,0.50); border:1px solid rgba(148,163,184,.35);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: 14px; box-shadow: 0 16px 45px rgba(2,6,23,0.45); }
+html.dark #login-view .feature-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-top: 26px; }
+@media (max-width: 980px){ html.dark #login-view .feature-grid { grid-template-columns: 1fr; } }
+html.dark #login-view .feature-card { padding:20px; }
+html.dark #login-view .cta-band { margin-top: 26px; padding: 22px; display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap: wrap; }
+html.dark #login-view .btn-primary { display:inline-block; padding:12px 18px; font-weight:700; border-radius:12px; background:#7c83ff; color:#fff; border:none; }
+html.dark #login-view .btn-primary:hover { background:#6a70ff; }
+
+
+
+/* v19: Professional scroll-triggered motion system (opacity+transform only) */
+:root {
+  --motion-duration: 900ms;
+  --motion-distance: 24px;
+  --motion-scale: .98;
+  --motion-ease: cubic-bezier(.22,.61,.36,1);
+}
+
+/* base state */
+.reveal { opacity: 0; transform: translateY(var(--motion-distance)) scale(var(--motion-scale)); will-change: transform, opacity; }
+/* visible state */
+.reveal.is-visible { opacity: 1; transform: translateY(0) scale(1); transition: transform var(--motion-duration) var(--motion-ease), opacity var(--motion-duration) var(--motion-ease); }
+
+/* variants */
+.reveal.slide-right { transform: translateX(-var(--motion-distance)); }
+.reveal.slide-right.is-visible { transform: translateX(0); }
+
+.reveal.slide-left { transform: translateX(var(--motion-distance)); }
+.reveal.slide-left.is-visible { transform: translateX(0); }
+
+.reveal.scale-in { transform: scale(.94); }
+.reveal.scale-in.is-visible { transform: scale(1); }
+
+/* stagger via inline style or data-delay attr */
+.reveal[data-delay] { transition-delay: var(--delay, 0ms); }
+
+/* reduced motion: show instantly */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal.is-visible {
+    opacity: 1 !important; transform: none !important; transition: none !important;
+  }
+}
+
+/* login scroll hint */
+.scroll-hint {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: 18px; display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 999px; font-weight: 600;
+  background: rgba(17,24,39,.55); color: #cbd5ff; border: 1px solid rgba(148,163,184,.35);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  cursor: pointer; user-select: none;
+}
+.scroll-hint .chev { display:inline-block; width:12px; height:12px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform: rotate(45deg); animation: bob 1.4s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(45deg); } 50% { transform: translateY(4px) rotate(45deg);} }
+
+/* subtle parallax of purple glow on scroll */
+html.dark .global-glow { transition: transform 600ms var(--motion-ease); will-change: transform; }
+
+
+
+/* v20: make login view a true fullscreen hero; intro strictly below the fold */
+#login-view .hero-viewport {
+  min-height: 100dvh; display: grid; place-items: center; position: relative;
+  padding: 24px 16px 96px; /* top padding for nav/logo if needed and bottom for scroll-hint */
+}
+#login-view .afterfold-spacer { height: 12vh; } /* ensures intro starts below fold across devices */
+
+/* mobile polish */
+@media (max-width: 640px){
+  html.dark #login-view .hero-title { font-size: 34px; }
+  html.dark #login-view .hero-sub { font-size: 16px; }
+  html.dark #login-view .feature-grid { grid-template-columns: 1fr; }
+  .scroll-hint { bottom: 12px; padding: 6px 10px; }
+}
+
+
+
+/* v21: base layout + light theme palette for intro */
+#login-view .intro-wrap { max-width: 1200px; margin: 0 auto; padding: 32px 16px 56px; }
+#login-view .hero-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center; }
+@media (max-width: 980px){ #login-view .hero-grid { grid-template-columns: 1fr; } }
+
+/* Light theme look */
+html:not(.dark) #login-view .badge { display:inline-flex; gap:8px; align-items:center; padding:8px 12px;
+  border-radius:999px; border:1px solid rgba(2,6,23,.10); background: rgba(255,255,255,.65); color:#334155; }
+html:not(.dark) #login-view .hero-title { font-size: 44px; line-height: 1.06; font-weight: 800; margin: 10px 0 12px; color:#111827; }
+html:not(.dark) #login-view .hero-sub { color:#475569; font-size: 18px; }
+#login-view .chips { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; } /* layout shared */
+html:not(.dark) #login-view .chip { display:inline-block; padding:8px 12px; border-radius:999px; border:1px solid rgba(2,6,23,.10); background: rgba(255,255,255,.65); color:#334155; }
+
+html:not(.dark) #login-view .glass-card { background: rgba(255,255,255,0.70); border:1px solid rgba(2,6,23,0.08);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: 14px; box-shadow: 0 16px 45px rgba(2,6,23,0.08); }
+#login-view .feature-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-top: 26px; } /* layout shared */
+@media (max-width: 980px){ #login-view .feature-grid { grid-template-columns: 1fr; } }
+#login-view .feature-card { padding:20px; } /* layout shared */
+html:not(.dark) #login-view .cta-band { margin-top: 26px; padding: 22px; display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap: wrap; }
+html:not(.dark) #login-view .btn-primary { display:inline-block; padding:12px 18px; font-weight:700; border-radius:12px; background:#4f46e5; color:#fff; border:none; }
+html:not(.dark) #login-view .btn-primary:hover { background:#4338ca; }
+
+
+
+/* v22: center heading + card as one stack */
+#login-view .hero-viewport > .flex {
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+#login-view .hero-viewport h1,
+#login-view .hero-viewport p.leading-6 {
+  text-align: center;
+  margin: 0;
+}
+@media (max-width: 640px){
+  #login-view .hero-viewport > .flex { gap: 8px; }
+}
+
 </style>
 
 <script>
@@ -752,7 +886,84 @@ html.dark.has-global-glow #role-selection-view > * { position: relative; z-index
                     </form>
 
                 </div>
+            
+                <!-- v18: scrolling marketing intro section (reference-style) -->
+                <div id="intro" class="intro-wrap">
+                  <div class="hero-grid reveal">
+                    <div>
+                      <div class="badge">以 10× 效率，完成 100 位網紅的精準合作</div>
+                      <h2 class="hero-title reveal" data-delay="40ms">讓「品牌需求 × 網紅供給」自動配對，<br/>不再用人力一個個對接。</h2>
+                      <p class="hero-sub reveal" data-delay="80ms">InfluenceLink 使用資料爬取、AI 評估與透明計分，為商家找出「最合適、CP 值最高」的創作者；創作者只要連動平台，即可一鍵展現價值並接單。</p>
+                      <div class="chips reveal" data-delay="120ms">
+                        <span class="chip">YouTube</span>
+                        <span class="chip">Instagram</span>
+                        <span class="chip">Facebook</span>
+                        <span class="chip">TikTok</span>
+                        <span class="chip">小紅書</span>
+                      </div>
+                    </div>
+                    <div class="glass-card reveal slide-left" style="padding:18px;" data-delay="150ms">
+                      <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=1200&auto=format&fit=crop" alt="demo" style="width:100%; border-radius:12px;" />
+                      <div style="padding:10px 4px; color:#9aa3b2;">資料驅動的透明配對：分類、受眾、地區、CPM、互動率</div>
+                    </div>
+                  </div>
+
+                  <div class="feature-grid">
+                    <div class="glass-card feature-card reveal scale-in" data-delay="0ms">
+                      <h3>商家：對話式建立需求</h3>
+                      <p style="color:#9aa3b2;">用聊天框描述你的目標（如：曝光 10 萬、女性 25–34、台灣、美妝類），系統即時生成預算、建議平台、與預估成效。</p>
+                    </div>
+                    <div class="glass-card feature-card reveal scale-in" data-delay="120ms">
+                      <h3>網紅：連動帳號 → 自動評估</h3>
+                      <p style="color:#9aa3b2;">連接社群帳號後，即可看到「綜合價值分數」、報價建議與合作建議；可一鍵接單、管理合約與素材。</p>
+                    </div>
+                    <div class="glass-card feature-card reveal scale-in" data-delay="240ms">
+                      <h3>平台：透明計分與抽成</h3>
+                      <p style="color:#9aa3b2;">以類 Jaccard / 互動率 / CPM 適配度 / 地區與平台偏好等加權計分；接單成功平台收取 10–15% 抽成。</p>
+                    </div>
+                  </div>
+
+                  <div class="glass-card cta-band reveal slide-right" data-delay="120ms">
+                    <div>
+                      <h3>準備好用 1 人完成過去 10 人才做得到的對接嗎？</h3>
+                      <div style="color:#9aa3b2;">現在加入，立即體驗自動化配對流程。</div>
+                    </div>
+                    <button class="btn-primary" type="button" onclick="handleRegister()">免費註冊</button>
+                  </div>
+                </div>
+
+        
+        <!-- v22: AI Explainer section -->
+        <section id="ai-explainer" class="intro-wrap" style="padding-top: 12vh;">
+          <div class="reveal"><span class="badge">我們的 AI 怎麼幫你</span></div>
+          <h2 class="hero-title reveal" data-delay="60ms">從「需求」→「配對」→「成效」全自動</h2>
+          <p class="hero-sub reveal" data-delay="120ms">三個引擎協同運作：資料爬取與清理、適配度與報價模型、透明成效預估。你只要敘述目標，其餘交給模型。</p>
+
+          <div class="feature-grid" style="margin-top: 18px;">
+            <div class="glass-card feature-card reveal slide-right" data-delay="0ms">
+              <h3>1) 資料引擎（Crawler + Clean）</h3>
+              <p style="color:#9aa3b2;">跨平台收集創作者與受眾資料，做正規化、去重與風險檢測（買粉、異常互動）。輸出乾淨特徵，供模型使用。</p>
             </div>
+            <div class="glass-card feature-card reveal scale-in" data-delay="120ms">
+              <h3>2) 適配與報價（Match + Price）</h3>
+              <p style="color:#9aa3b2;">以主題相似度、受眾重疊、地區與CPM曲線建模，輸出「配對分數」與建議報價；可針對預算自動最佳化組合。</p>
+            </div>
+            <div class="glass-card feature-card reveal slide-left" data-delay="240ms">
+              <h3>3) 成效預估（Lift + Risk）</h3>
+              <p style="color:#9aa3b2;">根據歷史轉換、互動、投放類型建立 uplift 預測，提供可信區間；自動標示風險與備選方案。</p>
+            </div>
+          </div>
+
+          <div class="glass-card cta-band reveal" data-delay="160ms">
+            <div>
+              <h3>想看模型如何選人＋如何估價？</h3>
+              <div style="color:#9aa3b2;">提供你的目標與預算，我們會輸出配對名單、預估成效與透明拆解。</div>
+            </div>
+            <button class="btn-primary" type="button" onclick="document.getElementById('login-email').focus()">立即試試</button>
+          </div>
+        </section>
+
+</div>
         </div>
 
         <div id="role-selection-view" class="view">
@@ -1745,6 +1956,38 @@ try {
   // Also try headers in dashboards:
   accentAI(document.querySelector('header h1'));
   document.querySelectorAll('.sidebar .text-3xl, .sidebar .text-2xl').forEach(accentAI);
+})();
+</script>
+
+
+
+
+
+<script>
+/* v20: bi-directional reveal (enter = show, leave = hide), keep observing */
+(function(){
+  var opts = { threshold: [0, 0.12, 0.4, 1], rootMargin: "0px 0px -10% 0px" };
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      var el = entry.target;
+      var d = el.getAttribute('data-delay') || '0ms';
+      el.style.setProperty('--delay', d);
+      if(entry.intersectionRatio >= 0.12){
+        el.classList.add('is-visible');
+      } else {
+        el.classList.remove('is-visible');
+      }
+    });
+  }, opts);
+
+  function boot(){
+    document.querySelectorAll('.reveal').forEach(function(el){ observer.observe(el); });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 })();
 </script>
 
