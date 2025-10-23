@@ -563,6 +563,56 @@
   html.dark #login-view > * { position: relative; z-index: 1; }
 </style>
 
+
+<style>
+/* ===== v12: Safari-consistent purple + guaranteed lavender AI in dark mode ===== */
+
+/* 1) Single authoritative glow (override previous duplicates) */
+html.dark #login-view { position: relative !important; overflow: hidden; background: #111827 !important; }
+html.dark #login-view::before {
+  content:""; position:absolute; inset:-60% -60%; width:220%; height:220%;
+  z-index:0; pointer-events:none;
+  background:
+    radial-gradient(circle, rgba(99,102,241,0.60) 0%, rgba(99,102,241,0) 60%),
+    radial-gradient(circle at top right, rgba(139,92,246,0.70) 0%, rgba(139,92,246,0) 50%);
+  opacity: .8;
+  filter: saturate(145%) brightness(122%) contrast(112%);
+  animation: rotateBGv12 20s linear infinite;
+  will-change: transform, opacity; transform: translateZ(0);
+}
+@keyframes rotateBGv12 { to { transform: rotate(360deg); } }
+html.dark #login-view > * { position: relative; z-index: 1; }
+
+/* 2) Display-P3 override for Safari on wide-gamut displays */
+@supports (color: color(display-p3 1 1 1)) {
+  html.dark #login-view::before{
+    background:
+      radial-gradient(circle, color(display-p3 0.43 0.45 0.98 / 0.60) 0%, color(display-p3 0.43 0.45 0.98 / 0) 60%),
+      radial-gradient(circle at top right, color(display-p3 0.62 0.46 0.98 / 0.70) 0%, color(display-p3 0.62 0.46 0.98 / 0) 50%);
+    /* Slightly lower filter in P3 to avoid clipping */
+    filter: saturate(130%) brightness(115%) contrast(108%);
+  }
+}
+
+/* 3) Force lavender accent for AI in dark mode, whatever Tailwind class it has */
+html.dark #login-view h1 .text-teal-500,
+html.dark #login-view h1 .text-teal-600,
+html.dark #login-view h1 .text-green-500,
+html.dark #login-view h1 .text-emerald-500,
+html.dark #login-view h1 .logo-accent,
+html.dark header h1 .text-teal-500,
+html.dark header h1 .text-teal-600,
+html.dark header h1 .text-green-500,
+html.dark header h1 .text-emerald-500,
+html.dark header h1 .logo-accent {
+  color: #c4b5fd !important; /* lavender */
+  text-shadow: 0 0 10px rgba(196,181,253,.28);
+}
+
+/* 4) Optional: when theme toggles at runtime, ensure repaint */
+html.dark .force-repaint { transform: translateZ(0); }
+</style>
+
 </head>
 <body>
 
