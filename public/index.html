@@ -46,7 +46,34 @@
         .modal {
             transition: opacity 0.3s ease;
         }
-    </style>
+    
+/* === Light mode global glow & role-selection background === */
+html:not(.dark) .global-glow{
+  position: fixed; inset: -60% -60%; width: 220%; height: 220%;
+  z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(99,102,241,0.35) 0%, rgba(99,102,241,0) 60%),
+    radial-gradient(circle at top right, rgba(139,92,246,0.40) 0%, rgba(139,92,246,0) 50%);
+  opacity: .70;
+  filter: saturate(110%) brightness(108%) contrast(105%);
+  animation: rotateGlowV15 22s linear infinite;
+}
+
+html:not(.dark) #role-selection-view{ background: transparent !important; position: relative !important; overflow:hidden; }
+html:not(.dark) #role-selection-view .min-h-screen{ background: transparent !important; }
+
+
+/* ==== role-selection 覆寫：讓動畫可見 ==== */
+html:not(.dark) #role-selection-view{ background: transparent !important; position: relative !important; overflow: hidden; }
+html.dark       #role-selection-view{ background: transparent !important; position: relative !important; overflow: hidden; }
+html:not(.dark) #role-selection-view .min-h-screen{ background: transparent !important; }
+html.dark       #role-selection-view .min-h-screen{ background: transparent !important; }
+/* 角色頁內容浮在動畫之上 */
+#role-selection-view > * { position: relative !important; z-index: 1 !important; }
+/* 確保動畫層在最底 */
+#bg-anim{ z-index: 0 !important; pointer-events: none; }
+
+</style>
 
 <style>
   /* —— 主題顏色（參考「前端測試版本_03」） —— */
@@ -619,7 +646,7 @@ html.dark.has-global-glow .theme-toggle{
 }
 
 /* v17: Make role-selection page use the same full-page gradient/glow as login */
-html.dark #role-selection-view { position: relative !important; overflow: hidden; background: #111827 !important; }
+html.dark #role-selection-view{ background: transparent !important; position: relative !important; overflow:hidden; }
 html.dark #role-selection-view .min-h-screen { background: transparent !important; }
 
 /* v17: Role-selection gets the same animated purple overlay as login */
@@ -830,86 +857,65 @@ html:not(.dark) #login-view .chip {
 
 
 <script>
-/* v15 runtime: manage glow on login + role selection; remove glow after role chosen */
+<script>
+/* v15 runtime: manage glow on login + role selection; remove glow after choice */
 (function(){
-  function ensureGlow(){
-    if(!document.documentElement.classList.contains('dark')) return removeGlow();
-    var onLogin = isVisible(document.getElementById('login-view'));
-    var onRole  = isVisible(document.getElementById('role-selection-view'));
-    if(onLogin || onRole){
-      if(!document.querySelector('.global-glow')){
-        var g = document.createElement('div'); g.className='global-glow';
-        document.body.prepend(g);
-      }
-      document.documentElement.classList.add('has-global-glow');
-    } else {
-      removeGlow();
-    }
-  }
-  function removeGlow(){
-    var g = document.querySelector('.global-glow'); if(g) g.remove();
-    document.documentElement.classList.remove('has-global-glow');
-  }
   function isVisible(el){
     if(!el) return false;
     var s = getComputedStyle(el);
     return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed');
   }
-
-  // Hook navigateTo if it exists
+  function addGlowLayer(){
+    if (!document.querySelector('.global-glow')) {
+      var g = document.createElement('div');
+      g.className = 'global-glow';
+      document.body.prepend(g);
+    }
+    document.documentElement.classList.add('has-global-glow');
+  }
+  function removeGlow(){
+    var g = document.querySelector('.global-glow'); if(g) g.remove();
+    document.documentElement.classList.remove('has-global-glow');
+  }
+  function showBgAnim(show){
+    var bg = document.getElementById('bg-anim');
+    if(!bg) return;
+    bg.style.display = show ? 'block' : 'none';
+  }
+  function ensureGlow(){
+    var onLogin = isVisible(document.getElementById('login-view'));
+    var onRole  = isVisible(document.getElementById('role-selection-view'));
+    if (onLogin || onRole){
+      addGlowLayer();
+      showBgAnim(true);
+    } else {
+      removeGlow();
+      showBgAnim(false);
+    }
+  }
   var _navigateTo = window.navigateTo;
   window.navigateTo = function(viewId){
     if(_navigateTo) _navigateTo(viewId);
     setTimeout(ensureGlow, 0);
   };
-
-  // Hook enterDashboard to remove glow once role chosen
-/* 功能：依角色（商家/網紅）進入相對應儀表頁面，顯示歡迎資訊並切換到預設分頁。*/
   var _enterDashboard = window.enterDashboard;
   window.enterDashboard = function(role){
     removeGlow();
+    showBgAnim(false);
     if(_enterDashboard) return _enterDashboard(role);
   };
-
-  // Also attach to obvious role buttons just in case
-  function bindRoleButtons(){
-    var sels = [
-      '#merchant-login', '#influencer-login',
-      '[data-role="merchant"]', '[data-role="influencer"]'
-    ];
-    sels.forEach(function(sel){
-      document.querySelectorAll(sel).forEach(function(el){
-        el.addEventListener('click', removeGlow, { once:true });
-      });
-    });
-    // Fallback by text content
-    Array.from(document.querySelectorAll('button, a')).forEach(function(el){
-      var t=(el.textContent||'').trim();
-      if(/商家/.test(t) || /網紅/.test(t)){
-        el.addEventListener('click', removeGlow, { once:true });
-      }
-    });
-  }
-
-  // Theme toggle wrapper (if your app defines one)
   var _toggle = window.toggleTheme;
   window.toggleTheme = function(){
     if(_toggle) _toggle();
     setTimeout(ensureGlow, 0);
   };
-
-  // Initial run
   document.addEventListener('DOMContentLoaded', function(){
-    ensureGlow(); bindRoleButtons();
-    setTimeout(function(){ ensureGlow(); bindRoleButtons(); }, 250);
+    ensureGlow();
+    setTimeout(ensureGlow, 200);
   });
-
-  // Respond to SPA changes
-  window.addEventListener('hashchange', function(){ setTimeout(ensureGlow, 0); });
-  window.addEventListener('popstate', function(){ setTimeout(ensureGlow, 0); });
-
-  // Observe DOM changes (views swapping)
-  new MutationObserver(function(){ setTimeout(ensureGlow, 0); }).observe(document.body, {childList:true, subtree:true});
+  window.addEventListener('hashchange', function(){ setTimeout(ensureGlow,0); });
+  window.addEventListener('popstate',  function(){ setTimeout(ensureGlow,0); });
+  new MutationObserver(function(){ setTimeout(ensureGlow,0); }).observe(document.body, {childList:true, subtree:true});
 })();
 </script>
 
@@ -988,37 +994,37 @@ html:not(.dark) #login-view .chip {
 
 /* Light theme */
 html:not(.dark) #login-view .min-h-screen::before{
-  top:-20vh; left:-20vw; width:50vmax; height:50vmax;
+  top:2vh; left:-15vw; width:50vmax; height:50vmax;
   background: linear-gradient(to top right,
-    rgba(99,102,241,.95) 0%,
-    rgba(125,211,252,.85) 50%,
-    rgba(94,234,212,.85) 100%);
+    rgba(99,102,241,.97) 0%,
+    rgba(125,211,252,.87) 50%,
+    rgba(94,234,212,.87) 100%);
   opacity:.40;
 }
 html:not(.dark) #login-view .min-h-screen::after{
   bottom:0; right:0; width:45vmax; height:45vmax;
   background: linear-gradient(to bottom right,
-    rgba(232,121,249,.95) 0%,
-    rgba(192,132,252,.85) 50%,
-    rgba(147,197,253,.85) 100%);
+    rgba(232,121,249,.80) 0%,
+    rgba(192,132,252,.70) 50%,
+    rgba(147,197,253,.70) 100%);
   opacity:.30; animation-delay:-2s;
 }
 
 /* Dark theme */
 html.dark #login-view .min-h-screen::before{
-  top:-20vh; left:-20vw; width:50vmax; height:50vmax;
+  top:2vh; left:-15vw; width:50vmax; height:50vmax;
   background: linear-gradient(to top right,
-    rgba(67,56,202,.95) 0%,
-    rgba(2,132,199,.80) 50%,
-    rgba(13,148,136,.80) 100%);
+    rgba(67,56,202,.97) 0%,
+    rgba(2,132,199,.87) 50%,
+    rgba(13,148,136,.87) 100%);
   opacity:.30;
 }
 html.dark #login-view .min-h-screen::after{
   bottom:0; right:0; width:45vmax; height:45vmax;
   background: linear-gradient(to bottom right,
-    rgba(162,28,175,.95) 0%,
-    rgba(126,34,206,.80) 50%,
-    rgba(29,78,216,.80) 100%);
+    rgba(162,28,175,.85) 0%,
+    rgba(126,34,206,.75) 50%,
+    rgba(29,78,216,.75) 100%);
   opacity:.20; animation-delay:-2s;
 }
 
@@ -1031,6 +1037,52 @@ html.dark #login-view .min-h-screen::after{
   position:relative; z-index:1;
 }
 </style>
+
+<style>
+.scroll-hint{
+  position: fixed !important;
+  left: 50% !important; transform: translateX(-50%) !important;
+  bottom: 18px !important;
+  z-index: 1050 !important; /* below theme toggle */
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s ease;
+}
+.scroll-hint.is-visible{ opacity:1; pointer-events:auto; }
+</style>
+
+<style>
+/* --- Final layering: page bg < blobs(0) < content(1) < theme-toggle --- */
+#login-view .min-h-screen::before,
+#login-view .min-h-screen::after{
+  z-index: 0 !important; /* blobs stay visible but below content */
+}
+/* Elevate hero/logo/login card and any glass cards so they sit above blobs */
+header,
+#login-view .w-full.max-w-md,
+#login-view .glass-card,
+#login-view .hero-viewport,
+#login-view .card,
+#login-view .content,
+#login-view .container,
+#login-view h1, 
+#login-view p,
+#login-view img {
+  position: relative;
+  z-index: 1;
+}
+</style>
+
+<style>
+#bg-anim{opacity:0; transition: opacity .5s ease;}
+body.glow-on #bg-anim{opacity:1;}
+</style>
+
+
+<style>
+/* v6: hide bg-anim when not glowing */
+body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
+</style>
+
 </head>
 <body>
 
@@ -2251,6 +2303,129 @@ try {
   } else {
     boot();
   }
+})();
+</script>
+
+
+<script>
+(function(){
+  const hint = document.querySelector('.scroll-hint');
+  const hero = document.querySelector('#login-view .hero-viewport') 
+            || document.querySelector('#login-view .min-h-screen');
+  if(!hint || !hero) return;
+  function update(v){ v ? hint.classList.add('is-visible') : hint.classList.remove('is-visible'); }
+  if('IntersectionObserver' in window){
+    const io = new IntersectionObserver((ents)=>{
+      ents.forEach(e => update(e.isIntersecting));
+    }, {threshold: 0.1});
+    io.observe(hero);
+    const r = hero.getBoundingClientRect();
+    update(r.top < innerHeight && r.bottom > 0);
+  }else{
+    update(true);
+    addEventListener('scroll', ()=>{
+      const r = hero.getBoundingClientRect();
+      update(r.top < innerHeight && r.bottom > 0);
+    }, {passive:true});
+  }
+})();
+</script>
+<script>
+(function(){
+  function toggleBodyGlow(on){
+    try{
+      document.body.classList.toggle('glow-on', !!on);
+      var bg = document.getElementById('bg-anim');
+      if(bg) bg.style.display = on ? 'block' : 'none';
+    }catch(e){}
+  }
+  // inject into ensureGlow flow by wrapping or redefining ensureGlow
+  var _ensureGlow = window.ensureGlow;
+  window.ensureGlow = function(){
+    function visible(el){ if(!el) return false; var s = getComputedStyle(el); return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed'); }
+    var onLogin = visible(document.getElementById('login-view'));
+    var onRole  = visible(document.getElementById('role-selection-view'));
+    if(onLogin || onRole){
+      toggleBodyGlow(true);
+      if(typeof addGlowLayer==='function') addGlowLayer();
+    }else{
+      toggleBodyGlow(false);
+      if(typeof removeGlow==='function') removeGlow();
+    }
+    if(typeof _ensureGlow==='function'){ try{ _ensureGlow(); }catch(e){} }
+  };
+  // run once
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(window.ensureGlow,0); });
+})();
+</script>
+<script>
+// v5 patch: force-turn-off glow when entering any dashboard
+(function(){
+  function hardOffGlow(){
+    document.body.classList.remove('glow-on');
+    var bg = document.getElementById('bg-anim'); if(bg) bg.style.display = 'none';
+    var g  = document.querySelector('.global-glow'); if(g) g.remove();
+    document.documentElement.classList.remove('has-global-glow');
+  }
+  var _enterDashboard = window.enterDashboard;
+  window.enterDashboard = function(role){
+    hardOffGlow();
+    if(typeof _enterDashboard === 'function'){
+      return _enterDashboard(role);
+    }
+  };
+})();
+</script>
+
+<script>
+/* v6 hard fix: unified glow controller */
+(function(){
+  function hardOffGlow(){
+    document.body.classList.remove('glow-on');
+    var bg = document.getElementById('bg-anim'); if(bg){ bg.style.display='none'; bg.removeAttribute('style'); }
+    var g = document.querySelectorAll('.global-glow'); g.forEach(function(x){ x.remove(); });
+    document.documentElement.classList.remove('has-global-glow');
+  }
+  function hardOnGlow(){
+    document.body.classList.add('glow-on');
+    if(!document.querySelector('.global-glow')){
+      var d=document.createElement('div'); d.className='global-glow'; document.body.prepend(d);
+    }
+  }
+  function isVisible(el){
+    if(!el) return false;
+    var s = getComputedStyle(el);
+    return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed');
+  }
+  function ensureGlow(){
+    var onLogin = isVisible(document.getElementById('login-view'));
+    var onRole  = isVisible(document.getElementById('role-selection-view'));
+    if(onLogin || onRole){ hardOnGlow(); }
+    else{ hardOffGlow(); }
+  }
+  window.ensureGlow = ensureGlow;
+  var _navigateTo = window.navigateTo;
+  window.navigateTo = function(viewId){
+    if(_navigateTo) _navigateTo(viewId);
+    var idStr = String(viewId||'').toLowerCase();
+    if(idStr.includes('dashboard')){ hardOffGlow(); } else { ensureGlow(); }
+  };
+  var _enterDashboard = window.enterDashboard;
+  window.enterDashboard = function(role){
+    hardOffGlow();
+    if(_enterDashboard) return _enterDashboard(role);
+  };
+  function checkHash(){
+    var h = (location.hash||'').toLowerCase();
+    if(h.includes('dashboard')) hardOffGlow(); else ensureGlow();
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    ensureGlow();
+    setTimeout(ensureGlow, 200);
+  });
+  window.addEventListener('hashchange', checkHash);
+  window.addEventListener('popstate', checkHash);
+  new MutationObserver(function(){ ensureGlow(); }).observe(document.body, {childList:true, subtree:true});
 })();
 </script>
 
