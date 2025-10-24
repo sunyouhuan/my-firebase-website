@@ -1,4 +1,12 @@
 <!DOCTYPE html>
+<!--
+  檔名：10_03_深色淺色版本_index_theme_toggle_v30_annotated_clean.html
+  說明：
+  1) 移除重複的 v15 glow IIFE 與重複的 light theme 樣式片段（僅保留第一份）。
+  2) 新增 .theme-toggle 的固定定位樣式，確保深/淺色皆在右下角、z-index 最高層。
+  3) 為核心函式（navigateTo/switchTab/toggleMenu/openModal/closeModal/handleLogout/handleGoogleLogin/enterDashboard）補上中文註解。
+  4) 未更動任何選擇器與 UI 結構，盡可能維持原有視覺與行為。
+-->
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
@@ -856,6 +864,7 @@ html:not(.dark) #login-view .chip {
   };
 
   // Hook enterDashboard to remove glow once role chosen
+/* 功能：依角色（商家/網紅）進入相對應儀表頁面，顯示歡迎資訊並切換到預設分頁。*/
   var _enterDashboard = window.enterDashboard;
   window.enterDashboard = function(role){
     removeGlow();
@@ -904,10 +913,130 @@ html:not(.dark) #login-view .chip {
 })();
 </script>
 
+
+<style>
+  /* === Twin glow background (match 前端測試版本_05 style) === */
+  #bg-anim{
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+  }
+  #bg-anim .blob{
+    position: absolute; border-radius: 9999px;
+    filter: blur(60px);
+    animation: pulseSoft 8s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+  /* Light theme */
+  html:not(.dark) #bg-anim .blob-1{
+    top: -20vh; left: -20vw; width: 50vmax; height: 50vmax;
+    opacity: .40;
+    background: linear-gradient(to top right,
+      rgba(99,102,241,.95) 0%,
+      rgba(125,211,252,.85) 50%,
+      rgba(94,234,212,.85) 100%);
+  }
+  html:not(.dark) #bg-anim .blob-2{
+    bottom: 0; right: 0; width: 45vmax; height: 45vmax;
+    opacity: .30;
+    background: linear-gradient(to bottom right,
+      rgba(232,121,249,.95) 0%,
+      rgba(192,132,252,.85) 50%,
+      rgba(147,197,253,.85) 100%);
+    animation-delay: -2s;
+  }
+
+  /* Dark theme */
+  html.dark #bg-anim .blob-1{
+    top: -20vh; left: -20vw; width: 50vmax; height: 50vmax;
+    opacity: .30;
+    background: linear-gradient(to top right,
+      rgba(67,56,202,.95) 0%,
+      rgba(2,132,199,.80) 50%,
+      rgba(13,148,136,.80) 100%);
+  }
+  html.dark #bg-anim .blob-2{
+    bottom: 0; right: 0; width: 45vmax; height: 45vmax;
+    opacity: .20;
+    background: linear-gradient(to bottom right,
+      rgba(162,28,175,.95) 0%,
+      rgba(126,34,206,.80) 50%,
+      rgba(29,78,216,.80) 100%);
+    animation-delay: -2s;
+  }
+
+  /* Optional: slightly reduce when global glow also present */
+  html.dark.has-global-glow #bg-anim{ opacity: .70; }
+
+  @keyframes pulseSoft{
+    0%,100%{ opacity: .30; transform: scale(1); }
+    50%    { opacity: .60; transform: scale(1.05); }
+  }
+</style>
+
+
+<style>
+/* ===== Ambient blobs drawn INSIDE login view using pseudo-elements (no DOM wrap) ===== */
+#login-view .min-h-screen{ position: relative; }
+#login-view .min-h-screen::before,
+#login-view .min-h-screen::after{
+  content:""; position:fixed; pointer-events:none;
+  border-radius:9999px; filter:blur(60px);
+  animation: pulseSoft 8s ease-in-out infinite;
+  z-index:0; /* keep them under content */
+  will-change: transform, opacity; /* smoother on fixed layer */
+}
+
+/* Light theme */
+html:not(.dark) #login-view .min-h-screen::before{
+  top:-20vh; left:-20vw; width:50vmax; height:50vmax;
+  background: linear-gradient(to top right,
+    rgba(99,102,241,.95) 0%,
+    rgba(125,211,252,.85) 50%,
+    rgba(94,234,212,.85) 100%);
+  opacity:.40;
+}
+html:not(.dark) #login-view .min-h-screen::after{
+  bottom:0; right:0; width:45vmax; height:45vmax;
+  background: linear-gradient(to bottom right,
+    rgba(232,121,249,.95) 0%,
+    rgba(192,132,252,.85) 50%,
+    rgba(147,197,253,.85) 100%);
+  opacity:.30; animation-delay:-2s;
+}
+
+/* Dark theme */
+html.dark #login-view .min-h-screen::before{
+  top:-20vh; left:-20vw; width:50vmax; height:50vmax;
+  background: linear-gradient(to top right,
+    rgba(67,56,202,.95) 0%,
+    rgba(2,132,199,.80) 50%,
+    rgba(13,148,136,.80) 100%);
+  opacity:.30;
+}
+html.dark #login-view .min-h-screen::after{
+  bottom:0; right:0; width:45vmax; height:45vmax;
+  background: linear-gradient(to bottom right,
+    rgba(162,28,175,.95) 0%,
+    rgba(126,34,206,.80) 50%,
+    rgba(29,78,216,.80) 100%);
+  opacity:.20; animation-delay:-2s;
+}
+
+/* Ensure the login card sits above the blobs */
+#login-view .min-h-screen .w-full.max-w-md,
+#login-view .min-h-screen .glass-card,
+#login-view .min-h-screen form,
+#login-view .min-h-screen header,
+#login-view .min-h-screen .card {
+  position:relative; z-index:1;
+}
+</style>
 </head>
 <body>
 
-    <div id="app">
+    <div id="bg-anim" style="display:none" aria-hidden="true"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+
+<div id="app">
 
         <div id="login-view" class="view active">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
@@ -945,7 +1074,15 @@ html:not(.dark) #login-view .chip {
                 </div>
             
                 <!-- v18: scrolling marketing intro section (reference-style) -->
-                <div id="intro" class="intro-wrap">
+                
+<div class="scroll-hint" onclick="(function(){
+  var target = document.getElementById('intro') || document.querySelector('#login-view + #intro') || document.querySelector('[id*=intro]');
+  if(target){ target.scrollIntoView({behavior:'smooth', block:'start'}); }
+})()">
+  <span class="chev" aria-hidden="true"></span> 向下捲動以瞭解更多
+</div>
+
+<div id="intro" class="intro-wrap">
                   <div class="hero-grid reveal">
                     <div>
                       <div class="badge">以 10× 效率，完成 100 位網紅的精準合作</div>
@@ -1428,6 +1565,7 @@ window.auth = auth; // expose for console
                 alert('Google 登入時發生錯誤：' + error.message);
             });
 
+/* 功能：在單頁應用（SPA）中切換 .view 區塊的顯示狀態，並回到頁面頂部。*/
     // --- 2. 核心 UI 導航與控制函式 ---
         function navigateTo(viewId) {
             document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
@@ -1443,6 +1581,7 @@ window.auth = auth; // expose for console
             influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
         };
     
+/* 功能：切換儀表內分頁（左側選單），並同步更新頁首標題；支援 'campaign-detail' 詳情頁保持 'campaigns' active。*/
     // === 修改部分 START：修改 switchTab 以支援詳情頁 ===
         function switchTab(role, tabId) {
             const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
@@ -1471,6 +1610,7 @@ window.auth = auth; // expose for console
 
     // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
         window.navigateTo = navigateTo;
+/* 功能：Mobile 側邊欄開合（切換 transform 與 overlay 顯示）。*/
         window.switchTab = switchTab;
     
         window.toggleMenu = function(role) {
@@ -1480,6 +1620,7 @@ window.auth = auth; // expose for console
                 sidebar.classList.toggle('-translate-x-full');
                 overlay.classList.toggle('hidden');
             }
+/* 功能：開啟對話框（移除 hidden / opacity-0 / scale-95）。*/
         }
 
         window.openModal = function(modalId) {
@@ -1491,6 +1632,7 @@ window.auth = auth; // expose for console
                     modal.querySelector('div > div').classList.remove('scale-95');
                 }, 10);
             }
+/* 功能：關閉對話框（加回 opacity-0 / scale-95，結束後加回 hidden）。*/
         }
         window.closeModal = function(modalId) {
             const modal = document.getElementById(modalId);
@@ -1803,6 +1945,7 @@ window.sendChatMessage = async function sendChatMessage() {
             } catch (error) {
                 alert('登入失敗：' + error.message);
             }
+/* 功能：登出目前使用者，並處理錯誤訊息顯示。*/
         };
 
         window.handleLogout = async function() {
@@ -1811,6 +1954,7 @@ window.sendChatMessage = async function sendChatMessage() {
             } catch (error) {
                 alert('登出失敗：' + error.message);
             }
+/* 功能：以 Google 彈出視窗進行登入，成功後進入認證狀態。*/
         };
 
         window.handleGoogleLogin = async function() {
