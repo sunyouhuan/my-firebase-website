@@ -762,7 +762,64 @@ html:not(.dark) #login-view .btn-primary:hover { background:#4338ca; }
   #login-view .hero-viewport > .flex { gap: 8px; }
 }
 
+
+
+/* (b) Light theme accents (teal/gray) + richer typography */
+:root{
+  --brand-teal: #10b981;          /* emerald 500 like logo green */
+  --brand-teal-600: #0ea5a4;      /* custom teal for hover */
+  --brand-slate: #475569;         /* slate 600 */
+  --brand-decor: #0d9488;         /* teal 600 legacy */
+}
+html:not(.dark) .brand-green { color: var(--brand-teal); }
+html:not(.dark) .brand-muted { color: var(--brand-slate); }
+html:not(.dark) .kicker { 
+  display:inline-flex; align-items:center; gap:8px; 
+  padding:6px 10px; border-radius:999px; 
+  background: rgba(16,185,129,0.08); color:#0f766e; border:1px solid rgba(16,185,129,0.18);
+}
+html:not(.dark) .accent-underline {
+  background: linear-gradient(transparent 70%, rgba(16,185,129,.25) 0);
+}
+html:not(.dark) .btn-primary { background: var(--brand-teal); }
+html:not(.dark) .btn-primary:hover { background: var(--brand-teal-600); }
+
+/* (c) Professional light-mode micro-animations */
+html:not(.dark) .glass-card { transition: transform .35s cubic-bezier(.22,.61,.36,1), box-shadow .35s; }
+html:not(.dark) .glass-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(2,6,23,.12); }
+html:not(.dark) .chip { transition: transform .25s; }
+html:not(.dark) .chip:hover { transform: translateY(-2px); }
+
+/* (d) Ensure reveal animations visible in light theme as well */
+html:not(.dark) .reveal.is-visible { will-change: transform, opacity; }
+
+
+
+/* (a) Light-mode accents for TOP intro section
+   亮色主題的 login-intro 樣式強化（badge / 標題高光 / 副標 / chip） */
+html:not(.dark) #login-view .badge { 
+  display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border-radius:999px;
+  background: rgba(16,185,129,0.08); color:#0f766e; border:1px solid rgba(16,185,129,0.18);
+}
+html:not(.dark) #login-view .hero-title strong,
+html:not(.dark) #login-view .hero-title .brand-green { color: var(--brand-teal); }
+html:not(.dark) #login-view .hero-title .accent-underline {
+  background: linear-gradient(transparent 70%, rgba(16,185,129,.25) 0);
+}
+html:not(.dark) #login-view .hero-sub { color: var(--brand-slate); }
+html:not(.dark) #login-view .chip { 
+  border-color: rgba(16,185,129,.22); 
+  background: rgba(16,185,129,.06); 
+  color:#0f766e; 
+}
+
 </style>
+
+
+
+
+
+
 
 <script>
 /* v15 runtime: manage glow on login + role selection; remove glow after role chosen */
@@ -960,6 +1017,68 @@ html:not(.dark) #login-view .btn-primary:hover { background:#4338ca; }
               <div style="color:#9aa3b2;">提供你的目標與預算，我們會輸出配對名單、預估成效與透明拆解。</div>
             </div>
             <button class="btn-primary" type="button" onclick="document.getElementById('login-email').focus()">立即試試</button>
+          </div>
+        </section>
+
+
+                <!-- v23: Influencer Monetization Story -->
+        <section id="influencer-story" class="intro-wrap" style="padding-top: 12vh;">
+          <div class="reveal"><span class="kicker">我們如何幫助「網紅」賺到錢</span></div>
+          <h2 class="hero-title reveal" data-delay="60ms"><span class="accent-underline">用 AI 把內容影響力<span class="brand-green">變現</span></span></h2>
+          <p class="hero-sub reveal" data-delay="120ms">從被動等待合作 → 主動被推薦。系統會在你睡覺時替你跑資料、比對品牌需求、計算報價與預估成效，讓你<u>把時間花在創作</u>。</p>
+          
+          <!-- Flow Diagram -->
+          <div class="glass-card reveal scale-in" data-delay="160ms" style="padding:20px;">
+            <h3 class="mb-2">一條龍變現流程</h3>
+            <div class="grid lg:grid-cols-5 md:grid-cols-3 grid-cols-1 gap-4 items-stretch">
+              <div class="p-4 rounded-lg border brand-step"><h4>① 連動帳號</h4><p class="text-sm brand-muted">YouTube/IG/TikTok 等讀取公開數據</p></div>
+              <div class="p-4 rounded-lg border brand-step"><h4>② 清理建模</h4><p class="text-sm brand-muted">去重/反作弊/受眾特徵提取</p></div>
+              <div class="p-4 rounded-lg border brand-step"><h4>③ 適配配對</h4><p class="text-sm brand-muted">比對品牌目標與你的受眾</p></div>
+              <div class="p-4 rounded-lg border brand-step"><h4>④ 智能報價</h4><p class="text-sm brand-muted">依類別/CPM 曲線與互動率</p></div>
+              <div class="p-4 rounded-lg border brand-step"><h4>⑤ 合約&結算</h4><p class="text-sm brand-muted">素材上傳、里程碑、對帳</p></div>
+            </div>
+          </div>
+
+          <!-- Tech Diagram (SVG) -->
+          <div class="grid md:grid-cols-2 gap-6 mt-6">
+            <div class="glass-card feature-card reveal slide-right" data-delay="0ms">
+              <h3>技術：MatchAI 三引擎</h3>
+              <svg viewBox="0 0 600 280" width="100%" height="180">
+                <defs>
+                  <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#0ea5a4"/></linearGradient>
+                </defs>
+                <rect x="12" y="30" width="180" height="60" rx="12" fill="url(#g1)" opacity="0.2"/>
+                <text x="24" y="66" fill="#0f766e" font-size="14">資料引擎</text>
+                <rect x="210" y="30" width="180" height="60" rx="12" fill="url(#g1)" opacity="0.2"/>
+                <text x="222" y="66" fill="#0f766e" font-size="14">適配/報價</text>
+                <rect x="408" y="30" width="180" height="60" rx="12" fill="url(#g1)" opacity="0.2"/>
+                <text x="420" y="66" fill="#0f766e" font-size="14">成效預估</text>
+                <path d="M192 60 L210 60 M390 60 L408 60" stroke="#0ea5a4" stroke-width="2"/>
+                <rect x="12" y="130" width="576" height="120" rx="14" fill="none" stroke="#94a3b8" stroke-dasharray="6,6"/>
+                <text x="24" y="156" fill="#475569" font-size="14">資料來源：平台 API / 公開貼文 / 互動 / 受眾</text>
+                <text x="24" y="180" fill="#475569" font-size="14">推論：主題相似度、受眾重疊、地區、CPM、異常偵測</text>
+                <text x="24" y="204" fill="#475569" font-size="14">輸出：配對名單、建議報價、預估轉換（含可信區間）</text>
+              </svg>
+            </div>
+            <div class="glass-card feature-card reveal slide-left" data-delay="140ms">
+              <h3>收益機制：公平、透明、可追蹤</h3>
+              <ul class="list-disc pl-5 text-sm brand-muted">
+                <li>成案抽成 10–15%（案型不同略有差異）</li>
+                <li>平台提供「計分明細」：你知道為什麼自己被推薦／沒被推薦</li>
+                <li>每案皆有里程碑與驗收，避免拖款與爭議</li>
+              </ul>
+              <img alt="收入示意" style="width:100%; border-radius:12px; margin-top:10px"
+                   src="https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=1200&auto=format&fit=crop"/>
+            </div>
+          </div>
+
+          <!-- Storytelling -->
+          <div class="glass-card cta-band reveal" data-delay="200ms" style="margin-top: 18px;">
+            <div>
+              <h3>故事：一位 5 萬粉的創作者</h3>
+              <div class="brand-muted">她原本每月只接 1–2 案；啟用 MatchAI 後，系統主動推薦給符合她受眾的保養品牌，建議她調整報價與素材格式。三個月內，平均每月接 5 案，單案報酬提升 38%。</div>
+            </div>
+            <button class="btn-primary" type="button" onclick="handleRegister()">我也要開始變現</button>
           </div>
         </section>
 
