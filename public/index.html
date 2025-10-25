@@ -1101,14 +1101,18 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             <label for="email" class="text-sm font-medium text-gray-700">電子郵件</label>
                             <input id="email" name="email" type="email" autocomplete="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
                         </div>
+
                         <div>
                             <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
                             <input id="password" name="password" type="password" autocomplete="current-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
                         </div>
+                        <div class="text-right text-sm"> <a href="#" onclick="openModal('forgot-password-modal')" class="font-medium text-teal-600 hover:text-teal-500">
+                                忘記密碼？
+                            </a>
+                        </div>
                         <div class="flex flex-col space-y-2">
                             <button type="button" onclick="handleLogin()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">登入</button>
-                            <button type="button" onclick="handleRegister()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">註冊新帳號</button>
-                        </div>
+                            <button type="button" onclick="navigateTo('register-view')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">註冊新帳號</button>                        </div>
                         <div class="relative flex py-3 items-center">
                             <div class="flex-grow border-t border-gray-300"></div>
                             <span class="flex-shrink mx-4 text-gray-400 text-sm">或</span>
@@ -1174,7 +1178,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                       <h3>準備好用 1 人完成過去 10 人才做得到的對接嗎？</h3>
                       <div style="color:#9aa3b2;">現在加入，立即體驗自動化配對流程。</div>
                     </div>
-                    <button class="btn-primary" type="button" onclick="handleRegister()">免費註冊</button>
+                    <button class="btn-primary" type="button" onclick="navigateTo('register-view')">免費註冊</button>
                   </div>
                 </div>
 
@@ -1205,7 +1209,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
               <h3>想看模型如何選人＋如何估價？</h3>
               <div style="color:#9aa3b2;">提供你的目標與預算，我們會輸出配對名單、預估成效與透明拆解。</div>
             </div>
-            <button class="btn-primary" type="button" onclick="document.getElementById('login-email').focus()">立即試試</button>
+            <button class="btn-primary" type="button" onclick="navigateTo('register-view')">立即試試</button>
           </div>
         </section>
 
@@ -1267,12 +1271,51 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
               <h3>故事：一位 5 萬粉的創作者</h3>
               <div class="brand-muted">她原本每月只接 1–2 案；啟用 MatchAI 後，系統主動推薦給符合她受眾的保養品牌，建議她調整報價與素材格式。三個月內，平均每月接 5 案，單案報酬提升 38%。</div>
             </div>
-            <button class="btn-primary" type="button" onclick="handleRegister()">我也要開始變現</button>
+            <button class="btn-primary" type="button" onclick="navigateTo('register-view')">我也要開始變現</button>
           </div>
         </section>
 
 </div>
         </div>
+        
+        <div id="register-view" class="view">
+            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
+                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
+                <p class="text-gray-600 mb-8">建立您的 AI 行銷帳號</p>
+                
+                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
+                    <h2 class="text-2xl font-bold text-center text-slate-800">註冊新帳號</h2>
+                    <form id="register-form" class="space-y-4" onsubmit="return false;">
+                        <div>
+                            <label for="register-email" class="text-sm font-medium text-gray-700">電子郵件</label>
+                            <input id="register-email" name="email" type="email" autocomplete="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div>
+                            <label for="register-password" class="text-sm font-medium text-gray-700">設定密碼</label>
+                            <input id="register-password" name="password" type="password" autocomplete="new-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div>
+                            <label for="register-password-confirm" class="text-sm font-medium text-gray-700">確認密碼</label>
+                            <input id="register-password-confirm" name="password-confirm" type="password" autocomplete="new-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        
+                        <div class="flex flex-col space-y-2 pt-2">
+                            <button type="button" onclick="handlePerformRegistration()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">
+                                建立帳號
+                            </button>
+                        </div>
+                        
+                        <div class="text-center text-sm text-gray-600">
+                            已經有帳號了？
+                            <a href="#" onclick="navigateTo('login-view')" class="font-medium text-teal-600 hover:text-teal-500">
+                                點此登入
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
 
         <div id="role-selection-view" class="view">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
@@ -1552,9 +1595,37 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             </div>
         </div>
 
+
+
+
+
         <div id="ai-chat-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col h-[70vh] transform scale-95 transition-transform duration-300"><div class="p-4 border-b flex justify-between items-center"><h2 class="text-lg font-bold text-slate-800">AI 行銷顧問</h2><button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div><div id="chat-window" class="flex-1 p-4 overflow-y-auto space-y-4"></div><div class="p-4 border-t"><div class="flex space-x-2"><input id="chat-input" type="text" class="flex-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="請輸入您的回覆..."><button onclick="sendChatMessage()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">發送</button></div></div></div></div>
         <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300"></div></div>
     </div>
+
+
+    <div id="forgot-password-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300">
+                <div class="p-5 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-slate-800">重設您的密碼</h2>
+                    <button onclick="closeModal('forgot-password-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <p class="text-gray-600">請輸入您註冊時使用的電子郵件，我們將會寄送一封密碼重設信件給您。</p>
+                    <form id="forgot-password-form" onsubmit="return false;">
+                        <div>
+                            <label for="forgot-email" class="text-sm font-medium text-gray-700">電子郵件</label>
+                            <input id="forgot-email" type="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                    </form>
+                </div>
+                <div class="p-5 border-t bg-slate-50">
+                    <button onclick="handleForgotPassword()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">
+                        寄送重設信件
+                    </button>
+                </div>
+            </div>
+        </div>
 
     <script type="module">import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js';
 
@@ -1569,7 +1640,8 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             GoogleAuthProvider, 
             signInWithRedirect, 
             getRedirectResult,
-            signInWithPopup
+            signInWithPopup,
+            sendPasswordResetEmail
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
     // === 修改部分 START：從 Firestore 匯入更多我們需要的功能 ===
@@ -1589,6 +1661,67 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             serverTimestamp,   // ⬅️ 新增
             limit
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+
+    // === 新增：執行註冊的函式 (給 register-view 使用) ===
+        window.handlePerformRegistration = async function() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-password-confirm').value;
+
+            if (!email || !password || !confirmPassword) {
+                alert('請填寫所有欄位！');
+                return;
+            }
+            if (password !== confirmPassword) {
+                alert('兩次輸入的密碼不一致！');
+                return;
+            }
+            if (password.length < 6) {
+                alert('密碼長度至少需要 6 個字元。');
+                return;
+            }
+
+            try {
+                // 使用我們匯入的 createUserWithEmailAndPassword
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert('註冊成功！將為您導向登入頁面。');
+                navigateTo('login-view'); // 註冊成功後跳回登入頁
+                document.getElementById('register-form').reset(); // 清空註冊表單
+                document.getElementById('email').value = email; // 貼心地幫使用者填上 email
+            } catch (error) {
+                console.error("註冊失敗:", error);
+                if (error.code === 'auth/email-already-in-use') {
+                    alert('註冊失敗：這個 Email 已經被註冊了。');
+                } else {
+                    alert('註冊失敗：' + error.message);
+                }
+            }
+        };
+
+        // === 新增：處理忘記密碼的函式 ===
+        window.handleForgotPassword = async function() {
+            const email = document.getElementById('forgot-email').value;
+            if (!email) {
+                alert('請輸入您的電子郵件！');
+                return;
+            }
+
+            try {
+                // 使用我們匯入的 sendPasswordResetEmail
+                await sendPasswordResetEmail(auth, email);
+                alert('密碼重設信件已寄出，請檢查您的信箱 (包含垃圾郵件匣)。');
+                closeModal('forgot-password-modal');
+                document.getElementById('forgot-password-form').reset();
+            } catch (error) {
+                console.error("寄送重設信件失敗:", error);
+                if (error.code === 'auth/user-not-found') {
+                    alert('寄送失敗：找不到使用這個 Email 註冊的用戶。');
+                } else {
+                    alert('寄送失敗：' + error.message);
+                }
+            }
+        };    
     // === 修改部分 END ===
 
         const firebaseConfig = {
@@ -1977,17 +2110,6 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     // === 修改部分 END ===
 
-    // --- 4. Firebase 驗證功能 (這部分不變) ---
-        window.handleRegister = async function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                alert('註冊成功！現在您可以登入了。');
-            } catch (error) {
-                alert('註冊失敗：' + error.message);
-            }
-        };
 
         window.handleLogin = async function() {
             const email = document.getElementById('email').value;
