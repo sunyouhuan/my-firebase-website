@@ -2586,7 +2586,7 @@ window.sendChatMessage = async function sendChatMessage() {
                 } else {
                     console.log('Auth state 在 500ms 內恢復，取消跳轉。');
                 }
-            }, 1000); // 緩衝 500 毫秒
+            }, 10000); // 緩衝 500 毫秒
         }
     });
 // === 修改部分 END ===
