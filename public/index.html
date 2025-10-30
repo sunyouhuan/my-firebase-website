@@ -1837,8 +1837,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         const storage = getStorage(app); // v2 (本次修改): 初始化 Storage
 
         // v3 (新功能): 用於暫存 "建立新活動" 時上傳的圖片 URL
-        let uploadedImageUrls = [];
-        let authLogoutTimer = null; // <== 【修正】新增計時器變數 
+        let uploadedImageUrls = []; 
 
         getRedirectResult(auth)
             .then((result) => {
@@ -2550,46 +2549,32 @@ window.sendChatMessage = async function sendChatMessage() {
         };
 
     // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
- // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
-    onAuthStateChanged(auth, (user) => {
-
-        if (authLogoutTimer) clearTimeout(authLogoutTimer); // 【修正】只要有觸發，就清除計時器
-
-        if (user) {
-            // 【修正】使用者登入，一切照舊
-            console.log('使用者已登入，開始監聽活動...');
-            listenForCampaigns();
-            listenForAccountBalance(user.uid); 
-            navigateTo('role-selection-view');
-        } else {
-            // 【修正】使用者為 null (登出)
-            console.log('Auth state 變為 null，啟動登出計時器...');
-
-            // 不要馬上跳轉，給 500 毫秒的緩衝時間
-            authLogoutTimer = setTimeout(() => {
-                // 500 毫秒後「再次檢查」
-                if (!auth.currentUser) {
-                    console.log('確認登出，執行跳轉。');
-                    // 如果 500 毫秒後 user 仍然是 null，才真的執行登出
-                    if (unsubscribeCampaigns) {
-                        unsubscribeCampaigns();
-                        unsubscribeCampaigns = null;
-                    }
-                    if (unsubscribeBalance) { 
-                        unsubscribeBalance();
-                        unsubscribeBalance = null;
-                    }
-                    const balanceEl = document.getElementById('finance-account-balance');
-                    if (balanceEl) balanceEl.textContent = 'NT$ 0';
-
-                    navigateTo('login-view');
-                } else {
-                    console.log('Auth state 在 500ms 內恢復，取消跳轉。');
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('使用者已登入，開始監聽活動...');
+                // 當用戶登入後，立刻開始監聽他/她的活動資料
+                listenForCampaigns();
+                listenForAccountBalance(user.uid); // v2 (本次修改): 啟動餘額監聽
+                navigateTo('role-selection-view');
+            } else {
+                console.log('使用者已登出，停止監聽。');
+                // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
+                if (unsubscribeCampaigns) {
+                    unsubscribeCampaigns();
+                    unsubscribeCampaigns = null;
                 }
-            }, 10000); // 緩衝 500 毫秒
-        }
-    });
-// === 修改部分 END ===
+                if (unsubscribeBalance) { // v2 (本次修改): 取消餘額監聽
+                    unsubscribeBalance();
+                    unsubscribeBalance = null;
+                }
+                // v2 (本次修改): 重設餘額顯示
+                const balanceEl = document.getElementById('finance-account-balance');
+                if (balanceEl) balanceEl.textContent = 'NT$ 0';
+
+                navigateTo('login-view');
+            }
+        });
+    // === 修改部分 END ===
     
 
 // === 公司設定：Firestore 文件位置 ===
