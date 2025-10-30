@@ -1613,9 +1613,14 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                     <button onclick="closeModal('new-campaign-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
                 </div>
 
-                <form id="campaign-form" class="flex-1 flex flex-col overflow-hidden">
-                    
-                    <div class="flex-1 p-6 overflow-y-auto space-y-6"> <div>
+                <form id="campaign-form">
+                    <!-- 
+                      關於滾輪 (Request 1): 
+                      這個區塊 (flex-1 overflow-y-auto) 已設定為自動滾動。
+                      當表單內容 (如下方圖片預覽區) 變得太長時，滾輪會自動出現。
+                    -->
+                    <div class="flex-1 p-6 overflow-y-auto space-y-6">
+                        <div>
                             <label for="brief-product-name" class="block text-sm font-medium text-gray-700">產品名稱</label>
                             <input type="text" id="brief-product-name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：我的酷炫無線耳機">
                         </div>
@@ -1659,6 +1664,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             </div>
                         </div>
 
+                        <!-- === v3 (新功能): 上傳行銷圖片 (Request 2) === -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700">上傳行銷圖片 (可多選)</label>
                             <input type="file" id="campaign-images" multiple accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
@@ -1670,17 +1676,21 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                                 <span id="upload-status-text" class="text-sm text-gray-600"></span>
                             </div>
                             
+                            <!-- 圖片預覽區域 -->
                             <div id="image-preview-area" class="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                                </div>
+                                <!-- 上傳的圖片縮圖會顯示在這裡 -->
+                            </div>
                             <progress id="upload-progress-bar" value="0" max="100" class="w-full mt-2 hidden"></progress>
                         </div>
-                        </div>
-                    
-                    <div class="p-5 border-t bg-slate-50">
-                        <button type="button" onclick="handleSaveBrief()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">儲存需求並開始配對</button>
-                    </div>
+                        <!-- === v3 (新功能) 結束 === -->
 
-                </form> </div>
+                    </div>
+                </form>
+
+                <div class="p-5 border-t bg-slate-50">
+                    <button onclick="handleSaveBrief()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">儲存需求並開始配對</button>
+                </div>
+            </div>
         </div>
 
 
