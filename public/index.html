@@ -1,11 +1,23 @@
 <!DOCTYPE html>
 <!--
-  檔名：10_03_深色淺色版本_index_theme_toggle_v30_annotated_clean.html
+  檔名：11_新增註冊介面.html
   說明：
   1) 移除重複的 v15 glow IIFE 與重複的 light theme 樣式片段（僅保留第一份）。
   2) 新增 .theme-toggle 的固定定位樣式，確保深/淺色皆在右下角、z-index 最高層。
   3) 為核心函式（navigateTo/switchTab/toggleMenu/openModal/closeModal/handleLogout/handleGoogleLogin/enterDashboard）補上中文註解。
   4) 未更動任何選擇器與 UI 結構，盡可能維持原有視覺與行為。
+  
+  --- v2 (本次修改) ---
+  1.  [財務管理] 將「帳戶餘額」的靜態數字改為 ID (finance-account-balance)，並預設為 NT$ 0。
+  2.  [財務管理] 為儲值按鈕 (信用卡/銀行轉帳/電子支付) 加上 ID 與 onclick 事件 (selectPaymentMethod)。
+  3.  [財務管理] 新增一個預設隱藏的區塊 (bank-transfer-details)，用於顯示銀行轉帳資訊、上傳截圖、輸入金額。
+  4.  [財務管理] 移除原有的通用「儲值金額」與「確認儲值」按鈕，改為整合進銀行轉帳區塊。
+  5.  [Firebase JS] 新增 Storage 相關的 import (uploadBytesResumable, getDownloadURL, getStorage, ref)。
+  6.  [Firebase JS] 新增 const storage = getStorage(app) 初始化。
+  7.  [Firebase JS] 新增 selectPaymentMethod(method) 函式，用於切換儲值方式的 UI 顯示。
+  8.  [Firebase JS] 新增 handleSubmitTransferProof() 函式，用於處理銀行轉帳的上傳與資料庫寫入。
+  9.  [Firebase JS] 新增 listenForAccountBalance(userId) 函式，用於即時監聽 Firestore 上的帳戶餘額。
+  10. [Firebase JS] 在 onAuthStateChanged 中，登入時呼叫 listenForAccountBalance，登出時取消監聽並重設餘額。
 -->
 <html lang="zh-Hant">
 <head>
@@ -45,6 +57,15 @@
         }
         .modal {
             transition: opacity 0.3s ease;
+        }
+
+        /* --- v2 (本次修改): 儲值按鈕的 Active 狀態 --- */
+        .payment-btn.active {
+            border-color: #0d9488; /* teal 600 */
+            background-color: #f0fdfa; /* teal 50 */
+            color: #0d9488;
+            border-width: 2px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
     
 /* === Light mode global glow & role-selection background === */
@@ -857,7 +878,6 @@ html:not(.dark) #login-view .chip {
 
 
 <script>
-<script>
 /* v15 runtime: manage glow on login + role selection; remove glow after choice */
 (function(){
   function isVisible(el){
@@ -1406,10 +1426,64 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             <div class="bg-white rounded-xl shadow p-6"><h3 class="font-bold text-slate-800 mb-4">曝光 & 點擊趨勢</h3><div class="h-80"><canvas id="performanceLineChart"></canvas></div></div>
                         </div>
                         
+                        <!-- v2 (本次修改): 財務管理介面更新 -->
                         <div id="merchant-finance-content" class="dashboard-content">
-                             <div class="bg-white rounded-xl shadow p-6 mb-6"><h3 class="text-lg font-medium text-gray-500">帳戶餘額</h3><p class="text-4xl font-bold text-slate-800 mt-2">NT$ 88,500</p></div>
-                             <div class="bg-white rounded-xl shadow p-8"><h2 class="text-xl font-bold text-slate-800 mb-4">線上儲值 (入金)</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><button class="border-2 border-teal-500 text-teal-500 font-bold p-4 rounded-lg">信用卡</button><button class="border border-gray-300 p-4 rounded-lg">銀行轉帳</button><button class="border border-gray-300 p-4 rounded-lg">電子支付</button></div><div class="space-y-4"><div><label class="text-sm font-medium">儲值金額</label><input type="number" placeholder="NT$ 10,000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><button class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800">確認儲值</button></div></div>
+                             <!-- 帳戶餘額：ID (finance-account-balance) 用於 JS 更新，預設為 0 -->
+                             <div class="bg-white rounded-xl shadow p-6 mb-6">
+                                 <h3 class="text-lg font-medium text-gray-500">帳戶餘額</h3>
+                                 <p id="finance-account-balance" class="text-4xl font-bold text-slate-800 mt-2">NT$ 0</p>
+                             </div>
+                             
+                             <div class="bg-white rounded-xl shadow p-8">
+                                 <h2 class="text-xl font-bold text-slate-800 mb-4">線上儲值 (入金)</h2>
+                                 
+                                 <!-- 儲值方式按鈕：加上 ID 與 onclick -->
+                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                     <button id="btn-pay-card" onclick="selectPaymentMethod('card')" class="payment-btn border border-gray-300 p-4 rounded-lg font-semibold transition-all">
+                                         信用卡
+                                     </button>
+                                     <button id="btn-pay-bank" onclick="selectPaymentMethod('bank')" class="payment-btn border border-gray-300 p-4 rounded-lg font-semibold transition-all">
+                                         銀行轉帳
+                                     </button>
+                                     <button id="btn-pay-epay" onclick="selectPaymentMethod('epay')" class="payment-btn border border-gray-300 p-4 rounded-lg font-semibold transition-all">
+                                         電子支付
+                                     </button>
+                                 </div>
+                                 
+                                 <!-- 銀行轉帳詳細資訊：預設隱藏 -->
+                                 <div id="bank-transfer-details" class="hidden space-y-6 border-t pt-6">
+                                     <div>
+                                         <h3 class="text-lg font-semibold text-slate-800">匯款帳戶資訊</h3>
+                                         <p class="text-sm text-gray-600">請匯款至以下帳戶，並上傳您的匯款截圖或收據照片，我們將在 1-2 個工作天內為您加值。</p>
+                                         <div class="mt-3 bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-1">
+                                             <p><strong>銀行：</strong> MatchAI 銀行 (007)</p>
+                                             <p><strong>戶名：</strong> 媒合科技有限公司</p>
+                                             <p><strong>帳號：</strong> 123-456-789012</p>
+                                         </div>
+                                     </div>
+
+                                     <div>
+                                         <label for="transfer-amount" class="block text-sm font-medium text-gray-700">您的匯款金額 (NT$)</label>
+                                         <input type="number" id="transfer-amount" placeholder="請輸入您實際匯款的金額" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                     </div>
+
+                                     <div>
+                                         <label for="transfer-proof-file" class="block text-sm font-medium text-gray-700">上傳匯款截圖/照片</Dlabel>
+                                         <input type="file" id="transfer-proof-file" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+                                     </div>
+                                     
+                                     <div class="flex items-center gap-3">
+                                          <button id="submit-transfer-proof-btn" onclick="handleSubmitTransferProof()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">
+                                              提交匯款證明
+                                          </button>
+                                          <progress id="transfer-upload-progress" value="0" max="100" class="w-full hidden"></progress>
+                                     </div>
+                                     <span id="transfer-upload-status" class="text-sm text-center block text-gray-600"></span>
+                                 </div>
+                             </div>
                         </div>
+                        <!-- v2 修改結束 -->
+
 
                         <div id="merchant-settings-content" class="dashboard-content">
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1627,7 +1701,14 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             </div>
         </div>
 
-    <script type="module">import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js';
+    <!-- 
+      v2 (本次修改): 
+      - 在主要的 script module 中，同時 import storage 相關功能
+      - 這是為了讓後續新增的 handleSubmitTransferProof 函式可以順利運作
+    -->
+    <script type="module">
+    // --- v2 (本次修改): 從 firebase/storage 匯入必要功能 ---
+    import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js';
 
     // --- 1. Firebase 初始化 (這部分不變) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
@@ -1737,8 +1818,9 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-window.auth = auth; // expose for console
+        window.auth = auth; // expose for console
         const db = getFirestore(app);
+        const storage = getStorage(app); // v2 (本次修改): 初始化 Storage
 
         getRedirectResult(auth)
             .then((result) => {
@@ -2092,7 +2174,7 @@ window.sendChatMessage = async function sendChatMessage() {
                 isDeleted: false, // 新增：軟刪除標記
                 merchantId: user.uid,
                 merchantEmail: user.email,
-                createdAt: new Date()
+                createdAt: serverTimestamp() // v2 (本次修改): 使用 serverTimestamp()
             };
 
             if (!briefData.productName) return alert('請至少填寫產品名稱！');
@@ -2109,6 +2191,157 @@ window.sendChatMessage = async function sendChatMessage() {
             }
         }
     // === 修改部分 END ===
+
+    // === v2 (本次修改): 財務管理相關函式 START ===
+
+    // 1. 切換付款方式 UI
+    window.selectPaymentMethod = function(method) {
+        // 重設所有按鈕樣式
+        document.querySelectorAll('.payment-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // 隱藏所有詳情區塊
+        const bankDetails = document.getElementById('bank-transfer-details');
+        if (bankDetails) bankDetails.classList.add('hidden');
+        // (未來可在此處新增其他支付方式的區塊)
+
+        // 啟用選中的項目
+        if (method === 'bank') {
+            document.getElementById('btn-pay-bank').classList.add('active');
+            if (bankDetails) bankDetails.classList.remove('hidden');
+        } else if (method === 'card') {
+            document.getElementById('btn-pay-card').classList.add('active');
+            // (顯示信用卡表單)
+        } else if (method === 'epay') {
+            document.getElementById('btn-pay-epay').classList.add('active');
+            // (顯示電子支付選項)
+        }
+    }
+
+    // 2. 提交銀行轉帳證明
+    window.handleSubmitTransferProof = async function() {
+        const user = auth.currentUser;
+        if (!user) {
+            alert('請先登入後再提交！');
+            return;
+        }
+
+        const amountInput = document.getElementById('transfer-amount');
+        const fileInput = document.getElementById('transfer-proof-file');
+        const statusEl = document.getElementById('transfer-upload-status');
+        const progressEl = document.getElementById('transfer-upload-progress');
+        const submitBtn = document.getElementById('submit-transfer-proof-btn');
+
+        const amount = parseInt(amountInput.value);
+        const file = fileInput.files[0];
+
+        // 驗證
+        if (!amount || amount <= 0) {
+            alert('請輸入有效的匯款金額！');
+            return;
+        }
+        if (!file) {
+            alert('請選擇要上傳的匯款截圖！');
+            return;
+        }
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.textContent = '上傳中...';
+            statusEl.textContent = '上傳中... 0%';
+            progressEl.classList.remove('hidden');
+            progressEl.value = 0;
+
+            // 1. 上傳圖片至 Storage
+            // 檔案路徑符合您的 Storage 規則: /logos/{userId}/{allPaths=**}
+            const filePath = `logos/${user.uid}/transfer_proofs/${Date.now()}_${file.name}`;
+            const fileRef = storageRef(storage, filePath);
+            const uploadTask = uploadBytesResumable(fileRef, file);
+
+            // 監聽上傳進度
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    progressEl.value = progress;
+                    statusEl.textContent = `上傳中... ${Math.round(progress)}%`;
+                }, 
+                (error) => {
+                    // 處理上傳失敗
+                    console.error('檔案上傳失敗:', error);
+                    alert('檔案上傳失敗，請稍後再試。');
+                    statusEl.textContent = '上傳失敗，請重試。';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '提交匯款證明';
+                    progressEl.classList.add('hidden');
+                }, 
+                async () => {
+                    // 2. 上傳成功，取得下載 URL
+                    statusEl.textContent = '上傳完成，正在儲存紀錄...';
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    
+                    // 3. 將紀錄寫入 Firestore
+                    // 資料路徑符合您的 Firestore 規則: /users/{userId}/{document=**}
+                    const transferDocRef = doc(collection(db, 'users', user.uid, 'transfers'));
+                    
+                    await setDoc(transferDocRef, {
+                        amount: amount,
+                        proofImageUrl: downloadURL,
+                        status: 'pending', // 待審核
+                        createdAt: serverTimestamp(),
+                        userId: user.uid,
+                        userEmail: user.email
+                    });
+
+                    // 4. 完成後的回饋
+                    alert('匯款證明已提交！我們將盡快為您審核並加值。');
+                    amountInput.value = '';
+                    fileInput.value = null;
+                    statusEl.textContent = '提交成功！';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '提交匯款證明';
+                    progressEl.classList.add('hidden');
+                    selectPaymentMethod(null); // 隱藏銀行轉帳區塊
+                }
+            );
+
+        } catch (error) {
+            console.error('提交匯款證明時發生錯誤:', error);
+            alert('提交失敗，請稍後再試。');
+            statusEl.textContent = '提交失敗，請重試。';
+            submitBtn.disabled = false;
+            submitBtn.textContent = '提交匯款證明';
+            progressEl.classList.add('hidden');
+        }
+    }
+
+    // 3. 監聽帳戶餘額
+    let unsubscribeBalance = null; // 用來儲存取消監聽的函式
+    function listenForAccountBalance(userId) {
+        if (unsubscribeBalance) unsubscribeBalance(); // 取消舊的監聽
+
+        const balanceEl = document.getElementById('finance-account-balance');
+        if (!balanceEl) return;
+        
+        // 假設餘額文件儲存在 /users/{userId}/finance/balance
+        const balanceDocRef = doc(db, 'users', userId, 'finance', 'balance');
+
+        unsubscribeBalance = onSnapshot(balanceDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const balance = data.currentBalance || 0;
+                balanceEl.textContent = `NT$ ${balance.toLocaleString()}`;
+            } else {
+                // 如果文件不存在，顯示 0
+                balanceEl.textContent = 'NT$ 0';
+                console.log('尚未建立餘額文件 (finance/balance)。');
+            }
+        }, (error) => {
+            console.error('監聽餘額失敗:', error);
+            balanceEl.textContent = 'NT$ ---';
+        });
+    }
+    // === v2 (本次修改): 財務管理相關函式 END ===
 
 
         window.handleLogin = async function() {
@@ -2168,15 +2401,25 @@ window.sendChatMessage = async function sendChatMessage() {
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 console.log('使用者已登入，開始監聽活動...');
-            // 當用戶登入後，立刻開始監聽他/她的活動資料
+                // 當用戶登入後，立刻開始監聽他/她的活動資料
                 listenForCampaigns();
+                listenForAccountBalance(user.uid); // v2 (本次修改): 啟動餘額監聽
                 navigateTo('role-selection-view');
             } else {
                 console.log('使用者已登出，停止監聽。');
-            // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
+                // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
                 if (unsubscribeCampaigns) {
                     unsubscribeCampaigns();
+                    unsubscribeCampaigns = null;
                 }
+                if (unsubscribeBalance) { // v2 (本次修改): 取消餘額監聽
+                    unsubscribeBalance();
+                    unsubscribeBalance = null;
+                }
+                // v2 (本次修改): 重設餘額顯示
+                const balanceEl = document.getElementById('finance-account-balance');
+                if (balanceEl) balanceEl.textContent = 'NT$ 0';
+
                 navigateTo('login-view');
             }
         });
@@ -2186,8 +2429,8 @@ window.sendChatMessage = async function sendChatMessage() {
 // === 公司設定：Firestore 文件位置 ===
 const companyDocRef = (uid) => doc(db, 'users', uid, 'company', 'profile');
 
-// === Firebase Storage 初始化 ===
-const storage = getStorage(app);
+// === Firebase Storage 初始化 (v2: 移到主 script module 頂部) ===
+// const storage = getStorage(app); 
 
 // === 公司卡片渲染 ===
 function renderCompanyCard(data) {
