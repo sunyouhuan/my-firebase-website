@@ -1,23 +1,19 @@
 <!DOCTYPE html>
 <!--
-  檔名：11_新增註冊介面.html
+  檔名：12.html (v3)
   說明：
-  1) 移除重複的 v15 glow IIFE 與重複的 light theme 樣式片段（僅保留第一份）。
-  2) 新增 .theme-toggle 的固定定位樣式，確保深/淺色皆在右下角、z-index 最高層。
-  3) 為核心函式（navigateTo/switchTab/toggleMenu/openModal/closeModal/handleLogout/handleGoogleLogin/enterDashboard）補上中文註解。
-  4) 未更動任何選擇器與 UI 結構，盡可能維持原有視覺與行為。
-  
-  --- v2 (本次修改) ---
-  1.  [財務管理] 將「帳戶餘額」的靜態數字改為 ID (finance-account-balance)，並預設為 NT$ 0。
-  2.  [財務管理] 為儲值按鈕 (信用卡/銀行轉帳/電子支付) 加上 ID 與 onclick 事件 (selectPaymentMethod)。
-  3.  [財務管理] 新增一個預設隱藏的區塊 (bank-transfer-details)，用於顯示銀行轉帳資訊、上傳截圖、輸入金額。
-  4.  [財務管理] 移除原有的通用「儲值金額」與「確認儲值」按鈕，改為整合進銀行轉帳區塊。
-  5.  [Firebase JS] 新增 Storage 相關的 import (uploadBytesResumable, getDownloadURL, getStorage, ref)。
-  6.  [Firebase JS] 新增 const storage = getStorage(app) 初始化。
-  7.  [Firebase JS] 新增 selectPaymentMethod(method) 函式，用於切換儲值方式的 UI 顯示。
-  8.  [Firebase JS] 新增 handleSubmitTransferProof() 函式，用於處理銀行轉帳的上傳與資料庫寫入。
-  9.  [Firebase JS] 新增 listenForAccountBalance(userId) 函式，用於即時監聽 Firestore 上的帳戶餘額。
-  10. [Firebase JS] 在 onAuthStateChanged 中，登入時呼叫 listenForAccountBalance，登出時取消監聽並重設餘額。
+  1. [行銷活動] "建立新活動" 的彈出式表單 (new-campaign-modal) 中，新增圖片上傳區塊。
+     - 包含一個 <input type="file" multiple>
+     - 一個 "上傳選取的圖片" 按鈕
+     - 一個預覽區域 (image-preview-area)
+     - 一個進度條與狀態文字
+  2. [JS] 新增 let uploadedImageUrls = [] 暫存陣列。
+  3. [JS] 新增 handleUploadCampaignImages() 函式，處理多檔案上傳至 Firebase Storage，並將回傳的 URL 存入暫存陣列，同時顯示預覽圖。
+  4. [JS] 修改 handleSaveBrief()，將暫存的 uploadedImageUrls 陣列一併存入 Firestore 的 briefs 文件中 (欄位為 imageUrls)。
+  5. [JS] 修改 closeModal()，在關閉 "new-campaign-modal" 時，自動清空 uploadedImageUrls 暫存陣列與圖片預覽區。
+  6. [JS] 修改 renderCampaigns()，讓行銷活動卡片會抓取 imageUrls[0] (第一張圖) 作為封面圖顯示。
+  7. [JS] 修改 showCampaignDetail()，在活動詳情頁中，顯示所有上傳的行銷圖片。
+  8. [表單滾輪] 彈出式表單的內容區塊本來就有 overflow-y-auto，在新增圖片預覽後，內容變長，滾輪會自動生效。
 -->
 <html lang="zh-Hant">
 <head>
@@ -1419,6 +1415,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             </div>
                           
                             <div id="campaigns-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <!-- v3: 活動卡片會由 renderCampaigns() 動態插入這裡 -->
                             </div>
                         </div>                        
 
@@ -1608,6 +1605,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         <div id="influencer-sidebar-overlay" onclick="toggleMenu('influencer')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
         </div>
 
+        <!-- v3: 修改彈出式表單 -->
         <div id="new-campaign-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col h-[90vh] transform scale-95 transition-transform duration-300">
                 <div class="p-5 border-b flex justify-between items-center">
@@ -1615,9 +1613,9 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                     <button onclick="closeModal('new-campaign-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
                 </div>
 
-                <form id="campaign-form">
-                    <div class="flex-1 p-6 overflow-y-auto space-y-6">
-                        <div>
+                <form id="campaign-form" class="flex-1 flex flex-col overflow-hidden">
+                    
+                    <div class="flex-1 p-6 overflow-y-auto space-y-6"> <div>
                             <label for="brief-product-name" class="block text-sm font-medium text-gray-700">產品名稱</label>
                             <input type="text" id="brief-product-name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：我的酷炫無線耳機">
                         </div>
@@ -1656,17 +1654,33 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                                 <label class="inline-flex items-center"><input type="checkbox" value="Instagram" class="rounded border-gray-300"> <span class="ml-2">Instagram</span></label>
                                 <label class="inline-flex items-center"><input type="checkbox" value="YouTube" class="rounded border-gray-300"> <span class="ml-2">YouTube</span></label>
                                 <label class="inline-flex items-center"><input type="checkbox" value="Facebook" class="rounded border-gray-300"> <span class="ml-2">Facebook</span></label>
-                                        <label class="inline-flex items-center"><input type="checkbox" value="TikTok" class="rounded border-gray-300"> <span class="ml-2">TikTok</span></label>
+                                <label class="inline-flex items-center"><input type="checkbox" value="TikTok" class="rounded border-gray-300"> <span class="ml-2">TikTok</span></label>
                                 <label class="inline-flex items-center"><input type="checkbox" value="XiaoHongShu" class="rounded border-gray-300"> <span class="ml-2">小紅書</span></label>
                             </div>
                         </div>
-                    </div>
-                </form>
 
-                <div class="p-5 border-t bg-slate-50">
-                    <button onclick="handleSaveBrief()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">儲存需求並開始配對</button>
-                </div>
-            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">上傳行銷圖片 (可多選)</label>
+                            <input type="file" id="campaign-images" multiple accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+                            
+                            <div class="flex items-center gap-3 mt-3">
+                                <button type="button" id="upload-images-btn" onclick="handleUploadCampaignImages()" class="bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-700">
+                                    上傳選取的圖片
+                                </button>
+                                <span id="upload-status-text" class="text-sm text-gray-600"></span>
+                            </div>
+                            
+                            <div id="image-preview-area" class="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                </div>
+                            <progress id="upload-progress-bar" value="0" max="100" class="w-full mt-2 hidden"></progress>
+                        </div>
+                        </div>
+                    
+                    <div class="p-5 border-t bg-slate-50">
+                        <button type"button" onclick="handleSaveBrief()" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">儲存需求並開始配對</button>
+                    </div>
+
+                </form> </div>
         </div>
 
 
@@ -1822,6 +1836,9 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         const db = getFirestore(app);
         const storage = getStorage(app); // v2 (本次修改): 初始化 Storage
 
+        // v3 (新功能): 用於暫存 "建立新活動" 時上傳的圖片 URL
+        let uploadedImageUrls = []; 
+
         getRedirectResult(auth)
             .then((result) => {
                 if (result) {
@@ -1901,6 +1918,8 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             }
 /* 功能：關閉對話框（加回 opacity-0 / scale-95，結束後加回 hidden）。*/
         }
+        
+        // === v3 (新功能): 修改 closeModal，使其在關閉 "new-campaign-modal" 時清空暫存 ===
         window.closeModal = function(modalId) {
             const modal = document.getElementById(modalId);
             if(modal) {
@@ -1908,6 +1927,15 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                 modal.querySelector('div > div').classList.add('scale-95');
                 setTimeout(() => {
                     modal.classList.add('hidden');
+                    
+                    // v3: 清空 "建立新活動" 表單的暫存資料
+                    if (modalId === 'new-campaign-modal') {
+                        uploadedImageUrls = []; // 清空 URL 陣列
+                        document.getElementById('image-preview-area').innerHTML = ''; // 清空預覽
+                        document.getElementById('upload-status-text').textContent = ''; // 清空狀態
+                        document.getElementById('upload-progress-bar').classList.add('hidden'); // 隱藏進度條
+                        document.getElementById('campaign-form').reset(); // 重設表單
+                    }
                 }, 300);
             }
         }
@@ -2032,6 +2060,94 @@ window.sendChatMessage = async function sendChatMessage() {
 
     // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
 
+    // === v3 (新功能): 上傳行銷活動圖片 (Request 2) ===
+    window.handleUploadCampaignImages = async function() {
+        const user = auth.currentUser;
+        if (!user) return alert('請先登入');
+
+        const fileInput = document.getElementById('campaign-images');
+        const files = fileInput.files;
+        if (!files || files.length === 0) return alert('請先選擇要上傳的圖片');
+
+        const statusEl = document.getElementById('upload-status-text');
+        const progressEl = document.getElementById('upload-progress-bar');
+        const previewEl = document.getElementById('image-preview-area');
+        const uploadBtn = document.getElementById('upload-images-btn');
+
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = '上傳中...';
+        statusEl.textContent = '準備上傳...';
+        progressEl.classList.remove('hidden');
+        progressEl.value = 0;
+
+        const uploadPromises = [];
+        let totalBytes = 0;
+        let transferredBytes = 0;
+
+        // 計算總大小
+        Array.from(files).forEach(file => {
+            totalBytes += file.size;
+        });
+
+        // 為每個檔案建立一個上傳 promise
+        Array.from(files).forEach(file => {
+            const filePath = `logos/${user.uid}/campaign_uploads/${Date.now()}_${file.name}`;
+            const fileRef = storageRef(storage, filePath);
+            const uploadTask = uploadBytesResumable(fileRef, file);
+
+            const promise = new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        // 這裡只更新單一檔案的進度，我們需要累加
+                        // 為了簡化，我們在 .then() 裡更新總進度
+                        statusEl.textContent = `正在上傳 ${snapshot.ref.name}...`;
+                    }, 
+                    (error) => {
+                        // 處理單一檔案上傳失敗
+                        console.error(`檔案 ${file.name} 上傳失敗:`, error);
+                        reject(error);
+                    }, 
+                    async () => {
+                        // 單一檔案上傳成功
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        
+                        // 更新總進度
+                        transferredBytes += file.size;
+                        progressEl.value = (transferredBytes / totalBytes) * 100;
+
+                        // 立即顯示縮圖
+                        const imgEl = document.createElement('img');
+                        imgEl.src = downloadURL;
+                        imgEl.className = 'w-full h-20 object-cover rounded-md border';
+                        previewEl.appendChild(imgEl);
+                        
+                        resolve(downloadURL); // 將 URL 回傳
+                    }
+                );
+            });
+            uploadPromises.push(promise);
+        });
+
+        try {
+            // 等待所有圖片上傳完成
+            const urls = await Promise.all(uploadPromises);
+            uploadedImageUrls = uploadedImageUrls.concat(urls); // 將新上傳的 URL 加入暫存
+            
+            statusEl.textContent = `成功上傳 ${urls.length} 張圖片！`;
+            progressEl.classList.add('hidden');
+            fileInput.value = null; // 清空選擇
+        } catch (error) {
+            console.error("上傳圖片時發生錯誤:", error);
+            alert('部分圖片上傳失敗，請重試');
+            statusEl.textContent = '上傳失敗';
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = '上傳選取的圖片';
+        }
+    }
+
+
+    // === v3 (新功能): 修改 renderCampaigns 以顯示封面圖 ===
     // 功能 1: 根據傳入的活動資料，產生 HTML 卡片
         function renderCampaigns(campaigns) {
             const listElement = document.getElementById('campaigns-list');
@@ -2046,6 +2162,13 @@ window.sendChatMessage = async function sendChatMessage() {
             campaigns.forEach(campaign => {
                 const data = campaign.data;
                 const id = campaign.id;
+
+                // v3: 檢查是否有圖片，並產生封面圖 HTML
+                let coverImage = '';
+                if (data.imageUrls && data.imageUrls.length > 0) {
+                    // 使用 onerror 來處理圖片載入失敗
+                    coverImage = `<img src="${data.imageUrls[0]}" alt="${data.productName}" class="w-full h-32 object-cover" onerror="this.style.display='none'">`;
+                }
 
                 let statusBadge = '';
                 switch (data.status) {
@@ -2067,17 +2190,21 @@ window.sendChatMessage = async function sendChatMessage() {
                     deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}')" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100">刪除</button>`;
                 }
 
+                // v3: 修改卡片結構以容納圖片
                 campaignsHTML += `
-                    <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-between">
-                        <div>
-                            ${statusBadge}
-                            <h3 class="font-bold text-lg mt-2 text-slate-800">${data.productName}</h3>
-                            <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
-                            <p class="text-sm text-gray-500 mt-1">希望網紅數: ${data.influencerCount} 位</p>
-                        </div>
-                        <div class="mt-4 flex space-x-2">
-                            <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200">查看詳情</button>
-                            ${deleteButtonHTML}
+                    <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden">
+                        ${coverImage}
+                        <div class="p-6 flex-1 flex flex-col justify-between">
+                            <div>
+                                ${statusBadge}
+                                <h3 class="font-bold text-lg mt-2 text-slate-800">${data.productName}</h3>
+                                <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
+                                <p class="text-sm text-gray-500 mt-1">希望網紅數: ${data.influencerCount} 位</p>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200">查看詳情</button>
+                                ${deleteButtonHTML}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2121,6 +2248,7 @@ window.sendChatMessage = async function sendChatMessage() {
             }
        }
 
+    // === v3 (新功能): 修改 showCampaignDetail 以顯示所有圖片 ===
     // 功能 4: 處理顯示活動詳情的邏輯
         window.showCampaignDetail = async function(campaignId) {
             if (!campaignId) return;
@@ -2128,6 +2256,21 @@ window.sendChatMessage = async function sendChatMessage() {
                 const docSnap = await getDoc(doc(db, "briefs", campaignId));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+
+                    // v3: 產生圖片預覽 HTML
+                    let imagesHTML = '<p class="text-gray-500">此活動沒有上傳行銷圖片。</p>';
+                    if (data.imageUrls && data.imageUrls.length > 0) {
+                        imagesHTML = '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">';
+                        data.imageUrls.forEach(url => {
+                            imagesHTML += `
+                                <a href="${url}" target="_blank" rel="noopener noreferrer">
+                                    <img src="${url}" class="w-full h-24 object-cover rounded-md border hover:opacity-75 transition-opacity" alt="行銷素材" onerror="this.parentElement.style.display='none'">
+                                </a>
+                            `;
+                        });
+                        imagesHTML += '</div>';
+                    }
+                    
                     const contentArea = document.getElementById('merchant-campaign-detail-content');
                     contentArea.innerHTML = `
                         <div class="bg-white rounded-xl shadow p-6 mb-6">
@@ -2140,7 +2283,16 @@ window.sendChatMessage = async function sendChatMessage() {
                                 <div><p class="text-sm text-gray-500">希望網紅數</p><p class="font-bold">${data.influencerCount}</p></div>
                             </div>
                         </div>
-                        <div class="bg-white rounded-xl shadow">
+
+                        <!-- v3 (新功能): 顯示行銷圖片素材 -->
+                        <div class="bg-white rounded-xl shadow mt-6">
+                            <h3 class="p-6 font-bold text-slate-800 border-b">行銷圖片素材</h3>
+                            <div class="p-6">
+                                ${imagesHTML}
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow mt-6">
                             <h3 class="p-6 font-bold text-slate-800 border-b">合作網紅列表 (開發中)</h3>
                             <div class="p-6 text-center text-gray-500">配對完成後，這裡會顯示合作的網紅名單與成效。</div>
                         </div>
@@ -2157,7 +2309,7 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     // === 新增部分 END ===
 
-    // === 修改部分 START: 修改 handleSaveBrief 以符合新架構 ===
+    // === v3 (新功能): 修改 handleSaveBrief 以儲存 imageUrls ===
         window.handleSaveBrief = async function() {
             const user = auth.currentUser;
             if (!user) return alert('請先登入！');
@@ -2169,7 +2321,8 @@ window.sendChatMessage = async function sendChatMessage() {
                 budget: parseInt(document.getElementById('brief-budget').value) || 0,
                 influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
                 followerRange: document.getElementById('brief-follower-range').value,
-               platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
+                platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
+                imageUrls: uploadedImageUrls, // v3: 儲存上傳的圖片 URL
                 status: 'pending_match',
                 isDeleted: false, // 新增：軟刪除標記
                 merchantId: user.uid,
@@ -2182,9 +2335,7 @@ window.sendChatMessage = async function sendChatMessage() {
             try {
                 await addDoc(collection(db, "briefs"), briefData);
                 alert('您的需求已成功送出！');
-                closeModal('new-campaign-modal');
-            // 清空表單，注意: 這需要你在 HTML 中用 <form> 標籤包住 modal 的內容
-                document.getElementById('campaign-form').reset();
+                closeModal('new-campaign-modal'); // closeModal 會自動清空表單和暫存
             } catch (error) {
                 console.error("儲存需求單失敗:", error);
                 alert('儲存失敗，請查看 console 的錯誤訊息。');
