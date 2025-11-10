@@ -19,7 +19,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MatchAI - AI 驅動的網紅行銷平台</title>
+    <title>InfluenceAI - AI 驅動的網紅行銷平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -344,7 +344,7 @@ html.dark       #role-selection-view .min-h-screen{ background: transparent !imp
   /* --- Fix: keep .text-white actually white in dark mode --- */
   html.dark .text-white { color: #ffffff !important; }
 
-  /* --- Logo accent for "MatchAI" (common patterns) --- */
+  /* --- Logo accent for "InfluenceAI" (common patterns) --- */
   html.dark #login-view h1 span:last-child,
   html.dark header h1 span:last-child,
   html.dark .brand .accent,
@@ -569,7 +569,7 @@ html.dark       #role-selection-view .min-h-screen{ background: transparent !imp
   html.dark header h1 span.logo-accent { color: var(--primary) !important; }
 </style>
 <script>
-/* Ensure MatchAI -> 'AI' accented if no <span> present */
+/* Ensure InfluenceAI -> 'AI' accented if no <span> present */
 (function(){
   var nodes = [
     document.querySelector('#login-view h1'),
@@ -582,7 +582,7 @@ html.dark       #role-selection-view .min-h-screen{ background: transparent !imp
     var html = h.innerHTML;
     if(/<span/i.test(html)) return; // already custom
     var text = (h.textContent||'').trim();
-    if(/MatchAI$/.test(text)){
+    if(/InfluenceAI$/.test(text)){
       h.innerHTML = text.slice(0,-2) + '<span class="logo-accent">AI</span>';
     }
   });
@@ -1108,7 +1108,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
         <div id="login-view" class="view active">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
+                <div class="text-4xl font-bold text-gray-800 mb-2">Influence<span class="text-teal-500">AI</span></div>
                 <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
                 <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
                     <h2 class="text-2xl font-bold text-center text-slate-800">登入您的帳號</h2>
@@ -1285,7 +1285,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
           <div class="glass-card cta-band reveal" data-delay="200ms" style="margin-top: 18px;">
             <div>
               <h3>故事：一位 5 萬粉的創作者</h3>
-              <div class="brand-muted">她原本每月只接 1–2 案；啟用 MatchAI 後，系統主動推薦給符合她受眾的保養品牌，建議她調整報價與素材格式。三個月內，平均每月接 5 案，單案報酬提升 38%。</div>
+              <div class="brand-muted">她原本每月只接 1–2 案；啟用 InfluenceAI 後，系統主動推薦給符合她受眾的保養品牌，建議她調整報價與素材格式。三個月內，平均每月接 5 案，單案報酬提升 38%。</div>
             </div>
             <button class="btn-primary" type="button" onclick="navigateTo('register-view')">我也要開始變現</button>
           </div>
@@ -1296,7 +1296,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         
         <div id="register-view" class="view">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
+                <div class="text-4xl font-bold text-gray-800 mb-2">InfluenceAI<span class="text-teal-500">AI</span></div>
                 <p class="text-gray-600 mb-8">建立您的 AI 行銷帳號</p>
                 
                 <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
@@ -1335,7 +1335,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
         <div id="role-selection-view" class="view">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-                <div class="text-4xl font-bold text-gray-800 mb-2">Match<span class="text-teal-500">AI</span></div>
+                <div class="text-4xl font-bold text-gray-800 mb-2">Influence<span class="text-teal-500">AI</span></div>
                 <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
                 <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
                     <h2 class="text-2xl font-bold text-center text-slate-800">請選擇您的身分</h2>
@@ -1350,7 +1350,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         <div id="merchant-dashboard-view" class="view">
             <div class="flex h-screen bg-slate-50">
                 <div id="merchant-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
-                    <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
+                    <div class="p-6 text-2xl font-bold text-gray-800 border-b">Influence<span class="text-teal-500">AI</span></div>
                     <nav class="mt-6">
                         <a href="#" onclick="switchTab('merchant', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
                         <a href="#" onclick="switchTab('merchant', 'campaigns')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">行銷活動</a>
@@ -1490,7 +1490,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
       <form id="company-form" class="space-y-5" onsubmit="return false;">
         <div>
           <label class="block text-sm font-medium text-gray-700">公司名稱</label>
-          <input id="company-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：MatchAI Inc.">
+          <input id="company-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：InfluenceAI Inc.">
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -1565,7 +1565,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         <div id="influencer-dashboard-view" class="view">
              <div class="flex h-screen bg-slate-50">
                 <div id="influencer-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
-                    <div class="p-6 text-2xl font-bold text-gray-800 border-b">Match<span class="text-teal-500">AI</span></div>
+                    <div class="p-6 text-2xl font-bold text-gray-800 border-b">Influence<span class="text-teal-500">AI</span></div>
                     <nav class="mt-6">
                         <a href="#" onclick="switchTab('influencer', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
                         <a href="#" onclick="switchTab('influencer', 'value')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">我的價值</a>
@@ -2775,7 +2775,7 @@ try {
     var text = (node.textContent || '').trim();
     if (!text) return;
     if (/span/i.test(node.innerHTML)) return; // assume already styled by author
-    if (/MatchAI/.test(text)) {
+    if (/InfluenceAI/.test(text)) {
       var base = text.slice(0, -2);
       var last = text.slice(-2);
       node.innerHTML = base + '<span class="logo-accent">' + last + '</span>';
