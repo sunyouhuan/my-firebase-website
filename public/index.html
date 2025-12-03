@@ -55,6 +55,12 @@
             transition: opacity 0.3s ease;
         }
 
+        /* === 修正 2: 確保註冊頁面的白色卡片浮在動畫之上 === */
+          #register-view .w-full.max-w-md {
+            position: relative;
+            z-index: 10; /* 確保高於背景 blobs */
+          }
+
         /* --- v2 (本次修改): 儲值按鈕的 Active 狀態 --- */
         .payment-btn.active {
             border-color: #0d9488; /* teal 600 */
@@ -633,7 +639,10 @@ html.dark .global-glow {
 @keyframes rotateGlowV15 { to { transform: rotate(360deg); } }
 
 /* Keep all content above glow */
-html.dark.has-global-glow body > :not(.global-glow):not(.theme-toggle) { position: relative; z-index: 1; }
+html.dark.has-global-glow body > :not(.global-glow):not(.theme-toggle):not(.modal) {
+  position: relative;
+  z-index: 1;
+}
 
 /* Ensure login-view's ::before never blocks clicks; keep its look if you still want it */
 html.dark #login-view::before { pointer-events: none !important; z-index: 0 !important; }
@@ -899,16 +908,18 @@ html:not(.dark) #login-view .chip {
     bg.style.display = show ? 'block' : 'none';
   }
   function ensureGlow(){
-    var onLogin = isVisible(document.getElementById('login-view'));
-    var onRole  = isVisible(document.getElementById('role-selection-view'));
-    if (onLogin || onRole){
-      addGlowLayer();
-      showBgAnim(true);
-    } else {
-      removeGlow();
-      showBgAnim(false);
-    }
+  const onLogin    = isVisible(document.getElementById('login-view'));
+  const onRole     = isVisible(document.getElementById('role-selection-view'));
+  const onRegister = isVisible(document.getElementById('register-view'));
+
+  if (onLogin || onRole || onRegister) {
+    addGlowLayer();
+    showBgAnim(true);
+  } else {
+    removeGlow();
+    showBgAnim(false);
   }
+}
   var _navigateTo = window.navigateTo;
   window.navigateTo = function(viewId){
     if(_navigateTo) _navigateTo(viewId);
@@ -1043,7 +1054,9 @@ html.dark #login-view .min-h-screen::after{
     rgba(29,78,216,.75) 100%);
   opacity:.20; animation-delay:-2s;
 }
-
+html.dark #register-view .min-h-screen {
+  background: transparent !important;
+}
 /* Ensure the login card sits above the blobs */
 #login-view .min-h-screen .w-full.max-w-md,
 #login-view .min-h-screen .glass-card,
@@ -1296,7 +1309,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         
         <div id="register-view" class="view">
             <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-                <div class="text-4xl font-bold text-gray-800 mb-2">InfluenceAI<span class="text-teal-500">AI</span></div>
+                <div class="text-4xl font-bold text-gray-800 mb-2">Influence<span class="text-teal-500">AI</span></div>
                 <p class="text-gray-600 mb-8">建立您的 AI 行銷帳號</p>
                 
                 <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
@@ -1465,7 +1478,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                                      </div>
 
                                      <div>
-                                         <label for="transfer-proof-file" class="block text-sm font-medium text-gray-700">上傳匯款截圖/照片</Dlabel>
+                                         <label for="transfer-proof-file" class="block text-sm font-medium text-gray-700">上傳匯款截圖/照片</label>
                                          <input type="file" id="transfer-proof-file" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
                                      </div>
                                      
@@ -1594,9 +1607,40 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                     </header>
 
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
-                        <div id="influencer-dashboard-content" class="dashboard-content active"><div class="h-80"><canvas id="valueRadarChart"></canvas></div></div>
-                        <div id="influencer-value-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6"><h3 class="text-lg font-bold text-slate-800 mb-4">點擊社群平台查看詳細分析報告</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><div onclick="showPlatformDetail('instagram')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/E1306C/FFFFFF?text=IG" class="rounded-full" /><div><p class="font-bold">hsi_daily</p><p class="text-sm text-gray-500">Instagram</p></div></div><div onclick="showPlatformDetail('youtube')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/FF0000/FFFFFF?text=YT" class="rounded-full" /><div><p class="font-bold">小希的探索頻道</p><p class="text-sm text-gray-500">YouTube</p></div></div><div class="p-4 border border-dashed rounded-lg flex items-center space-x-4 text-gray-400"><img src="https://placehold.co/48x48/000000/FFFFFF?text=TK" class="rounded-full" /><div><p class="font-bold">連結 TikTok</p><p class="text-sm">尚未連結</p></div></div></div></div></div>
-                        <div id="influencer-invitations-content" class="dashboard-content"><div class="space-y-6"><div class="bg-white rounded-xl shadow p-6"><div class="flex flex-col md:flex-row justify-between"><div><p class="font-bold text-sm text-teal-600">A 公司</p><h3 class="font-bold text-xl mt-1 text-slate-800">聯名無線耳機預熱</h3><p class="text-sm text-gray-500 mt-2">內容形式: 1 則 Instagram 圖文 + 3 則限時動態</p></div><div class="mt-4 md:mt-0 text-left md:text-right"><p class="font-bold text-xl text-slate-800">NT$ 8,000 - 12,000</p><p class="text-sm text-gray-500">預算範圍</p></div></div><div class="mt-4 pt-4 border-t flex flex-col md:flex-row items-center justify-between"><p class="text-sm text-gray-500">截止日期: 2025-10-15</p><div class="flex space-x-2 mt-3 md:mt-0"><button class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">婉拒</button><button class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">查看詳情並接受</button></div></div></div></div></div>
+                        <div id="influencer-dashboard-content" class="dashboard-content active">
+                            <div class="h-80 mb-8"><canvas id="valueRadarChart"></canvas></div>
+    
+                            <div class="border-t pt-6">
+                                <h2 class="text-xl font-bold text-slate-800 mb-6">進行中的工作 (Active Collaborations)</h2>
+                                <div id="influencer-active-jobs-list" class="space-y-6">
+                                    <p class="text-gray-500">目前沒有進行中的工作。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="influencer-value-content" class="dashboard-content">
+                          <div class="bg-white rounded-xl shadow p-6"><h3 class="text-lg font-bold text-slate-800 mb-4">點擊社群平台查看詳細分析報告</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <div onclick="showPlatformDetail('instagram')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/E1306C/FFFFFF?text=IG" class="rounded-full" />
+                                <div><p class="font-bold">hsi_daily</p><p class="text-sm text-gray-500">Instagram</p>
+                                </div>
+                              </div>
+                              <div onclick="showPlatformDetail('youtube')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/FF0000/FFFFFF?text=YT" class="rounded-full" />
+                                <div><p class="font-bold">小希的探索頻道</p><p class="text-sm text-gray-500">YouTube</p>
+                                </div>
+                              </div>
+                              <div class="p-4 border border-dashed rounded-lg flex items-center space-x-4 text-gray-400"><img src="https://placehold.co/48x48/000000/FFFFFF?text=TK" class="rounded-full" />
+                                <div><p class="font-bold">連結 TikTok</p><p class="text-sm">尚未連結</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div id="influencer-invitations-content" class="dashboard-content">
+                          <h2 class="text-xl font-bold text-slate-800 mb-6">合作邀請 (新活動)</h2>
+                          <div id="influencer-invitations-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <p class="text-gray-500">目前沒有新的合作邀請。</p>
+                          </div>
+                        </div>
                         <div id="influencer-finance-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6 mb-6"><h3 class="text-lg font-medium text-gray-500">可提領金額</h3><p class="text-4xl font-bold text-green-500 mt-2">NT$ 25,600</p></div><div class="bg-white rounded-xl shadow p-8"><h2 class="text-xl font-bold text-slate-800 mb-4">申請提領 (出金)</h2><div class="space-y-4"><div><label class="text-sm font-medium">提領銀行</label><select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option>中國信託 (822)</option><option>國泰世華 (013)</option></select></div><div><label class="text-sm font-medium">銀行帳號</label><input type="text" value="1234-5678-9012-3456" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><div><label class="text-sm font-medium">提領金額</label><input type="number" placeholder="最高可提領 NT$ 25,600" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><button class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">確認提領</button></div></div></div>
                         <div id="influencer-settings-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto"><h2 class="text-xl font-bold text-slate-800">個人設定</h2></div></div>
                     </main>
@@ -1865,47 +1909,57 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
         };
     
-/* 功能：切換儀表內分頁（左側選單），並同步更新頁首標題；支援 'campaign-detail' 詳情頁保持 'campaigns' active。*/
-    // === 修改部分 START：修改 switchTab 以支援詳情頁 ===
-        function switchTab(role, tabId) {
-            const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
-            const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
-            const headerTitle = document.getElementById(`${role}-header-title`);
-        
-            sidebarLinks.forEach(link => {
-                link.classList.remove('active');
-            // 如果是詳情頁，則讓 'campaigns' 保持 active
-                const linkTab = tabId === 'campaign-detail' ? 'campaigns' : tabId;
-                if (link.getAttribute('onclick').includes(`'${linkTab}'`)) {
-                    link.classList.add('active');
-                }
-            });
-
-            contents.forEach(content => content.classList.remove('active'));
-            const activeContent = document.getElementById(`${role}-${tabId}-content`);
-            if (activeContent) activeContent.classList.add('active');
-        
-        // 只有在 headerTitles 中有定義時才更新標題，避免覆蓋詳情頁的自訂標題
-            if (headerTitles[role][tabId]) {
-                headerTitle.textContent = headerTitles[role][tabId];
+// === 修改後的 switchTab (切換分頁時，順便載入資料) ===
+    window.switchTab = function(role, tabId) {
+        // 1. 處理側邊欄按鈕樣式 (Active 狀態)
+        const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
+        sidebarLinks.forEach(link => {
+            link.classList.remove('active');
+            // 特殊處理：如果是詳情頁 (campaign-detail)，側邊欄維持在 'campaigns' 亮起
+            const linkTab = tabId === 'campaign-detail' ? 'campaigns' : tabId;
+            // 檢查 onclick 屬性是否包含目標 tab
+            if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(`'${linkTab}'`)) {
+                link.classList.add('active');
             }
-        }
-    // === 修改部分 END ===
+        });
 
-    // --- 3. 將函式掛載到 window，讓 HTML 可以呼叫 ---
-        window.navigateTo = navigateTo;
-/* 功能：Mobile 側邊欄開合（切換 transform 與 overlay 顯示）。*/
-        window.switchTab = switchTab;
+        // 2. 處理內容區塊顯示 (隱藏其他，顯示目前的)
+        const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
+        contents.forEach(content => content.classList.remove('active'));
+        
+        const activeContent = document.getElementById(`${role}-${tabId}-content`);
+        if (activeContent) activeContent.classList.add('active');
     
-        window.toggleMenu = function(role) {
-            const sidebar = document.getElementById(`${role}-sidebar`);
-            const overlay = document.getElementById(`${role}-sidebar-overlay`);
-            if (sidebar && overlay) {
-                sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            }
-/* 功能：開啟對話框（移除 hidden / opacity-0 / scale-95）。*/
+        // 3. 更新頁面標題 (Header Title)
+        const headerTitle = document.getElementById(`${role}-header-title`);
+        // 確保 headerTitles 物件存在 (這是全域變數)
+        if (typeof headerTitles !== 'undefined' && headerTitles[role] && headerTitles[role][tabId]) {
+            headerTitle.textContent = headerTitles[role][tabId];
         }
+
+        // ==========================================
+        // NEW: 這裡就是新增的邏輯！
+        // 當切換到特定分頁時，自動觸發資料載入函式
+        // ==========================================
+        if (role === 'influencer') {
+            if (tabId === 'invitations') {
+                // 如果切換到「合作邀請」，就去資料庫撈邀請
+                if (typeof renderInfluencerInvitations === 'function') {
+                    renderInfluencerInvitations();
+                }
+            } else if (tabId === 'dashboard') {
+                // 如果切換到「總覽」，就去資料庫撈進行中的工作
+                if (typeof renderInfluencerActiveJobs === 'function') {
+                    renderInfluencerActiveJobs();
+                }
+            }
+        }
+    };
+    
+    // 確保 navigateTo 也有被掛載 (保留原本邏輯)
+    window.navigateTo = navigateTo;
+
+
 
         window.openModal = function(modalId) {
             const modal = document.getElementById(modalId);
@@ -2250,64 +2304,73 @@ window.sendChatMessage = async function sendChatMessage() {
 
     // === v3 (新功能): 修改 showCampaignDetail 以顯示所有圖片 ===
     // 功能 4: 處理顯示活動詳情的邏輯
-        window.showCampaignDetail = async function(campaignId) {
-            if (!campaignId) return;
-            try {
-                const docSnap = await getDoc(doc(db, "briefs", campaignId));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
+        // === 修改後的 showCampaignDetail (支援審核) ===
+    window.showCampaignDetail = async function(campaignId) {
+        if (!campaignId) return;
+        try {
+            const docSnap = await getDoc(doc(db, "briefs", campaignId));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
 
-                    // v3: 產生圖片預覽 HTML
-                    let imagesHTML = '<p class="text-gray-500">此活動沒有上傳行銷圖片。</p>';
-                    if (data.imageUrls && data.imageUrls.length > 0) {
-                        imagesHTML = '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">';
-                        data.imageUrls.forEach(url => {
-                            imagesHTML += `
-                                <a href="${url}" target="_blank" rel="noopener noreferrer">
-                                    <img src="${url}" class="w-full h-24 object-cover rounded-md border hover:opacity-75 transition-opacity" alt="行銷素材" onerror="this.parentElement.style.display='none'">
-                                </a>
-                            `;
-                        });
-                        imagesHTML += '</div>';
-                    }
-                    
-                    const contentArea = document.getElementById('merchant-campaign-detail-content');
-                    contentArea.innerHTML = `
-                        <div class="bg-white rounded-xl shadow p-6 mb-6">
-                            <h2 class="text-xl font-bold text-slate-800">${data.productName}</h2>
-                            <p class="text-gray-600 mt-2">${data.productDesc}</p>
-                            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-t pt-4">
-                                <div><p class="text-sm text-gray-500">狀態</p><p class="font-bold">${data.status}</p></div>
-                                <div><p class="text-sm text-gray-500">預算</p><p class="font-bold">NT$ ${data.budget.toLocaleString()}</p></div>
-                                <div><p class="text-sm text-gray-500">預期曝光</p><p class="font-bold">${data.impressions.toLocaleString()}</p></div>
-                                <div><p class="text-sm text-gray-500">希望網紅數</p><p class="font-bold">${data.influencerCount}</p></div>
-                            </div>
-                        </div>
-
-                        <!-- v3 (新功能): 顯示行銷圖片素材 -->
-                        <div class="bg-white rounded-xl shadow mt-6">
-                            <h3 class="p-6 font-bold text-slate-800 border-b">行銷圖片素材</h3>
-                            <div class="p-6">
-                                ${imagesHTML}
-                            </div>
-                        </div>
-
-                        <div class="bg-white rounded-xl shadow mt-6">
-                            <h3 class="p-6 font-bold text-slate-800 border-b">合作網紅列表 (開發中)</h3>
-                            <div class="p-6 text-center text-gray-500">配對完成後，這裡會顯示合作的網紅名單與成效。</div>
-                        </div>
-                    `;
-                    switchTab('merchant', 'campaign-detail');
-                    document.getElementById('merchant-header-title').textContent = `活動詳情: ${data.productName}`;
-                } else {
-                    alert("無法載入活動詳情。");
+                // 產生圖片預覽 HTML (保留原邏輯)
+                let imagesHTML = '<p class="text-gray-500">此活動沒有上傳行銷圖片。</p>';
+                if (data.imageUrls && data.imageUrls.length > 0) {
+                    imagesHTML = '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">';
+                    data.imageUrls.forEach(url => {
+                        imagesHTML += `
+                            <a href="${url}" target="_blank" rel="noopener noreferrer">
+                                <img src="${url}" class="w-full h-24 object-cover rounded-md border hover:opacity-75 transition-opacity" alt="行銷素材" onerror="this.parentElement.style.display='none'">
+                            </a>
+                        `;
+                    });
+                    imagesHTML += '</div>';
                 }
-            } catch (error) {
-                console.error("讀取詳情失敗: ", error);
-                alert("讀取詳情時發生錯誤。");
+                
+                const contentArea = document.getElementById('merchant-campaign-detail-content');
+                contentArea.innerHTML = `
+                    <div class="bg-white rounded-xl shadow p-6 mb-6">
+                        <div class="flex justify-between">
+                            <h2 class="text-xl font-bold text-slate-800">${data.productName}</h2>
+                            <button onclick="switchTab('merchant', 'campaigns')" class="text-sm text-blue-500 hover:underline">返回列表</button>
+                        </div>
+                        <p class="text-gray-600 mt-2">${data.productDesc}</p>
+                        <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-t pt-4">
+                            <div><p class="text-sm text-gray-500">狀態</p><p class="font-bold">${data.status}</p></div>
+                            <div><p class="text-sm text-gray-500">預算</p><p class="font-bold">NT$ ${data.budget.toLocaleString()}</p></div>
+                            <div><p class="text-sm text-gray-500">預期曝光</p><p class="font-bold">${data.impressions.toLocaleString()}</p></div>
+                            <div><p class="text-sm text-gray-500">希望網紅數</p><p class="font-bold">${data.influencerCount}</p></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow mt-6">
+                        <h3 class="p-6 font-bold text-slate-800 border-b">行銷圖片素材</h3>
+                        <div class="p-6">
+                            ${imagesHTML}
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow mt-6">
+                        <h3 class="p-6 font-bold text-slate-800 border-b bg-teal-50">合作網紅與審核 (Collaborations)</h3>
+                        <div id="collab-list-${campaignId}" class="p-6 bg-slate-50 min-h-[200px]">
+                            <p class="text-center text-gray-500">載入中...</p>
+                        </div>
+                    </div>
+                `;
+                
+                switchTab('merchant', 'campaign-detail');
+                document.getElementById('merchant-header-title').textContent = `活動詳情: ${data.productName}`;
+
+                // 啟動監聽該活動的合作狀態
+                renderCampaignCollaborations(campaignId, `collab-list-${campaignId}`);
+
+            } else {
+                alert("無法載入活動詳情。");
             }
+        } catch (error) {
+            console.error("讀取詳情失敗: ", error);
+            alert("讀取詳情時發生錯誤。");
         }
-    // === 新增部分 END ===
+    }
 
     // === v3 (新功能): 修改 handleSaveBrief 以儲存 imageUrls ===
         window.handleSaveBrief = async function() {
@@ -2342,6 +2405,353 @@ window.sendChatMessage = async function sendChatMessage() {
             }
         }
     // === 修改部分 END ===
+
+  // ==========================================
+    //  NEW: 網紅端 - 合作流程核心邏輯 (貼在 handleSaveBrief 之後)
+    // ==========================================
+
+    // 1. 渲染「合作邀請」列表 (讀取所有 pending_match 的 Briefs)
+// 1. 渲染「合作邀請」列表 (已修復 snapshot 變數錯誤)
+    window.renderInfluencerInvitations = async function() {
+        const listEl = document.getElementById('influencer-invitations-list');
+        if (!listEl) return;
+        listEl.innerHTML = '<p class="text-gray-500">載入中...</p>';
+
+        try {
+            // 查詢狀態為 pending_match 的活動
+            const q = query(collection(db, "briefs"), where("status", "==", "pending_match"));
+            
+            // ✅ [關鍵修復] 這一行就是之前消失的，現在補回來了！
+            const snapshot = await getDocs(q);
+            
+            if (snapshot.empty) {
+                listEl.innerHTML = '<p class="text-gray-500">目前沒有適合的合作邀請。</p>';
+                return;
+            }
+
+            let html = '';
+            for (const docSnap of snapshot.docs) {
+                const brief = docSnap.data();
+                const briefId = docSnap.id;
+
+                let merchantLogo = 'https://placehold.co/50';
+                let merchantName = '未知商家';
+                try {
+                    // 嘗試讀取商家頭像
+                    const merchantProfileSnap = await getDoc(doc(db, 'users', brief.merchantId, 'company', 'profile'));
+                    if (merchantProfileSnap.exists()) {
+                        const mData = merchantProfileSnap.data();
+                        if (mData.logoUrl) merchantLogo = mData.logoUrl;
+                        if (mData.name) merchantName = mData.name;
+                    }
+                } catch (e) { console.error('讀取商家資料錯誤', e); }
+
+                html += `
+                <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-4">
+                    <img src="${merchantLogo}" class="w-16 h-16 rounded-full object-cover border bg-gray-50" alt="Logo">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-800">${brief.productName}</h3>
+                                <p class="text-sm text-teal-600 font-semibold">${merchantName}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-xl font-bold text-slate-800">NT$ ${brief.budget.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 text-sm mt-2 line-clamp-2">${brief.productDesc}</p>
+                        <div class="mt-4 flex gap-2">
+                            <span class="px-2 py-1 bg-gray-100 text-xs rounded text-gray-600">平台: ${brief.platforms.join(', ')}</span>
+                            <span class="px-2 py-1 bg-gray-100 text-xs rounded text-gray-600">需求: ${brief.influencerCount} 人</span>
+                        </div>
+                        <div class="mt-4 pt-4 border-t flex justify-end">
+                            <button onclick="handleAcceptInvite('${briefId}', '${brief.merchantId}')" class="bg-teal-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-600 transition-colors">
+                                接受邀請
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            listEl.innerHTML = html;
+        } catch (error) {
+            console.error("載入邀請失敗:", error);
+            listEl.innerHTML = '<p class="text-red-500">載入失敗，請稍後重試。</p>';
+        }
+    };
+
+    // 2. 網紅接單 (建立 Collaboration)
+    window.handleAcceptInvite = async function(briefId, merchantId) {
+        const user = auth.currentUser;
+        if (!user) return alert('請先登入');
+        
+        if(!confirm('確定要接受這個合作邀請嗎？')) return;
+
+        try {
+            // 檢查是否已經接過單
+            const q = query(collection(db, "collaborations"), 
+                where("briefId", "==", briefId), 
+                where("influencerId", "==", user.uid));
+            const existing = await getDocs(q);
+            if (!existing.empty) {
+                return alert('您已經接受過這個邀請了，請至「總覽」查看進行中的工作。');
+            }
+
+            // 寫入 collaborations
+            await addDoc(collection(db, "collaborations"), {
+                briefId: briefId,
+                merchantId: merchantId,
+                influencerId: user.uid,
+                influencerEmail: user.email,
+                status: 'accepted', // accepted -> submitting -> reviewing -> approved/rejected
+                changeRequestCount: 0,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+
+            alert('接單成功！請至「總覽」分頁查看並開始製作素材。');
+            switchTab('influencer', 'dashboard'); // 跳轉到總覽
+            // renderInfluencerActiveJobs 會由 switchTab 觸發，或自動監聽
+        } catch (error) {
+            console.error("接單失敗:", error);
+            alert("接單失敗: " + error.message);
+        }
+    };
+
+    // 3. 渲染「進行中的工作」 (讀取 user 的 collaborations)
+    window.renderInfluencerActiveJobs = async function() {
+        const user = auth.currentUser;
+        if (!user) return;
+        const listEl = document.getElementById('influencer-active-jobs-list');
+        if (!listEl) return;
+
+        const q = query(collection(db, "collaborations"), where("influencerId", "==", user.uid), orderBy("updatedAt", "desc"));
+        
+        // 使用 onSnapshot 實現即時更新
+        onSnapshot(q, async (snapshot) => {
+            if (snapshot.empty) {
+                listEl.innerHTML = '<p class="text-gray-500">目前沒有進行中的工作。</p>';
+                return;
+            }
+
+            let html = '';
+            for (const docSnap of snapshot.docs) {
+                const collab = docSnap.data();
+                const collabId = docSnap.id;
+                
+                // 讀取對應的 Brief 資訊以顯示標題
+                let briefTitle = '載入中...';
+                try {
+                    const briefSnap = await getDoc(doc(db, 'briefs', collab.briefId));
+                    if (briefSnap.exists()) briefTitle = briefSnap.data().productName;
+                } catch(e){}
+
+                // 狀態顯示邏輯
+                let statusBadge = '';
+                let actionArea = '';
+
+                if (collab.status === 'accepted') {
+                    statusBadge = '<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-bold">待製作</span>';
+                    actionArea = `
+                        <div class="mt-4 bg-slate-50 p-4 rounded-lg">
+                            <p class="text-sm font-bold mb-2">上傳素材 (支援圖片或影片)</p>
+                            <input type="file" id="file-${collabId}" accept="image/*,video/*" class="block w-full text-sm mb-2">
+                            <textarea id="text-${collabId}" placeholder="請輸入貼文內容或備註..." class="w-full border rounded p-2 text-sm mb-2"></textarea>
+                            <button onclick="handleSubmitContent('${collabId}')" class="bg-indigo-600 text-white py-2 px-4 rounded text-sm font-bold hover:bg-indigo-700">提交審核</button>
+                            <div id="progress-${collabId}" class="hidden text-xs text-indigo-600 mt-1">上傳中...</div>
+                        </div>
+                    `;
+                } else if (collab.status === 'submitting' || collab.status === 'reviewing') {
+                    statusBadge = '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-bold">商家審核中</span>';
+                    actionArea = `<p class="text-sm text-gray-500 mt-2">您已提交素材，請等待商家審核。</p>`;
+                } else if (collab.status === 'changes_requested') {
+                    statusBadge = '<span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-bold">需修改</span>';
+                    actionArea = `
+                        <div class="mt-4 bg-orange-50 p-4 rounded-lg border border-orange-200">
+                            <p class="text-sm font-bold text-orange-800 mb-1">商家修改建議：</p>
+                            <p class="text-sm text-gray-700 mb-3 bg-white p-2 rounded">${collab.merchantMessage || '無'}</p>
+                            <p class="text-xs text-gray-500 mb-2">請根據建議修改後重新上傳</p>
+                            <input type="file" id="file-${collabId}" accept="image/*,video/*" class="block w-full text-sm mb-2">
+                            <textarea id="text-${collabId}" placeholder="修改說明..." class="w-full border rounded p-2 text-sm mb-2"></textarea>
+                            <button onclick="handleSubmitContent('${collabId}')" class="bg-orange-600 text-white py-2 px-4 rounded text-sm font-bold hover:bg-orange-700">提交修正</button>
+                            <div id="progress-${collabId}" class="hidden text-xs text-orange-600 mt-1">上傳中...</div>
+                        </div>
+                    `;
+                } else if (collab.status === 'approved') {
+                    statusBadge = '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-bold">商家已確認</span>';
+                    actionArea = `<div class="mt-2 p-3 bg-green-50 text-green-700 text-sm rounded">恭喜！商家已通過您的素材，您可以發布貼文了！</div>`;
+                } else if (collab.status === 'rejected') {
+                    statusBadge = '<span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-bold">已拒絕</span>';
+                    actionArea = `<p class="text-sm text-red-500 mt-2">很遺憾，此合作案已被商家終止。</p>`;
+                }
+
+                html += `
+                    <div class="bg-white rounded-xl shadow p-6 border-l-4 ${collab.status === 'approved' ? 'border-green-500' : 'border-indigo-500'}">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold text-lg text-slate-800">${briefTitle}</h3>
+                            ${statusBadge}
+                        </div>
+                        <p class="text-xs text-gray-400 mb-4">合作單號: ${collabId}</p>
+                        ${actionArea}
+                    </div>
+                `;
+            }
+            listEl.innerHTML = html;
+        });
+    };
+
+    // 4. 網紅上傳素材 (圖片或影片)
+    window.handleSubmitContent = async function(collabId) {
+        const fileInput = document.getElementById(`file-${collabId}`);
+        const textInput = document.getElementById(`text-${collabId}`);
+        const progressDiv = document.getElementById(`progress-${collabId}`);
+
+        if (!fileInput.files[0]) return alert('請選擇要上傳的檔案');
+        
+        const file = fileInput.files[0];
+        const text = textInput.value;
+        const isVideo = file.type.startsWith('video/');
+
+        progressDiv.classList.remove('hidden');
+
+        try {
+            // 上傳到 Storage
+            const storagePath = `collaborations/${collabId}/${Date.now()}_${file.name}`;
+            const fileRef = storageRef(storage, storagePath);
+            const uploadTask = uploadBytesResumable(fileRef, file);
+
+            uploadTask.on('state_changed', null, 
+                (err) => { console.error(err); alert('上傳失敗'); progressDiv.classList.add('hidden'); },
+                async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    
+                    // 更新 Firestore
+                    await updateDoc(doc(db, "collaborations", collabId), {
+                        contentData: {
+                            url: downloadURL,
+                            type: isVideo ? 'video' : 'image',
+                            text: text
+                        },
+                        status: 'reviewing',
+                        updatedAt: serverTimestamp()
+                    });
+
+                    alert('提交成功！等待商家審核。');
+                    // onSnapshot 會自動更新畫面
+                }
+            );
+
+        } catch (error) {
+            console.error("提交失敗:", error);
+            alert("提交失敗");
+            progressDiv.classList.add('hidden');
+        }
+    };
+
+    // ==========================================
+    //  NEW: 商家端 - 審核流程 (接續在網紅邏輯後)
+    // ==========================================
+
+    // 1. 渲染某個活動下的所有合作網紅
+    window.renderCampaignCollaborations = function(briefId, containerId) {
+        const container = document.getElementById(containerId);
+        if(!container) return;
+
+        const q = query(collection(db, "collaborations"), where("briefId", "==", briefId), orderBy("updatedAt", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+            if (snapshot.empty) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-4">目前尚無網紅接單。</p>';
+                return;
+            }
+
+            let html = '<div class="grid grid-cols-1 gap-6">';
+            snapshot.docs.forEach(docSnap => {
+                const collab = docSnap.data();
+                const cid = docSnap.id;
+
+                // 根據 content 類型顯示
+                let contentDisplay = '<p class="text-gray-400 text-sm italic">尚未上傳素材</p>';
+                if (collab.contentData) {
+                    if (collab.contentData.type === 'video') {
+                        contentDisplay = `
+                            <video src="${collab.contentData.url}" controls class="w-full h-48 bg-black rounded mb-2"></video>
+                            <p class="text-sm bg-gray-50 p-2 rounded">${collab.contentData.text || '無文字說明'}</p>
+                        `;
+                    } else {
+                        contentDisplay = `
+                            <a href="${collab.contentData.url}" target="_blank">
+                                <img src="${collab.contentData.url}" class="w-full h-48 object-cover rounded mb-2 border hover:opacity-90">
+                            </a>
+                            <p class="text-sm bg-gray-50 p-2 rounded">${collab.contentData.text || '無文字說明'}</p>
+                        `;
+                    }
+                }
+
+                // 審核按鈕區域
+                let actionButtons = '';
+                if (collab.status === 'reviewing') {
+                    actionButtons = `
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="handleMerchantReview('${cid}', 'approve')" class="flex-1 bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">通過</button>
+                            ${collab.changeRequestCount === 0 ? 
+                                `<button onclick="handleMerchantReview('${cid}', 'request_change')" class="flex-1 bg-orange-500 text-white py-2 rounded font-bold hover:bg-orange-600">要求修改</button>` : 
+                                `<button disabled class="flex-1 bg-gray-300 text-white py-2 rounded cursor-not-allowed">已修改過</button>`
+                            }
+                            <button onclick="handleMerchantReview('${cid}', 'reject')" class="flex-1 bg-red-500 text-white py-2 rounded font-bold hover:bg-red-600">拒絕</button>
+                        </div>
+                    `;
+                } else {
+                    const statusMap = {
+                        'accepted': '等待網紅製作',
+                        'approved': '已通過 ✅',
+                        'changes_requested': '等待網紅修改 ⏳',
+                        'rejected': '已拒絕 ❌'
+                    };
+                    actionButtons = `<div class="mt-3 text-center font-bold text-slate-600 border-t pt-2">${statusMap[collab.status] || collab.status}</div>`;
+                }
+
+                html += `
+                    <div class="border rounded-lg p-4 bg-white shadow-sm">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-slate-700">網紅: ${collab.influencerEmail}</span>
+                            <span class="text-xs text-gray-500">${new Date(collab.updatedAt?.seconds * 1000).toLocaleDateString()}</span>
+                        </div>
+                        ${contentDisplay}
+                        ${actionButtons}
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        });
+    };
+
+    // 2. 商家執行審核動作
+    window.handleMerchantReview = async function(collabId, action) {
+        let updateData = { updatedAt: serverTimestamp() };
+        
+        if (action === 'approve') {
+            if(!confirm('確定通過此素材嗎？網紅將收到通知並可發布。')) return;
+            updateData.status = 'approved';
+        } else if (action === 'reject') {
+            if(!confirm('確定拒絕此合作嗎？此操作無法復原。')) return;
+            updateData.status = 'rejected';
+        } else if (action === 'request_change') {
+            const msg = prompt('請輸入修改建議 (例如：影片光線太暗，請調整)：');
+            if (!msg) return;
+            updateData.status = 'changes_requested';
+            updateData.merchantMessage = msg;
+            updateData.changeRequestCount = 1; 
+        }
+
+        try {
+            await updateDoc(doc(db, "collaborations", collabId), updateData);
+            alert('狀態已更新');
+        } catch(e) {
+            console.error(e);
+            alert('更新失敗');
+        }
+    };
 
     // === v2 (本次修改): 財務管理相關函式 START ===
 
@@ -2547,6 +2957,10 @@ window.sendChatMessage = async function sendChatMessage() {
                 switchTab('influencer', 'dashboard');
             }
         };
+
+
+
+
 
     // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
         onAuthStateChanged(auth, (user) => {
