@@ -2424,7 +2424,7 @@ window.sendChatMessage = async function sendChatMessage() {
             // ✅ [關鍵修復] 這一行就是之前消失的，現在補回來了！
             const snapshot = await getDocs(q);
             
-            if (snapshot.empty) {
+            if (snapshot.empty) {https://test-b493a.web.app
                 listEl.innerHTML = '<p class="text-gray-500">目前沒有適合的合作邀請。</p>';
                 return;
             }
@@ -2652,11 +2652,13 @@ window.sendChatMessage = async function sendChatMessage() {
     // ==========================================
 
     // 1. 渲染某個活動下的所有合作網紅
+// === 修改後的 renderCampaignCollaborations (暫時移除排序以修復讀取卡住) ===
     window.renderCampaignCollaborations = function(briefId, containerId) {
         const container = document.getElementById(containerId);
         if(!container) return;
 
-        const q = query(collection(db, "collaborations"), where("briefId", "==", briefId), orderBy("updatedAt", "desc"));
+        // 修改：拿掉 orderBy("updatedAt", "desc")，避免需要建立索引
+        const q = query(collection(db, "collaborations"), where("briefId", "==", briefId));
         
         onSnapshot(q, (snapshot) => {
             if (snapshot.empty) {
