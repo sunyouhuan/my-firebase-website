@@ -1964,6 +1964,14 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             }
         }
     };
+
+
+    window.toggleMenu = function(role) {
+        const sidebar = document.getElementById(`${role}-sidebar`);
+        const overlay = document.getElementById(`${role}-sidebar-overlay`);
+        if (sidebar) sidebar.classList.toggle('-translate-x-full');
+        if (overlay) overlay.classList.toggle('hidden');
+    };
     
     // 確保 navigateTo 也有被掛載 (保留原本邏輯)
     window.navigateTo = navigateTo;
@@ -2374,6 +2382,7 @@ window.showCampaignDetail = async function(campaignId) {
         } else { alert("找不到活動資料"); }
     } catch (e) { console.error(e); alert("讀取詳情錯誤"); }
 }
+
 
 
     // === v3 (新功能): 修改 handleSaveBrief 以儲存 imageUrls ===
