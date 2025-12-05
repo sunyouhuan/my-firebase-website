@@ -1371,6 +1371,8 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                         <a href="#" onclick="switchTab('merchant', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
                         <a href="#" onclick="switchTab('merchant', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
                         <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
+                        <button onclick="navigateTo('role-selection-view')" class="mt-4 ml-4 text-sm text-teal-600 border border-teal-800 px-6 py-2 rounded hover:bg-teal-50">⇄ 切換身分</button>
+
                     </nav>
                 </div>
 
@@ -1586,6 +1588,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                         <a href="#" onclick="switchTab('influencer', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
                         <a href="#" onclick="switchTab('influencer', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
                         <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
+                        <button onclick="navigateTo('role-selection-view')" class="mt-4 ml-4 text-sm text-teal-600 border border-teal-800 px-6 py-2 rounded hover:bg-teal-50">⇄ 切換身分</button>
                     </nav>
                 </div>
 
@@ -1715,7 +1718,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">上傳行銷圖片 (可多選)</label>
-                    <input type="file" id="campaign-images" multiple accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+                    <input type="file" id="campaign-images" multiple accept="image/*,video/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
                     
                     <div class="flex items-center gap-3 mt-3">
                         <button type="button" id="upload-images-btn" onclick="handleUploadCampaignImages()" class="bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-700">
