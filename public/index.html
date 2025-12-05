@@ -1644,8 +1644,85 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             <p class="text-gray-500">目前沒有新的合作邀請。</p>
                           </div>
                         </div>
-                        <div id="influencer-finance-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-6 mb-6"><h3 class="text-lg font-medium text-gray-500">可提領金額</h3><p class="text-4xl font-bold text-green-500 mt-2">NT$ 25,600</p></div><div class="bg-white rounded-xl shadow p-8"><h2 class="text-xl font-bold text-slate-800 mb-4">申請提領 (出金)</h2><div class="space-y-4"><div><label class="text-sm font-medium">提領銀行</label><select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option>中國信託 (822)</option><option>國泰世華 (013)</option></select></div><div><label class="text-sm font-medium">銀行帳號</label><input type="text" value="1234-5678-9012-3456" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><div><label class="text-sm font-medium">提領金額</label><input type="number" placeholder="最高可提領 NT$ 25,600" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div><button class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">確認提領</button></div></div></div>
-                        <div id="influencer-settings-content" class="dashboard-content"><div class="bg-white rounded-xl shadow p-8 max-w-2xl mx-auto"><h2 class="text-xl font-bold text-slate-800">個人設定</h2></div></div>
+                        <div id="influencer-finance-content" class="dashboard-content">
+                            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                                <h3 class="text-lg font-medium text-gray-500">可提領金額</h3>
+                                <p id="inf-balance-display" class="text-4xl font-bold text-green-500 mt-2">NT$ 0</p>
+                            </div>
+                            <div class="bg-white rounded-xl shadow p-8">
+                                <h2 class="text-xl font-bold text-slate-800 mb-4">申請提領 (出金)</h2>
+                                <div class="space-y-4">
+                                    <div><label class="text-sm font-medium">提領銀行</label><select id="inf-bank-code" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option value="822">中國信託 (822)</option><option value="013">國泰世華 (013)</option><option value="700">郵局 (700)</option></select></div>
+                                    <div><label class="text-sm font-medium">銀行帳號</label><input id="inf-bank-account" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                                    <div><label class="text-sm font-medium">提領金額</label><input id="inf-withdraw-amount" type="number" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                                    <button onclick="handleInfluencerWithdraw()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">確認提領</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="influencer-settings-content" class="dashboard-content">
+                            <div class="bg-white rounded-xl shadow p-8 max-w-3xl mx-auto">
+                                <h2 class="text-xl font-bold text-slate-800 mb-6">網紅個人資料設定</h2>
+                                <form id="influencer-profile-form" class="space-y-5" onsubmit="return false;">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">暱稱 / 藝名</label>
+                                            <input id="inf-name" type="text" placeholder="名稱" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">聯絡 Email (公開)</label>
+                                            <input id="inf-contact-email" type="email" placeholder="@gmail.com" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">電話/手機</label>
+                                            <input id="inf-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">地址（公關品寄送地址）</label>
+                                            <input id="inf-contact-email" type="email" placeholder="公關品寄送" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                        </div>
+                                    </div>
+            
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">個人簡介 / 風格描述</label>
+                                        <textarea id="inf-bio" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                                    </div>
+
+                                    <div class="border-t pt-4">
+                                        <h3 class="font-bold text-gray-700 mb-3">社交平台帳號連結</h3>
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div>
+                                                <label class="text-xs text-gray-500">Instagram ID</label>
+                                                <input id="inf-ig" type="text" placeholder="@username" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500">YouTube 頻道名稱</label>
+                                                <input id="inf-yt" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500">TikTok ID</label>
+                                                <input id="inf-tt" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500">Instagram ID 2</label>
+                                                <input id="inf-ig" type="text" placeholder="@username" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500">YouTube 頻道名稱2</label>
+                                                <input id="inf-yt" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500">TikTok ID 2</label>
+                                                <input id="inf-tt" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex justify-end pt-4">
+                                        <button onclick="handleSaveInfluencerProfile()" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700">儲存設定</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </main>
                 </div>
             </div>
@@ -1718,7 +1795,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">上傳行銷素材(圖片或影片，可多選)</label>
-                    <input type="file" id="campaign-images" multiple accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+                    <input type="file" id="campaign-images" multiple accept="image/*,video/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
                     
                     <div class="flex items-center gap-3 mt-3">
                         <button type="button" id="upload-images-btn" onclick="handleUploadCampaignImages()" class="bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-700">
