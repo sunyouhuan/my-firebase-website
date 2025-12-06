@@ -2900,35 +2900,71 @@ window.sendChatMessage = async function sendChatMessage() {
     // ==========================================
 
     // === 更新版：渲染網紅牆與狀態條 ===
-// 1. 商家詳細頁渲染 (網紅牆 + 狀態條) (Requirement #3 & #4)
 // === 更新版：商家網紅牆 (含多檔顯示、修改限制、歷史紀錄) ===
     window.renderCampaignCollaborations = function(briefId, containerId, targetCount = 10) {
         const container = document.getElementById(containerId);
         if(!container) return;
 
+        // 監聽此活動的所有合作單
         const q = query(collection(db, "collaborations"), where("briefId", "==", briefId));
         
         onSnapshot(q, (snapshot) => {
-            // ... (原本的狀態條統計代碼保持不變，為了節省篇幅略過，請保留原本的 stats 計算) ...
+            // --- 1. 計算狀態統計 ---
+            let stats = { accepted: 0, reviewing: 0, changes: 0, approved: 0, rejected: 0 };
+            const currentTotal = snapshot.size;
             
-            // 下面是卡片渲染邏輯
+            snapshot.docs.forEach(doc => {
+                const s = doc.data().status;
+                if (s === 'accepted') stats.accepted++;
+                else if (s === 'reviewing' || s === 'submitting') stats.reviewing++;
+                else if (s === 'changes_requested') stats.changes++;
+                else if (s === 'approved') stats.approved++;
+                else if (s === 'rejected') stats.rejected++;
+            });
+
+            // 更新上方的進度條 (如果有找到元素)
+            const barContainer = document.getElementById('status-bar-container');
+            const legendContainer = document.getElementById('status-legend');
+            
+            if (barContainer) {
+                const activeCount = currentTotal - stats.rejected; // 扣除被拒絕的
+                const base = Math.max(targetCount, activeCount); // 分母
+                const remainingSlots = Math.max(0, targetCount - activeCount);
+                const p = (num) => (num / base) * 100;
+                
+                barContainer.innerHTML = `
+                    <div style="width: ${p(stats.approved)}%" class="bg-green-500 shadow-none"></div>
+                    <div style="width: ${p(stats.reviewing)}%" class="bg-yellow-400 shadow-none"></div>
+                    <div style="width: ${p(stats.changes)}%" class="bg-orange-400 shadow-none"></div>
+                    <div style="width: ${p(stats.accepted)}%" class="bg-blue-400 shadow-none"></div>
+                `;
+                legendContainer.innerHTML = `
+                    <span class="text-green-600">●已確認 ${stats.approved}</span>
+                    <span class="text-yellow-600">●審核中 ${stats.reviewing}</span>
+                    <span class="text-orange-600">●修改中 ${stats.changes}</span>
+                    <span class="text-blue-600">●製作中 ${stats.accepted}</span>
+                    <span class="text-gray-400">●剩餘名額 ${remainingSlots}</span>
+                `;
+            }
+
+            // --- 2. 渲染網紅卡片 ---
             if (snapshot.empty) {
                 container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">尚無網紅接單</div>';
                 return;
             }
 
-            let html = '<div class="grid grid-cols-1 gap-6">'; // 改成單欄或雙欄比較好顯示詳細資料
+            let html = '<div class="grid grid-cols-1 gap-6">'; // 改用單欄顯示，比較清楚
             
             snapshot.docs.forEach(docSnap => {
                 const c = docSnap.data();
                 const cid = docSnap.id;
                 
-                // 1. 顯示所有上傳的檔案 (Requirement #5)
+                // A. 顯示所有上傳的檔案 (Requirement #5)
                 let mediaHtml = '';
                 const contents = Array.isArray(c.contentData) ? c.contentData : (c.contentData ? [c.contentData] : []);
                 
                 if(contents.length > 0) {
-                    mediaHtml = `<div class="grid grid-cols-3 gap-2 mb-3">`;
+                    mediaHtml = `<div class="grid grid-cols-3 gap-2 mb-3 bg-slate-50 p-2 rounded">`;
                     contents.forEach(item => {
                         if(item.type === 'video') {
                             mediaHtml += `<video src="${item.url}" class="w-full h-32 object-cover bg-black rounded" controls></video>`;
@@ -2939,37 +2975,39 @@ window.sendChatMessage = async function sendChatMessage() {
                     mediaHtml += `</div>`;
                     // 顯示最新的備註
                     const lastMsg = contents[contents.length-1]?.text;
-                    if(lastMsg) mediaHtml += `<p class="text-sm bg-slate-50 p-2 rounded text-gray-700 mb-2"><strong>網紅備註：</strong>${lastMsg}</p>`;
+                    if(lastMsg) mediaHtml += `<p class="text-sm text-gray-700 mb-2"><strong>網紅備註：</strong>${lastMsg}</p>`;
                 } else {
-                    mediaHtml = `<div class="h-32 bg-slate-100 flex items-center justify-center text-gray-400 rounded">尚未上傳素材</div>`;
+                    mediaHtml = `<div class="h-32 bg-slate-100 flex items-center justify-center text-gray-400 rounded mb-3">尚未上傳素材</div>`;
                 }
 
-                // 2. 歷史修改紀錄 (Requirement #4)
+                // B. 歷史修改紀錄 (Requirement #4)
                 let historyHtml = '';
                 if (c.auditTrail && c.auditTrail.length > 0) {
                     historyHtml = `<div class="mt-4 p-3 bg-gray-50 rounded border border-gray-200 text-xs max-h-40 overflow-y-auto">
-                        <p class="font-bold text-gray-500 mb-2">溝通歷史：</p>
+                        <p class="font-bold text-gray-500 mb-2">溝通與修改紀錄：</p>
                         <ul class="space-y-2">`;
                     c.auditTrail.forEach(log => {
+                        // 轉換時間戳記
                         const dateStr = log.time ? new Date(log.time.toMillis()).toLocaleString() : '';
                         if (log.action === 'request_change') {
-                            historyHtml += `<li class="text-orange-600">商家要求修改：${log.message} <span class="text-gray-400">(${dateStr})</span></li>`;
-                        } else if (log.action === 'submit') {
-                            historyHtml += `<li class="text-blue-600">網紅提交素材 <span class="text-gray-400">(${dateStr})</span></li>`;
+                            historyHtml += `<li class="text-orange-600">商家要求：${log.message} <span class="text-gray-400">(${dateStr})</span></li>`;
+                        } else if (log.action === 'approved') {
+                            historyHtml += `<li class="text-green-600">商家已通過 <span class="text-gray-400">(${dateStr})</span></li>`;
                         }
                     });
                     historyHtml += `</ul></div>`;
                 }
 
-                // 3. 操作按鈕 (Requirement #3: 修改次數限制)
+                // C. 操作按鈕 (Requirement #3: 修改次數限制)
                 let actions = '';
                 if (c.status === 'reviewing' || c.status === 'submitting') {
                     const changeCount = c.changeRequestCount || 0;
-                    const canRequestChange = changeCount < 2; // 限制最多2次 (0, 1)
+                    // 限制最多2次 (次數從0開始，0和1可以修改，2就不能了)
+                    const canRequestChange = changeCount < 2; 
                     
                     let changeBtn = '';
                     if (canRequestChange) {
-                        changeBtn = `<button onclick="handleMerchantReview('${cid}', 'request_change')" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">要求修改 (剩 ${2-changeCount} 次)</button>`;
+                        changeBtn = `<button onclick="handleMerchantReview('${cid}', 'request_change')" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">要求修改 (剩${2-changeCount}次)</button>`;
                     } else {
                         changeBtn = `<button disabled class="bg-gray-300 text-white px-4 py-2 rounded cursor-not-allowed" title="已達修改上限">無法再修改</button>`;
                     }
@@ -2983,6 +3021,10 @@ window.sendChatMessage = async function sendChatMessage() {
                     `;
                 } else if (c.status === 'changes_requested') {
                     actions = `<div class="mt-4 text-center text-orange-600 bg-orange-50 py-2 rounded">等待網紅修改中...</div>`;
+                } else if (c.status === 'approved') {
+                    actions = `<div class="mt-4 text-center text-green-600 bg-green-50 py-2 rounded font-bold">案件已完成</div>`;
+                } else if (c.status === 'rejected') {
+                    actions = `<div class="mt-4 text-center text-red-600 bg-red-50 py-2 rounded font-bold">案件已終止</div>`;
                 } else {
                     actions = `<div class="mt-4 text-center text-gray-500 bg-gray-100 py-2 rounded font-bold">${c.status}</div>`;
                 }
@@ -2990,7 +3032,12 @@ window.sendChatMessage = async function sendChatMessage() {
                 html += `
                     <div class="bg-white border rounded-xl p-6 shadow-sm">
                         <div class="flex justify-between items-center mb-4">
-                            <div class="font-bold text-lg">${c.influencerEmail}</div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold">
+                                    ${c.influencerEmail[0].toUpperCase()}
+                                </div>
+                                <div class="font-bold text-lg">${c.influencerEmail}</div>
+                            </div>
                             <div class="text-xs text-gray-500">修改次數：${c.changeRequestCount || 0} / 2</div>
                         </div>
                         ${mediaHtml}
@@ -3002,58 +3049,34 @@ window.sendChatMessage = async function sendChatMessage() {
             html += '</div>';
             container.innerHTML = html;
         });
-    }
+    };
 
 
-// === 更新版：商家審核動作 (寫入歷史紀錄) ===
+    // 2. 商家執行審核動作
     window.handleMerchantReview = async function(collabId, action) {
-        // 先讀取舊資料以取得目前的 changeRequestCount
-        const ref = doc(db, "collaborations", collabId);
-        const snap = await getDoc(ref);
-        const currentData = snap.data();
-        
         let updateData = { updatedAt: serverTimestamp() };
-        let logEntry = null;
-
+        
         if (action === 'approve') {
-            if(!confirm('確定通過？')) return;
+            if(!confirm('確定通過此素材嗎？網紅將收到通知並可發布。')) return;
             updateData.status = 'approved';
         } else if (action === 'reject') {
-            if(!confirm('確定拒絕？')) return;
+            if(!confirm('確定拒絕此合作嗎？此操作無法復原。')) return;
             updateData.status = 'rejected';
         } else if (action === 'request_change') {
-            const msg = prompt('請輸入修改建議：');
-            if (!msg) return;
-            
+            const msg = prompt('請輸入修改建議 (例如：影片光線太暗，請調整)：');
+            if (!msg) return; // 如果按取消，就不執行
             updateData.status = 'changes_requested';
             updateData.merchantMessage = msg;
-            // 增加次數
-            updateData.changeRequestCount = (currentData.changeRequestCount || 0) + 1;
-            
-            // 建立 Log
-            logEntry = {
-                action: 'request_change',
-                message: msg,
-                time: Timestamp.now() // 注意：需從 firebase-firestore 匯入 Timestamp，或用 serverTimestamp
-            };
         }
 
         try {
-            // 如果有 log，先把它加到陣列 (Firestore arrayUnion)
-            // 這裡為了簡化，我們先讀取舊陣列再寫回 (比較笨但穩定的方法)
-            if (logEntry) {
-                let trail = currentData.auditTrail || [];
-                trail.push(logEntry);
-                updateData.auditTrail = trail;
-            }
-            
-            await updateDoc(ref, updateData);
-            alert('更新成功');
+            await updateDoc(doc(db, "collaborations", collabId), updateData);
+            alert('狀態已更新');
         } catch(e) {
             console.error(e);
-            alert('更新失敗');
+            alert('更新失敗: ' + e.message);
         }
-    }
+    };
 
     // 3. 刪除活動 (Requirement #1: 10分鐘軟刪除限制)
     window.handleDeleteCampaign = async function(id, createdTimeMillis) {
