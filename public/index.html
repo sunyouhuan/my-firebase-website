@@ -1644,21 +1644,47 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             <p class="text-gray-500">目前沒有新的合作邀請。</p>
                           </div>
                         </div>
-                        <div id="influencer-finance-content" class="dashboard-content">
-                            <div class="bg-white rounded-xl shadow p-6 mb-6">
-                                <h3 class="text-lg font-medium text-gray-500">可提領金額</h3>
-                                <p id="inf-balance-display" class="text-4xl font-bold text-green-500 mt-2">NT$ 0</p>
-                            </div>
-                            <div class="bg-white rounded-xl shadow p-8">
-                                <h2 class="text-xl font-bold text-slate-800 mb-4">申請提領 (出金)</h2>
-                                <div class="space-y-4">
-                                    <div><label class="text-sm font-medium">提領銀行</label><select id="inf-bank-code" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option value="822">中國信託 (822)</option><option value="013">國泰世華 (013)</option><option value="700">郵局 (700)</option></select></div>
-                                    <div><label class="text-sm font-medium">銀行帳號</label><input id="inf-bank-account" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                    <div><label class="text-sm font-medium">提領金額</label><input id="inf-withdraw-amount" type="number" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                    <button onclick="handleInfluencerWithdraw()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600">確認提領</button>
-                                </div>
-                            </div>
-                        </div>
+<div id="influencer-finance-content" class="dashboard-content">
+    <div class="bg-white rounded-xl shadow p-6 mb-6 border-l-4 border-green-500">
+        <h3 class="text-lg font-medium text-gray-500">目前可提領金額 (未稅)</h3>
+        <p id="inf-balance-display" class="text-4xl font-bold text-slate-800 mt-2">NT$ 0</p>
+        <p class="text-xs text-gray-400 mt-1">※ 此金額由系統根據您已完成的案件自動計算</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-8">
+        <h2 class="text-xl font-bold text-slate-800 mb-4">申請提領 (出金)</h2>
+        <div class="space-y-5 bg-slate-50 p-6 rounded-lg">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">提領銀行</label>
+                    <select id="inf-withdraw-bank" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                        <option value="">請選擇銀行</option>
+                        <option value="822">中國信託 (822)</option>
+                        <option value="013">國泰世華 (013)</option>
+                        <option value="700">中華郵政 (700)</option>
+                        <option value="004">台灣銀行 (004)</option>
+                        <option value="812">台新銀行 (812)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">銀行帳號</label>
+                    <input id="inf-withdraw-account" type="text" placeholder="請輸入存摺帳號" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">提領金額 (NT$)</label>
+                <input id="inf-withdraw-amount" type="number" placeholder="最低提領單位為 1,000 元" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                <p class="text-xs text-red-500 mt-1">* 提領金額必須是 1,000 的倍數，且不得大於可提領餘額。</p>
+            </div>
+
+            <button onclick="handleInfluencerWithdraw()" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors shadow-lg">
+                確認送出提領申請
+            </button>
+        </div>
+    </div>
+</div>
                         <div id="influencer-settings-content" class="dashboard-content">
                             <div class="bg-white rounded-xl shadow p-8 max-w-3xl mx-auto">
                                 <h2 class="text-xl font-bold text-slate-800 mb-6">網紅個人資料設定</h2>
@@ -3273,6 +3299,102 @@ window.sendChatMessage = async function sendChatMessage() {
             }
         };
 
+
+// === 網紅財務變數 ===
+    let currentInfluencerBalance = 0; // 用來暫存從資料庫讀到的餘額
+    let unsubInfBalance = null; // 監聽器
+
+    // 1. 監聽網紅的可提領餘額
+    // 資料位置：users/{uid}/finance/influencer_balance (欄位: amount)
+    // === 修改後的除錯版本 ===
+    window.listenForInfluencerBalance = function(uid) {
+        if (unsubInfBalance) unsubInfBalance(); 
+
+        console.log("正在監聽網紅財務，目標 UID:", uid); // 檢查 1: 確認監聽的 ID 對不對
+
+
+        const docRef = doc(db, 'users', uid, 'finance', 'influencer_balance');
+        unsubInfBalance = onSnapshot(docRef, (docSnap) => {
+            const el = document.getElementById('inf-balance-display');
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                console.log("找到資料了！內容是:", data); // 檢查 2: 確認有抓到資料
+                
+                // 確保 amount 是數字，避免 undefined
+                currentInfluencerBalance = data.amount || 0;
+            } else {
+                console.warn("找不到資料！請確認資料庫路徑是否為:", docRef.path); // 檢查 3: 路徑錯誤提示
+                currentInfluencerBalance = 0;
+            }
+            
+            // 更新畫面
+            if(el) {
+                el.textContent = `NT$ ${currentInfluencerBalance.toLocaleString()}`;
+                console.log("畫面已更新為:", el.textContent);
+            } else {
+                console.error("找不到畫面上的顯示元素 (id='inf-balance-display')");
+            }
+        });
+    };
+
+    // 2. 處理提領申請
+    window.handleInfluencerWithdraw = async function() {
+        const user = auth.currentUser;
+        if (!user) return alert('請先登入');
+
+        const bankCode = document.getElementById('inf-withdraw-bank').value;
+        const account = document.getElementById('inf-withdraw-account').value;
+        const amountStr = document.getElementById('inf-withdraw-amount').value;
+        const amount = parseInt(amountStr);
+
+        // --- 驗證邏輯 ---
+        if (!bankCode) return alert('請選擇提領銀行');
+        if (!account) return alert('請輸入銀行帳號');
+        if (!amount || amount <= 0) return alert('請輸入有效的金額');
+        
+        // 規則 A: 金額是否大於餘額
+        if (amount > currentInfluencerBalance) {
+            return alert(`提領失敗：您的餘額不足 (目前餘額: ${currentInfluencerBalance})`);
+        }
+
+        // 規則 B: 是否為 1000 的倍數
+        if (amount % 1000 !== 0) {
+            return alert('提領失敗：金額必須是 1,000 的倍數 (例如 1000, 2000, 5000)');
+        }
+
+        if (!confirm(`確定要申請提領 NT$ ${amount.toLocaleString()} 至銀行帳號 (${bankCode}) ${account} 嗎？`)) {
+            return;
+        }
+
+        try {
+        // ✅ 修改這裡：寫在 user 底下的 withdrawals 子集合
+        await addDoc(
+            collection(db, "users", user.uid, "withdrawals"),
+            {
+                userId: user.uid,
+                userEmail: user.email,
+                role: 'influencer',
+                amount: amount,
+                bankCode: bankCode,
+                bankAccount: account,
+                status: 'pending',      // pending(待審核), approved(已撥款), rejected(拒絕)
+                createdAt: serverTimestamp()
+            }
+        );
+
+
+            alert('提領申請已送出！我們將由專人進行審核。');
+            // 清空輸入框
+            document.getElementById('inf-withdraw-amount').value = '';
+        } catch (error) {
+            console.error("提領申請失敗:", error);
+            alert('系統忙碌中，請稍後再試');
+        }
+    };
+
+
+
         window.enterDashboard = function(role) {
             const user = auth.currentUser;
             if (!user) {
@@ -3305,6 +3427,8 @@ window.sendChatMessage = async function sendChatMessage() {
                 // 當用戶登入後，立刻開始監聽他/她的活動資料
                 listenForCampaigns();
                 listenForAccountBalance(user.uid); // v2 (本次修改): 啟動餘額監聽
+                // ⭐ 3. 網紅端財務管理：可提領金額
+                listenForInfluencerBalance(user.uid);
                 navigateTo('role-selection-view');
             } else {
                 console.log('使用者已登出，停止監聽。');
@@ -3317,9 +3441,18 @@ window.sendChatMessage = async function sendChatMessage() {
                     unsubscribeBalance();
                     unsubscribeBalance = null;
                 }
+                // ⭐ 停止監聽網紅可提領金額
+                if (unsubInfBalance) {
+                    unsubInfBalance();
+                    unsubInfBalance = null;
+                }
                 // v2 (本次修改): 重設餘額顯示
                 const balanceEl = document.getElementById('finance-account-balance');
                 if (balanceEl) balanceEl.textContent = 'NT$ 0';
+
+
+                const infEl = document.getElementById('inf-balance-display');
+                if (infEl) infEl.textContent = 'NT$ 0';
 
                 navigateTo('login-view');
             }
