@@ -2900,18 +2900,18 @@ window.sendChatMessage = async function sendChatMessage() {
     // ==========================================
 
     // === 更新版：渲染網紅牆與狀態條 ===
-// === 更新版：商家網紅牆 (含多檔顯示、修改限制、歷史紀錄) ===
+// 1. 商家詳細頁渲染 (網紅牆 + 狀態條) (Requirement #3 & #4)
     window.renderCampaignCollaborations = function(briefId, containerId, targetCount = 10) {
         const container = document.getElementById(containerId);
         if(!container) return;
 
-        // 監聽此活動的所有合作單
+        // 即時監聽該活動底下的所有合作
         const q = query(collection(db, "collaborations"), where("briefId", "==", briefId));
         
         onSnapshot(q, (snapshot) => {
-            // --- 1. 計算狀態統計 ---
+            // 統計狀態 (Requirement #3)
             let stats = { accepted: 0, reviewing: 0, changes: 0, approved: 0, rejected: 0 };
-            const currentTotal = snapshot.size;
+            const currentTotal = snapshot.size; // 目前接單總數
             
             snapshot.docs.forEach(doc => {
                 const s = doc.data().status;
@@ -2922,126 +2922,111 @@ window.sendChatMessage = async function sendChatMessage() {
                 else if (s === 'rejected') stats.rejected++;
             });
 
-            // 更新上方的進度條 (如果有找到元素)
+            // 計算有效名額 (目標 - (目前總數 - 已拒絕))，如果拒絕了就釋出名額
+            const activeCount = currentTotal - stats.rejected;
+            const remainingSlots = Math.max(0, targetCount - activeCount);
+
+            // 更新狀態條 UI
             const barContainer = document.getElementById('status-bar-container');
             const legendContainer = document.getElementById('status-legend');
             
             if (barContainer) {
-                const activeCount = currentTotal - stats.rejected; // 扣除被拒絕的
-                const base = Math.max(targetCount, activeCount); // 分母
-                const remainingSlots = Math.max(0, targetCount - activeCount);
+                // 分母設定為 max(目標, 當前有效)，確保條不會爆掉
+                const base = Math.max(targetCount, activeCount); 
                 const p = (num) => (num / base) * 100;
                 
                 barContainer.innerHTML = `
-                    <div style="width: ${p(stats.approved)}%" class="bg-green-500 shadow-none"></div>
-                    <div style="width: ${p(stats.reviewing)}%" class="bg-yellow-400 shadow-none"></div>
-                    <div style="width: ${p(stats.changes)}%" class="bg-orange-400 shadow-none"></div>
-                    <div style="width: ${p(stats.accepted)}%" class="bg-blue-400 shadow-none"></div>
+                    <div style="width: ${p(stats.approved)}%" class="bg-green-500 shadow-none" title="已確認"></div>
+                    <div style="width: ${p(stats.reviewing)}%" class="bg-yellow-400 shadow-none" title="審核中"></div>
+                    <div style="width: ${p(stats.changes)}%" class="bg-orange-400 shadow-none" title="修改中"></div>
+                    <div style="width: ${p(stats.accepted)}%" class="bg-blue-400 shadow-none" title="製作中"></div>
                 `;
+                // 剩餘名額顯示灰色背景 (在 CSS 中通常是 bar 的背景色)
+                
                 legendContainer.innerHTML = `
-                    <span class="text-green-600">●已確認 ${stats.approved}</span>
-                    <span class="text-yellow-600">●審核中 ${stats.reviewing}</span>
-                    <span class="text-orange-600">●修改中 ${stats.changes}</span>
-                    <span class="text-blue-600">●製作中 ${stats.accepted}</span>
-                    <span class="text-gray-400">●剩餘名額 ${remainingSlots}</span>
+                    <div class="flex flex-wrap gap-4 text-xs font-medium">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> 已確認 ${stats.approved}</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-400"></span> 審核中 ${stats.reviewing}</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-400"></span> 修改中 ${stats.changes}</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-400"></span> 製作中 ${stats.accepted}</span>
+                        <span class="flex items-center gap-1 text-gray-400"><span class="w-2 h-2 rounded-full bg-gray-300"></span> 剩餘名額 ${remainingSlots}</span>
+                    </div>
                 `;
             }
 
-            // --- 2. 渲染網紅卡片 ---
+            // 2. 渲染網紅牆卡片 (Requirement #4)
             if (snapshot.empty) {
-                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">尚無網紅接單</div>';
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                        <p class="text-4xl mb-2">📭</p>
+                        <p class="text-gray-500">目前尚無網紅接單</p>
+                    </div>`;
                 return;
             }
 
-            let html = '<div class="grid grid-cols-1 gap-6">'; // 改用單欄顯示，比較清楚
-            
+            let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">';
             snapshot.docs.forEach(docSnap => {
-                const c = docSnap.data();
+                const collab = docSnap.data();
                 const cid = docSnap.id;
                 
-                // A. 顯示所有上傳的檔案 (Requirement #5)
-                let mediaHtml = '';
-                const contents = Array.isArray(c.contentData) ? c.contentData : (c.contentData ? [c.contentData] : []);
+                // 定義狀態外觀
+                const statusConfig = {
+                    'accepted': { class: 'bg-blue-100 text-blue-800', label: '製作中' },
+                    'reviewing': { class: 'bg-yellow-100 text-yellow-800', label: '待審核' },
+                    'submitting': { class: 'bg-yellow-100 text-yellow-800', label: '待審核' },
+                    'changes_requested': { class: 'bg-orange-100 text-orange-800', label: '修改中' },
+                    'approved': { class: 'bg-green-100 text-green-800', label: '已確認' },
+                    'rejected': { class: 'bg-red-100 text-red-800', label: '已拒絕' }
+                };
+                const st = statusConfig[collab.status] || { class: 'bg-gray-100', label: collab.status };
+
+                // 素材預覽
+                let contentPreview = '<div class="h-40 bg-slate-100 rounded-lg flex items-center justify-center text-gray-400 text-sm">尚未上傳</div>';
+                let contentDataArr = Array.isArray(collab.contentData) ? collab.contentData : (collab.contentData ? [collab.contentData] : []);
                 
-                if(contents.length > 0) {
-                    mediaHtml = `<div class="grid grid-cols-3 gap-2 mb-3 bg-slate-50 p-2 rounded">`;
-                    contents.forEach(item => {
-                        if(item.type === 'video') {
-                            mediaHtml += `<video src="${item.url}" class="w-full h-32 object-cover bg-black rounded" controls></video>`;
-                        } else {
-                            mediaHtml += `<a href="${item.url}" target="_blank"><img src="${item.url}" class="w-full h-32 object-cover rounded border hover:opacity-80"></a>`;
-                        }
-                    });
-                    mediaHtml += `</div>`;
-                    // 顯示最新的備註
-                    const lastMsg = contents[contents.length-1]?.text;
-                    if(lastMsg) mediaHtml += `<p class="text-sm text-gray-700 mb-2"><strong>網紅備註：</strong>${lastMsg}</p>`;
-                } else {
-                    mediaHtml = `<div class="h-32 bg-slate-100 flex items-center justify-center text-gray-400 rounded mb-3">尚未上傳素材</div>`;
-                }
-
-                // B. 歷史修改紀錄 (Requirement #4)
-                let historyHtml = '';
-                if (c.auditTrail && c.auditTrail.length > 0) {
-                    historyHtml = `<div class="mt-4 p-3 bg-gray-50 rounded border border-gray-200 text-xs max-h-40 overflow-y-auto">
-                        <p class="font-bold text-gray-500 mb-2">溝通與修改紀錄：</p>
-                        <ul class="space-y-2">`;
-                    c.auditTrail.forEach(log => {
-                        // 轉換時間戳記
-                        const dateStr = log.time ? new Date(log.time.toMillis()).toLocaleString() : '';
-                        if (log.action === 'request_change') {
-                            historyHtml += `<li class="text-orange-600">商家要求：${log.message} <span class="text-gray-400">(${dateStr})</span></li>`;
-                        } else if (log.action === 'approved') {
-                            historyHtml += `<li class="text-green-600">商家已通過 <span class="text-gray-400">(${dateStr})</span></li>`;
-                        }
-                    });
-                    historyHtml += `</ul></div>`;
-                }
-
-                // C. 操作按鈕 (Requirement #3: 修改次數限制)
-                let actions = '';
-                if (c.status === 'reviewing' || c.status === 'submitting') {
-                    const changeCount = c.changeRequestCount || 0;
-                    // 限制最多2次 (次數從0開始，0和1可以修改，2就不能了)
-                    const canRequestChange = changeCount < 2; 
-                    
-                    let changeBtn = '';
-                    if (canRequestChange) {
-                        changeBtn = `<button onclick="handleMerchantReview('${cid}', 'request_change')" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">要求修改 (剩${2-changeCount}次)</button>`;
+                if (contentDataArr.length > 0) {
+                    const firstItem = contentDataArr[0];
+                    if (firstItem.type === 'video') {
+                        contentPreview = `<video src="${firstItem.url}" class="w-full h-40 object-cover bg-black rounded-lg" controls></video>`;
                     } else {
-                        changeBtn = `<button disabled class="bg-gray-300 text-white px-4 py-2 rounded cursor-not-allowed" title="已達修改上限">無法再修改</button>`;
+                        contentPreview = `<a href="${firstItem.url}" target="_blank"><img src="${firstItem.url}" class="w-full h-40 object-cover rounded-lg border hover:opacity-90 transition-opacity"></a>`;
                     }
+                }
 
+                // 審核按鈕 (只在審核中出現)
+                let actions = '';
+                if (collab.status === 'reviewing' || collab.status === 'submitting') {
                     actions = `
-                        <div class="mt-4 flex gap-3 border-t pt-4">
-                            <button onclick="handleMerchantReview('${cid}', 'approve')" class="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">通過</button>
-                            ${changeBtn}
-                            <button onclick="handleMerchantReview('${cid}', 'reject')" class="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">拒絕</button>
+                        <div class="mt-4 grid grid-cols-3 gap-2">
+                            <button onclick="handleMerchantReview('${cid}', 'approve')" class="bg-green-500 text-white text-xs font-bold py-2 rounded hover:bg-green-600">通過</button>
+                            <button onclick="handleMerchantReview('${cid}', 'request_change')" class="bg-orange-500 text-white text-xs font-bold py-2 rounded hover:bg-orange-600">修改</button>
+                            <button onclick="handleMerchantReview('${cid}', 'reject')" class="bg-red-500 text-white text-xs font-bold py-2 rounded hover:bg-red-600">拒絕</button>
                         </div>
                     `;
-                } else if (c.status === 'changes_requested') {
-                    actions = `<div class="mt-4 text-center text-orange-600 bg-orange-50 py-2 rounded">等待網紅修改中...</div>`;
-                } else if (c.status === 'approved') {
-                    actions = `<div class="mt-4 text-center text-green-600 bg-green-50 py-2 rounded font-bold">案件已完成</div>`;
-                } else if (c.status === 'rejected') {
-                    actions = `<div class="mt-4 text-center text-red-600 bg-red-50 py-2 rounded font-bold">案件已終止</div>`;
-                } else {
-                    actions = `<div class="mt-4 text-center text-gray-500 bg-gray-100 py-2 rounded font-bold">${c.status}</div>`;
+                } else if (collab.status === 'changes_requested') {
+                    actions = `<div class="mt-3 text-xs text-orange-700 bg-orange-50 p-2 rounded border border-orange-200">已要求修改：${collab.merchantMessage}</div>`;
                 }
 
                 html += `
-                    <div class="bg-white border rounded-xl p-6 shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold">
-                                    ${c.influencerEmail[0].toUpperCase()}
+                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                                    ${collab.influencerEmail ? collab.influencerEmail[0].toUpperCase() : 'U'}
                                 </div>
-                                <div class="font-bold text-lg">${c.influencerEmail}</div>
+                                <div class="text-sm font-bold text-slate-700 truncate" title="${collab.influencerEmail}">
+                                    ${collab.influencerEmail}
+                                </div>
                             </div>
-                            <div class="text-xs text-gray-500">修改次數：${c.changeRequestCount || 0} / 2</div>
+                            <span class="text-xs px-2 py-1 rounded-full font-bold whitespace-nowrap ${st.class}">${st.label}</span>
                         </div>
-                        ${mediaHtml}
-                        ${historyHtml}
+                        
+                        ${contentPreview}
+                        
+                        <div class="text-xs text-gray-500 mt-2 truncate h-5">
+                            ${contentDataArr.length > 0 ? (contentDataArr[contentDataArr.length-1].text || '無備註') : ''}
+                        </div>
+                        
                         ${actions}
                     </div>
                 `;
