@@ -2212,169 +2212,173 @@ window.sendChatMessage = async function sendChatMessage() {
     // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
 
     // === v3 (新功能): 上傳行銷活動圖片 (Request 2) ===
+    // === 修正版：上傳行銷素材 (路徑改回 logos，並支援影片預覽) ===
     window.handleUploadCampaignImages = async function() {
         const user = auth.currentUser;
         if (!user) return alert('請先登入');
 
         const fileInput = document.getElementById('campaign-images');
         const files = fileInput.files;
-        if (!files || files.length === 0) return alert('請先選擇要上傳的圖片');
+        if (!files || files.length === 0) return alert('請選擇檔案');
 
         const statusEl = document.getElementById('upload-status-text');
-        const progressEl = document.getElementById('upload-progress-bar');
         const previewEl = document.getElementById('image-preview-area');
         const uploadBtn = document.getElementById('upload-images-btn');
+        const progressEl = document.getElementById('upload-progress-bar'); // 確保進度條存在
 
         uploadBtn.disabled = true;
         uploadBtn.textContent = '上傳中...';
         statusEl.textContent = '準備上傳...';
-        progressEl.classList.remove('hidden');
-        progressEl.value = 0;
+        if(progressEl) progressEl.classList.remove('hidden');
 
-        const uploadPromises = [];
-        let totalBytes = 0;
-        let transferredBytes = 0;
+        // 使用 Promise 來包裝每一個上傳任務
+        const uploadPromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                // ★ 關鍵修正 1：改回原本的路徑結構 (logos/...) 避免權限錯誤
+                const path = `logos/${user.uid}/campaign_uploads/${Date.now()}_${file.name}`;
+                const ref = storageRef(storage, path);
+                const uploadTask = uploadBytesResumable(ref, file);
 
-        // 計算總大小
-        Array.from(files).forEach(file => {
-            totalBytes += file.size;
-        });
-
-        // 為每個檔案建立一個上傳 promise
-        Array.from(files).forEach(file => {
-            const filePath = `logos/${user.uid}/campaign_uploads/${Date.now()}_${file.name}`;
-            const fileRef = storageRef(storage, filePath);
-            const uploadTask = uploadBytesResumable(fileRef, file);
-
-            const promise = new Promise((resolve, reject) => {
+                // ★ 關鍵修正 2：改回使用 .on('state_changed') 監聽，這是最穩定的寫法
                 uploadTask.on('state_changed', 
                     (snapshot) => {
-                        // 這裡只更新單一檔案的進度，我們需要累加
-                        // 為了簡化，我們在 .then() 裡更新總進度
-                        statusEl.textContent = `正在上傳 ${snapshot.ref.name}...`;
-                    }, 
+                        // 顯示進度
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        statusEl.textContent = `上傳中... ${Math.round(progress)}%`;
+                        if(progressEl) progressEl.value = progress;
+                    },
                     (error) => {
-                        // 處理單一檔案上傳失敗
-                        console.error(`檔案 ${file.name} 上傳失敗:`, error);
+                        console.error("上傳單檔失敗:", error);
                         reject(error);
-                    }, 
+                    },
                     async () => {
-                        // 單一檔案上傳成功
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        // 上傳成功！開始處理預覽圖
+                        const url = await getDownloadURL(uploadTask.snapshot.ref);
                         
-                        // 更新總進度
-                        transferredBytes += file.size;
-                        progressEl.value = (transferredBytes / totalBytes) * 100;
+                        // ★ 這裡插入「影片 vs 圖片」的判斷邏輯
+                        const isVideo = file.type.startsWith('video');
+                        
+                        const el = isVideo 
+                            ? document.createElement('video') 
+                            : document.createElement('img');
+                        
+                        el.src = url;
+                        el.className = 'w-20 h-20 object-cover rounded border bg-black';
+                        
+                        if (isVideo) {
+                            el.muted = true;      // 靜音
+                            el.autoplay = false;  // 不自動播放
+                            el.controls = true;   // 顯示播放控制條 (讓商家可以點擊檢查)
+                        }
 
-                        // 立即顯示縮圖
-                        const imgEl = document.createElement('img');
-                        imgEl.src = downloadURL;
-                        imgEl.className = 'w-full h-20 object-cover rounded-md border';
-                        previewEl.appendChild(imgEl);
-                        
-                        resolve(downloadURL); // 將 URL 回傳
+                        previewEl.appendChild(el);
+                        resolve(url); // 回傳網址
                     }
                 );
             });
-            uploadPromises.push(promise);
         });
 
         try {
-            // 等待所有圖片上傳完成
-            const urls = await Promise.all(uploadPromises);
-            uploadedImageUrls = uploadedImageUrls.concat(urls); // 將新上傳的 URL 加入暫存
-            
-            statusEl.textContent = `成功上傳 ${urls.length} 張圖片！`;
-            progressEl.classList.add('hidden');
-            fileInput.value = null; // 清空選擇
-        } catch (error) {
-            console.error("上傳圖片時發生錯誤:", error);
-            alert('部分圖片上傳失敗，請重試');
-            statusEl.textContent = '上傳失敗';
+            const newUrls = await Promise.all(uploadPromises);
+            uploadedImageUrls = uploadedImageUrls.concat(newUrls);
+            statusEl.textContent = `成功上傳 ${newUrls.length} 個檔案！`;
+            fileInput.value = ''; // 清空選擇
+        } catch (e) {
+            console.error("上傳過程發生錯誤:", e);
+            statusEl.textContent = '上傳失敗，請查看 Console 錯誤訊息';
+            alert('上傳失敗，可能是網路問題或權限不足');
         } finally {
             uploadBtn.disabled = false;
             uploadBtn.textContent = '上傳選取的圖片';
+            if(progressEl) progressEl.classList.add('hidden');
         }
-    }
+    };
 
+// === 修正版：商家活動列表 (支援影片封面) ===
+    function renderCampaigns(campaigns) {
+        const listElement = document.getElementById('campaigns-list');
+        if (!listElement) return;
 
-    // === v3 (新功能): 修改 renderCampaigns 以顯示封面圖 ===
-    // 功能 1: 根據傳入的活動資料，產生 HTML 卡片
-        function renderCampaigns(campaigns) {
-            const listElement = document.getElementById('campaigns-list');
-            if (!listElement) return;
+        if (campaigns.length === 0) {
+            listElement.innerHTML = `<div class="col-span-full text-center py-10"><p class="text-gray-500 mb-4">目前沒有任何行銷活動</p><button onclick="openModal('new-campaign-modal')" class="bg-teal-600 text-white px-6 py-2 rounded-lg">立即建立第一個活動</button></div>`;
+            return;
+        }
 
-            if (campaigns.length === 0) {
-                listElement.innerHTML = `<p class="col-span-full text-center text-gray-500">目前沒有任何行銷活動，點擊右上角建立一個吧！</p>`;
-                return;
+        let campaignsHTML = '';
+        campaigns.forEach(campaign => {
+            const data = campaign.data;
+            const id = campaign.id;
+
+            // --- ★ 修改開始：智慧封面 ---
+            let coverImage = `<div class="w-full h-32 bg-slate-100 flex items-center justify-center text-gray-400">無封面</div>`;
+            
+            if (data.imageUrls && data.imageUrls.length > 0) {
+                const url = data.imageUrls[0];
+                const isVideo = url.toLowerCase().includes('.mp4') || 
+                              url.toLowerCase().includes('.mov') || 
+                              url.toLowerCase().includes('.webm');
+                
+                if (isVideo) {
+                    // 影片封面：滑鼠滑過自動播放
+                    coverImage = `
+                        <video src="${url}" class="w-full h-32 object-cover bg-black" 
+                            muted loop playsinline
+                            onmouseover="this.play()" 
+                            onmouseout="this.pause();this.currentTime=0;"
+                        ></video>`;
+                } else {
+                    // 圖片封面
+                    coverImage = `<img src="${url}" alt="${data.productName}" class="w-full h-32 object-cover" onerror="this.style.display='none'">`;
+                }
+            }
+            // --- ★ 修改結束 ---
+
+            // 狀態標籤
+            const statusMap = {
+                'pending_match': { text: '正在配對中', color: 'bg-yellow-100 text-yellow-800' },
+                'matched': { text: '配對完成', color: 'bg-green-100 text-green-800' },
+                'in_progress': { text: '執行中', color: 'bg-blue-100 text-blue-800' }
+            };
+            const st = statusMap[data.status] || { text: '未知', color: 'bg-gray-100 text-gray-800' };
+            const statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${st.color}">${st.text}</span>`;
+
+            // 刪除按鈕邏輯
+            let deleteButtonHTML = '';
+            const now = Date.now();
+            const createdTime = data.createdAt ? data.createdAt.toMillis() : 0;
+            const diffMinutes = (now - createdTime) / 1000 / 60;
+
+            if (data.status === 'pending_match') {
+                if (diffMinutes <= 10) {
+                    deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}', ${createdTime})" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100 text-xs">刪除 (剩${Math.round(10 - diffMinutes)}分)</button>`;
+                } else {
+                    deleteButtonHTML = `<button disabled class="w-1/2 text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-400 cursor-not-allowed text-xs">已鎖定</button>`;
+                }
             }
 
-            let campaignsHTML = '';
-            campaigns.forEach(campaign => {
-                const data = campaign.data;
-                const id = campaign.id;
-
-                // v3: 檢查是否有圖片，並產生封面圖 HTML
-                let coverImage = '';
-                if (data.imageUrls && data.imageUrls.length > 0) {
-                    // 使用 onerror 來處理圖片載入失敗
-                    coverImage = `<img src="${data.imageUrls[0]}" alt="${data.productName}" class="w-full h-32 object-cover" onerror="this.style.display='none'">`;
-                }
-
-                let statusBadge = '';
-                switch (data.status) {
-                    case 'pending_match':
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">正在配對中</span>`;
-                        break;
-                    case 'matched':
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">配對完成</span>`;
-                        break;
-                    case 'in_progress':
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">執行中</span>`;
-                        break;
-                    default:
-                        statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">未知</span>`;
-                }
-            
-                // ... 在 renderCampaigns 迴圈內 ...
-
-                let deleteButtonHTML = '';
-                // 計算時間差 (毫秒轉分鐘)
-                const now = Date.now();
-                // 確保 createdAt 存在 (舊資料可能沒有，給預設值)
-                const createdTime = data.createdAt ? data.createdAt.toMillis() : 0;
-                const diffMinutes = (now - createdTime) / 1000 / 60;
-
-                // 只有狀態是 pending_match 且 建立時間在 10 分鐘內 才顯示刪除按鈕
-                if (data.status === 'pending_match') {
-                    if (diffMinutes <= 10) {
-                        deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}', ${createdTime})" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100">刪除 (剩 ${Math.round(10 - diffMinutes)} 分)</button>`;
-                    } else {
-                        deleteButtonHTML = `<button disabled class="w-1/2 text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-400 cursor-not-allowed">已鎖定</button>`;
-                    }
-                }
-
-                // v3: 修改卡片結構以容納圖片
-                campaignsHTML += `
-                    <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden">
-                        ${coverImage}
-                        <div class="p-6 flex-1 flex flex-col justify-between">
-                            <div>
+            campaignsHTML += `
+                <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow">
+                    ${coverImage}
+                    <div class="p-5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
                                 ${statusBadge}
-                                <h3 class="font-bold text-lg mt-2 text-slate-800">${data.productName}</h3>
-                                <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
-                                <p class="text-sm text-gray-500 mt-1">希望網紅數: ${data.influencerCount} 位</p>
+                                <span class="text-xs text-gray-400">${new Date(createdTime).toLocaleDateString()}</span>
                             </div>
-                            <div class="mt-4 flex space-x-2">
-                                <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200">查看詳情</button>
-                                ${deleteButtonHTML}
-                            </div>
+                            <h3 class="font-bold text-lg mt-2 text-slate-800 line-clamp-1">${data.productName}</h3>
+                            <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
+                            <p class="text-sm text-gray-500 mt-1">需求: ${data.influencerCount} 位</p>
+                        </div>
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200 text-xs">查看詳情</button>
+                            ${deleteButtonHTML}
                         </div>
                     </div>
-                `;
-            });
-            listElement.innerHTML = campaignsHTML;
-        }
+                </div>
+            `;
+        });
+        listElement.innerHTML = campaignsHTML;
+    }
 
     // 功能 2: 建立一個即時監聽器，當資料庫有變化時自動更新畫面
         let unsubscribeCampaigns = null; 
@@ -2399,69 +2403,85 @@ window.sendChatMessage = async function sendChatMessage() {
             });
         }
 
-// === 更新版：商家詳情頁 (含狀態條 + 網紅牆) ===
-window.showCampaignDetail = async function(campaignId) {
-    if (!campaignId) return;
-    try {
-        const docSnap = await getDoc(doc(db, "briefs", campaignId));
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            
-            // 圖片預覽 HTML
-            let imagesHTML = data.imageUrls?.map(url => 
-                `<a href="${url}" target="_blank"><img src="${url}" class="w-full h-24 object-cover rounded-md border"></a>`
-            ).join('') || '<p class="text-gray-500">無圖片</p>';
-            if(data.imageUrls?.length) imagesHTML = `<div class="grid grid-cols-4 gap-2">${imagesHTML}</div>`;
-
-            // 設定 HTML 框架
-            const contentArea = document.getElementById('merchant-campaign-detail-content');
-            contentArea.innerHTML = `
-                <div class="bg-white rounded-xl shadow p-6 mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-bold text-slate-800">${data.productName}</h2>
-                        <button onclick="switchTab('merchant', 'campaigns')" class="text-sm text-blue-600 hover:underline">← 返回列表</button>
-                    </div>
+// === 修正版：商家詳情頁 (支援影片顯示) ===
+    window.showCampaignDetail = async function(campaignId) {
+        if (!campaignId) return;
+        try {
+            const docSnap = await getDoc(doc(db, "briefs", campaignId));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                
+                // --- ★ 修改開始：智慧判斷素材類型 ---
+                let imagesHTML = '<p class="text-gray-500">無素材</p>';
+                
+                if (data.imageUrls && data.imageUrls.length > 0) {
+                    const items = data.imageUrls.map(url => {
+                        // 判斷副檔名
+                        const isVideo = url.toLowerCase().includes('.mp4') || 
+                                      url.toLowerCase().includes('.mov') || 
+                                      url.toLowerCase().includes('.webm');
+                        
+                        if (isVideo) {
+                            // 如果是影片：顯示播放器 (controls)
+                            return `<video src="${url}" class="w-full h-24 object-cover rounded-md border bg-black" controls></video>`;
+                        } else {
+                            // 如果是圖片：維持原本的點擊放大
+                            return `<a href="${url}" target="_blank"><img src="${url}" class="w-full h-24 object-cover rounded-md border hover:opacity-80"></a>`;
+                        }
+                    }).join('');
                     
-                    <div class="mb-6 p-4 bg-slate-50 rounded-lg">
-                        <h3 class="font-bold text-slate-700 mb-2">專案進度 (目標: ${data.influencerCount} 人)</h3>
-                        <div class="flex h-4 overflow-hidden rounded-full bg-gray-200 text-xs font-bold text-white text-center" id="status-bar-container">
-                            <div style="width: 0%" class="bg-gray-400 flex items-center justify-center">0</div>
+                    imagesHTML = `<div class="grid grid-cols-4 gap-2">${items}</div>`;
+                }
+                // --- ★ 修改結束 ---
+
+                // 設定 HTML 框架
+                const contentArea = document.getElementById('merchant-campaign-detail-content');
+                contentArea.innerHTML = `
+                    <div class="bg-white rounded-xl shadow p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold text-slate-800">${data.productName}</h2>
+                            <button onclick="switchTab('merchant', 'campaigns')" class="text-sm text-blue-600 hover:underline">← 返回列表</button>
                         </div>
-                        <div class="flex justify-between text-xs text-gray-500 mt-2" id="status-legend">
-                            <span>載入數據中...</span>
+                        
+                        <div class="mb-6 p-4 bg-slate-50 rounded-lg">
+                            <h3 class="font-bold text-slate-700 mb-2">專案進度 (目標: ${data.influencerCount} 人)</h3>
+                            <div class="flex h-4 overflow-hidden rounded-full bg-gray-200 text-xs font-bold text-white text-center" id="status-bar-container">
+                                <div style="width: 0%" class="bg-gray-400 flex items-center justify-center">0</div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500 mt-2" id="status-legend">
+                                <span>載入數據中...</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-2 space-y-4">
+                                <div><label class="text-xs text-gray-500">描述</label><p class="text-gray-800">${data.productDesc}</p></div>
+                                <div><label class="text-xs text-gray-500">行銷素材</label>${imagesHTML}</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                                <div class="flex justify-between"><span>預算</span><span class="font-bold">NT$ ${data.budget.toLocaleString()}</span></div>
+                                <div class="flex justify-between"><span>預期曝光</span><span class="font-bold">${data.impressions.toLocaleString()}</span></div>
+                                <div class="flex justify-between"><span>狀態</span><span class="font-bold">${data.status}</span></div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-2 space-y-4">
-                            <div><label class="text-xs text-gray-500">描述</label><p class="text-gray-800">${data.productDesc}</p></div>
-                            <div><label class="text-xs text-gray-500">圖片素材</label>${imagesHTML}</div>
+                    <div class="bg-white rounded-xl shadow mt-6">
+                        <div class="p-6 border-b flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800 text-lg">合作網紅牆 (Influencer Wall)</h3>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
-                            <div class="flex justify-between"><span>預算</span><span class="font-bold">NT$ ${data.budget.toLocaleString()}</span></div>
-                            <div class="flex justify-between"><span>預期曝光</span><span class="font-bold">${data.impressions.toLocaleString()}</span></div>
-                            <div class="flex justify-between"><span>狀態</span><span class="font-bold">${data.status}</span></div>
+                        <div id="collab-list-${campaignId}" class="p-6 bg-slate-50 min-h-[300px]">
+                            <p class="text-center text-gray-500 py-10">載入網紅資料中...</p>
                         </div>
                     </div>
-                </div>
+                `;
+                
+                switchTab('merchant', 'campaign-detail');
+                renderCampaignCollaborations(campaignId, `collab-list-${campaignId}`, data.influencerCount);
 
-                <div class="bg-white rounded-xl shadow mt-6">
-                    <div class="p-6 border-b flex justify-between items-center">
-                        <h3 class="font-bold text-slate-800 text-lg">合作網紅牆 (Influencer Wall)</h3>
-                    </div>
-                    <div id="collab-list-${campaignId}" class="p-6 bg-slate-50 min-h-[300px]">
-                        <p class="text-center text-gray-500 py-10">載入網紅資料中...</p>
-                    </div>
-                </div>
-            `;
-            
-            switchTab('merchant', 'campaign-detail');
-            // 呼叫新的渲染函式，傳入目標數量以便計算進度
-            renderCampaignCollaborations(campaignId, `collab-list-${campaignId}`, data.influencerCount);
-
-        } else { alert("找不到活動資料"); }
-    } catch (e) { console.error(e); alert("讀取詳情錯誤"); }
-}
+            } else { alert("找不到活動資料"); }
+        } catch (e) { console.error(e); alert("讀取詳情錯誤"); }
+    };
 
 
 
@@ -2508,13 +2528,15 @@ window.showCampaignDetail = async function(campaignId) {
     //  修復後的網紅端邏輯 (解決 ... 問題、重複接單問題、修改上傳問題)
     // ============================================================
 
-    // 1. 渲染「合作邀請」列表 (修復：補回 HTML 並加入過濾機制)
+
+
+    // === 修正版：網紅合作邀請列表 (修復影片破圖問題) ===
     window.renderInfluencerInvitations = async function() {
         const user = auth.currentUser;
         const listEl = document.getElementById('influencer-invitations-list');
         if (!listEl || !user) return;
         
-        listEl.innerHTML = '<p class="text-gray-500 col-span-full text-center">正在尋找適合您的機會...</p>';
+        listEl.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">正在尋找適合您的機會...</div>';
 
         try {
             // 步驟 A: 先查出「我已經接過」的 briefId
@@ -2522,7 +2544,6 @@ window.showCampaignDetail = async function(campaignId) {
             const myJoinedBriefIds = new Set(myCollabsSnap.docs.map(doc => doc.data().briefId));
 
             // 步驟 B: 查出所有待媒合 (pending_match) 的活動
-            // 注意：這裡應該要加上 where("status", "==", "pending_match")，且排除已軟刪除的
             const q = query(collection(db, "briefs"), 
                            where("status", "==", "pending_match"),
                            where("isDeleted", "==", false));
@@ -2536,42 +2557,66 @@ window.showCampaignDetail = async function(campaignId) {
                 const briefId = docSnap.id;
                 const brief = docSnap.data();
 
-                // 關鍵過濾：如果我已經接過這個單，就跳過 (Requirement #5)
+                // 過濾：如果我已經接過這個單，就跳過
                 if (myJoinedBriefIds.has(briefId)) return;
 
                 count++;
                 
-                // 圖片處理
-                const coverImg = brief.imageUrls && brief.imageUrls.length > 0 
-                    ? `<img src="${brief.imageUrls[0]}" class="w-24 h-24 object-cover rounded-lg flex-shrink-0 bg-slate-200">`
-                    : `<div class="w-24 h-24 bg-slate-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">無圖片</div>`;
+                // --- ★ 修改重點：智慧封面 (圖片/影片判斷) ---
+                let coverImg = `<div class="w-24 h-24 bg-slate-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">無素材</div>`;
+                
+                if (brief.imageUrls && brief.imageUrls.length > 0) {
+                    const url = brief.imageUrls[0];
+                    // 簡單判斷副檔名
+                    const isVideo = url.toLowerCase().includes('.mp4') || 
+                                  url.toLowerCase().includes('.mov') || 
+                                  url.toLowerCase().includes('.webm');
+                    
+                    if (isVideo) {
+                        // 影片：滑鼠滑過預覽播放
+                        coverImg = `
+                            <video src="${url}" 
+                                class="w-24 h-24 object-cover rounded-lg flex-shrink-0 bg-black border" 
+                                muted loop playsinline
+                                onmouseover="this.play()" 
+                                onmouseout="this.pause();this.currentTime=0;"
+                            ></video>`;
+                    } else {
+                        // 圖片
+                        coverImg = `<img src="${url}" class="w-24 h-24 object-cover rounded-lg flex-shrink-0 bg-slate-200 border">`;
+                    }
+                }
+                // ------------------------------------------
 
-                // 這裡就是原本消失的 HTML，現在補回來了！ (Requirement #7)
                 html += `
-                    <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-6 items-start hover:shadow-lg transition-shadow">
+                    <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-6 items-start hover:shadow-lg transition-shadow border border-gray-100">
                         ${coverImg}
                         <div class="flex-1 w-full">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <h3 class="font-bold text-lg text-slate-800">${brief.productName}</h3>
-                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">
-                                          ${brief.category || '未分類'}
-                                    </span>
-                                    <p class="text-sm text-gray-500 mt-1 line-clamp-2">${brief.productDesc}</p>
+                                    <div class="flex gap-2 mt-1">
+                                        <span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100">
+                                            類別: ${brief.category || '一般'}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-2 line-clamp-2">${brief.productDesc}</p>
                                 </div>
-                                <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full font-bold whitespace-nowrap">
-                                    預算: $${brief.budget.toLocaleString()}
-                                </span>
+                                <div class="flex flex-col items-end gap-1">
+                                    <span class="bg-teal-50 text-teal-700 text-sm px-3 py-1 rounded-full font-bold border border-teal-100">
+                                        預算: $${brief.budget.toLocaleString()}
+                                    </span>
+                                </div>
                             </div>
-                            
                             <div class="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
                                 <span class="bg-slate-100 px-2 py-1 rounded">需求: ${brief.influencerCount} 人</span>
                                 <span class="bg-slate-100 px-2 py-1 rounded">平台: ${brief.platforms ? brief.platforms.join(', ') : '不限'}</span>
                             </div>
 
+
                             <div class="mt-4 flex justify-end">
                                 <button onclick="handleAcceptInvite('${briefId}', '${brief.merchantId}')" 
-                                        class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                                        class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95">
                                     接單合作
                                 </button>
                             </div>
@@ -2581,14 +2626,19 @@ window.showCampaignDetail = async function(campaignId) {
             });
 
             if (count === 0) {
-                listEl.innerHTML = '<div class="col-span-full text-center py-10 bg-white rounded-xl shadow"><p class="text-gray-500 text-lg">目前沒有新的合作邀請，晚點再來看看！</p></div>';
+                listEl.innerHTML = '<div class="col-span-full text-center py-12 bg-white rounded-xl shadow border border-dashed border-gray-300"><p class="text-4xl mb-2">📭</p><p class="text-gray-500 text-lg">目前沒有新的合作邀請，晚點再來看看！</p></div>';
             } else {
                 listEl.innerHTML = html;
             }
 
         } catch (error) {
             console.error("載入失敗:", error);
-            listEl.innerHTML = `<p class="text-red-500 col-span-full">載入失敗: ${error.message}</p>`;
+            // 這裡也加上友善的錯誤提示，如果是索引錯誤就引導使用者
+            if(error.message.includes("index")) {
+                listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">系統升級中 (缺少索引)，請管理員至 Console 點擊連結建立。</p>`;
+            } else {
+                listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">載入失敗: ${error.message}</p>`;
+            }
         }
     };
 
