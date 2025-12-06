@@ -2211,91 +2211,66 @@ window.sendChatMessage = async function sendChatMessage() {
 
     // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
 
-    // === v3 (新功能): 上傳行銷活動圖片 (Request 2) ===
+// === 更新版：上傳行銷素材 (支援圖片與影片) ===
     window.handleUploadCampaignImages = async function() {
         const user = auth.currentUser;
         if (!user) return alert('請先登入');
 
         const fileInput = document.getElementById('campaign-images');
         const files = fileInput.files;
-        if (!files || files.length === 0) return alert('請先選擇要上傳的圖片');
+        if (!files || files.length === 0) return alert('請選擇檔案');
 
         const statusEl = document.getElementById('upload-status-text');
-        const progressEl = document.getElementById('upload-progress-bar');
         const previewEl = document.getElementById('image-preview-area');
         const uploadBtn = document.getElementById('upload-images-btn');
 
         uploadBtn.disabled = true;
         uploadBtn.textContent = '上傳中...';
         statusEl.textContent = '準備上傳...';
-        progressEl.classList.remove('hidden');
-        progressEl.value = 0;
 
-        const uploadPromises = [];
-        let totalBytes = 0;
-        let transferredBytes = 0;
-
-        // 計算總大小
-        Array.from(files).forEach(file => {
-            totalBytes += file.size;
-        });
-
-        // 為每個檔案建立一個上傳 promise
-        Array.from(files).forEach(file => {
-            const filePath = `logos/${user.uid}/campaign_uploads/${Date.now()}_${file.name}`;
-            const fileRef = storageRef(storage, filePath);
-            const uploadTask = uploadBytesResumable(fileRef, file);
-
-            const promise = new Promise((resolve, reject) => {
-                uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        // 這裡只更新單一檔案的進度，我們需要累加
-                        // 為了簡化，我們在 .then() 裡更新總進度
-                        statusEl.textContent = `正在上傳 ${snapshot.ref.name}...`;
-                    }, 
-                    (error) => {
-                        // 處理單一檔案上傳失敗
-                        console.error(`檔案 ${file.name} 上傳失敗:`, error);
-                        reject(error);
-                    }, 
-                    async () => {
-                        // 單一檔案上傳成功
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        
-                        // 更新總進度
-                        transferredBytes += file.size;
-                        progressEl.value = (transferredBytes / totalBytes) * 100;
-
-                        // 立即顯示縮圖
-                        const imgEl = document.createElement('img');
-                        imgEl.src = downloadURL;
-                        imgEl.className = 'w-full h-20 object-cover rounded-md border';
-                        previewEl.appendChild(imgEl);
-                        
-                        resolve(downloadURL); // 將 URL 回傳
-                    }
-                );
+        const uploadPromises = Array.from(files).map(file => {
+            // 檔名加上時間戳記避免重複
+            const path = `campaigns/${user.uid}/${Date.now()}_${file.name}`;
+            const ref = storageRef(storage, path);
+            return uploadBytesResumable(ref, file).then(async snap => {
+                const url = await getDownloadURL(snap.ref);
+                
+                // 判斷是否為影片
+                const isVideo = file.type.startsWith('video');
+                
+                // 建立預覽元素
+                const el = isVideo 
+                    ? document.createElement('video') 
+                    : document.createElement('img');
+                
+                el.src = url;
+                el.className = 'w-20 h-20 object-cover rounded border bg-black';
+                
+                // 如果是影片，設為靜音且不自動播放，避免干擾
+                if(isVideo) {
+                    el.muted = true;
+                    el.autoplay = false;
+                }
+                
+                previewEl.appendChild(el);
+                return url; 
             });
-            uploadPromises.push(promise);
         });
 
         try {
-            // 等待所有圖片上傳完成
-            const urls = await Promise.all(uploadPromises);
-            uploadedImageUrls = uploadedImageUrls.concat(urls); // 將新上傳的 URL 加入暫存
-            
-            statusEl.textContent = `成功上傳 ${urls.length} 張圖片！`;
-            progressEl.classList.add('hidden');
-            fileInput.value = null; // 清空選擇
-        } catch (error) {
-            console.error("上傳圖片時發生錯誤:", error);
-            alert('部分圖片上傳失敗，請重試');
+            const newUrls = await Promise.all(uploadPromises);
+            // 將新上傳的 URL 加入全域暫存陣列
+            uploadedImageUrls = uploadedImageUrls.concat(newUrls);
+            statusEl.textContent = `成功上傳 ${newUrls.length} 個檔案`;
+        } catch (e) {
+            console.error(e);
             statusEl.textContent = '上傳失敗';
         } finally {
             uploadBtn.disabled = false;
-            uploadBtn.textContent = '上傳選取的圖片';
+            uploadBtn.textContent = '上傳';
+            fileInput.value = ''; // 清空選擇
         }
-    }
+    };
 
 
     // === v3 (新功能): 修改 renderCampaigns 以顯示封面圖 ===
