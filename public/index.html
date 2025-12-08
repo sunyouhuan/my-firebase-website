@@ -3166,20 +3166,22 @@ window.sendChatMessage = async function sendChatMessage() {
         const progressDiv = document.getElementById(`progress-${collabId}`);
         const user = auth.currentUser;
         
-        // 2. ★ 關鍵修正：直接從 input 讀取檔案，確保一定抓得到
         let files = [];
-        if (fileInput && fileInput.files) {
-            files = Array.from(fileInput.files);
+
+        // 1) 先把 input 裡「還沒進預覽」的檔案撈出來（以防萬一）
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            files = files.concat(Array.from(fileInput.files));
         }
-        
-        // 如果你有用 influencerSelectedFiles 這個變數做預覽，也可以合併進來 (選填)
-        // files = files.concat(influencerSelectedFiles[collabId] || []);
+
+        // 2) 再把你存到預覽用陣列裡的檔案也加進來（★關鍵修正）
+        if (influencerSelectedFiles[collabId] && influencerSelectedFiles[collabId].length > 0) {
+            files = files.concat(influencerSelectedFiles[collabId]);
+        }
 
         const text = textInput.value;
 
-        // 檢查是否真的沒東西
         if (files.length === 0 && !text) {
-            return alert('請至少選擇一個檔案或是填寫文字說明！');
+            return alert('請至少上傳一種檔案或說明'); // 文案隨你
         }
 
         progressDiv.classList.remove('hidden');
@@ -3247,6 +3249,12 @@ window.sendChatMessage = async function sendChatMessage() {
             });
             
             alert('提交成功！等待商家審核。');
+
+            influencerSelectedFiles[collabId] = [];
+            updateInfFilePreview(collabId);
+            if (fileInput) fileInput.value = '';
+            textInput.value = '';
+            progressDiv.classList.add('hidden');
             
             // 5. 清空輸入框與隱藏進度條
             fileInput.value = '';
