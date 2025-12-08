@@ -3158,93 +3158,98 @@ window.sendChatMessage = async function sendChatMessage() {
 
     // 4. 網紅上傳素材 (圖片或影片)
 // === 修改後：處理多檔上傳 ===
-    // === 更新版：提交作品 (寫入歷史紀錄) ===
+    // === 修改後的 handleSubmitContent (修正 Timestamp 與 檔案讀取) ===
     window.handleSubmitContent = async function(collabId) {
+        // 1. 取得 HTML 元素
         const textInput = document.getElementById(`text-${collabId}`);
+        const fileInput = document.getElementById(`files-${collabId}`); // 修正：抓取 input 元素
         const progressDiv = document.getElementById(`progress-${collabId}`);
         const user = auth.currentUser;
         
-        // 取得暫存檔案
-        const files = influencerSelectedFiles[collabId] || [];
+        // 2. 取得檔案與文字
+        // 修正：將 FileList 轉為陣列，避免 map 錯誤。如果沒選檔案就是空陣列。
+        const files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
         const text = textInput.value;
 
         if (files.length === 0 && !text) return alert('請至少上傳檔案或填寫說明');
 
         progressDiv.classList.remove('hidden');
-        progressDiv.textContent = `上傳中...`;
+        progressDiv.textContent = `準備上傳 ${files.length} 個檔案...`;
 
         try {
-            // 1. 上傳檔案
+            // 3. 上傳檔案到 Storage
             const uploadPromises = files.map(file => {
                 return new Promise((resolve, reject) => {
+                    // 路徑加上時間戳記避免檔名重複
                     const storagePath = `collaborations/${collabId}/${Date.now()}_${file.name}`;
                     const ref = storageRef(storage, storagePath);
                     const task = uploadBytesResumable(ref, file);
-                    task.on('state_changed', null, reject, async () => {
-                        const url = await getDownloadURL(task.snapshot.ref);
-                        resolve({
-                            url: url,
-                            type: file.type.startsWith('video/') ? 'video' : 'image',
-                            name: file.name
-                        });
-                    });
+                    
+                    task.on('state_changed', 
+                        (snapshot) => {
+                            // 可以在這裡做進度條計算，目前先簡單顯示
+                            const pc = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                            progressDiv.textContent = `上傳中... ${pc}%`;
+                        }, 
+                        (error) => reject(error), 
+                        async () => {
+                            const url = await getDownloadURL(task.snapshot.ref);
+                            resolve({
+                                url: url,
+                                type: file.type.startsWith('video/') ? 'video' : 'image',
+                                name: file.name
+                            });
+                        }
+                    );
                 });
             });
 
+            // 等待所有檔案上傳完畢
             const newFilesData = await Promise.all(uploadPromises);
 
-            // 2. 更新 Firestore (加入 history, 更新 status)
+            // 4. 更新 Firestore 資料庫
             const docRef = doc(db, "collaborations", collabId);
             
-            // 這裡我們要讀取舊資料來 Append contentData 嗎？通常「修改」是提交新的一批。
-            // 我們把這次提交的詳細內容寫入 History
+            // 步驟 A: 先讀取目前的資料 (為了拿到舊的 history)
+            const docSnap = await getDoc(docRef);
+            if (!docSnap.exists()) throw new Error("找不到該合作案");
+            
+            const currentData = docSnap.data();
+            const currentHistory = currentData.history || []; // 如果沒有歷史紀錄，就給空陣列
+
+            // 步驟 B: 建立新的歷史紀錄物件
             const newHistoryItem = {
                 role: 'influencer',
-                action: 'submit',
+                action: 'submit', // 動作：提交
                 text: text,
                 files: newFilesData,
-                time: Timestamp.now() // 注意：需確認是否已 import { Timestamp }
+                time: new Date() // 修正：使用 new Date() 避免 Timestamp 錯誤
             };
 
-            // 如果沒有 import Timestamp，改用 serverTimestamp 也可以，但 arrayUnion 裡建議用具體時間
-            // 這裡簡單用 Date
-            newHistoryItem.time = new Date();
+            // 步驟 C: 將新紀錄加入陣列
+            currentHistory.push(newHistoryItem);
 
-            // 我們將 contentData 更新為最新的一批 (讓商家主要看最新的)，但 History 保留舊的
+            // 步驟 D: 更新資料庫
             await updateDoc(docRef, {
-                contentData: newFilesData, 
-                status: 'reviewing',
-                updatedAt: serverTimestamp(),
-                // 使用 arrayUnion 加入歷史紀錄
-                // 需 import { arrayUnion } from firebase/firestore
-                // 如果沒 import，可以先讀再寫，但 arrayUnion 比較原子性
-                // 這裡假設你沒 import，我們用簡單的方式：
-                // 實際專案建議在上方 import { arrayUnion } ...
+                contentData: newFilesData, // 更新主要顯示區 (顯示最新的)
+                history: currentHistory,   // 更新歷史紀錄陣列
+                status: 'reviewing',       // 狀態改為審核中
+                updatedAt: serverTimestamp() // 使用伺服器時間
             });
             
-            // 手動補 arrayUnion 邏輯 (若未 import)
-            // 為了方便，我們這裡做一次 get 再 update (效能稍差但穩)
-            const snap = await getDoc(docRef);
-            let currentHistory = snap.data().history || [];
-            currentHistory.push(newHistoryItem);
+            alert('提交成功！等待商家審核。');
             
-            await updateDoc(docRef, { history: currentHistory });
-
-            alert('提交成功！');
-            // 清空暫存
-            influencerSelectedFiles[collabId] = [];
+            // 5. 清空輸入框與隱藏進度條
+            fileInput.value = '';
             textInput.value = '';
-            updateInfFilePreview(collabId);
+            progressDiv.classList.add('hidden');
 
         } catch (error) {
             console.error("提交失敗:", error);
             alert("錯誤: " + error.message);
-        } finally {
             progressDiv.classList.add('hidden');
         }
     };
-
-
 
 
     // ==========================================
