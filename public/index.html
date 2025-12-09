@@ -4865,30 +4865,48 @@ const OAUTH_CONFIG = {
     },
 };
 
-// 2. 發起連結 (取代原本的 simulateConnect)
-window.connectRealPlatform = function(platform) {
+window.connectInstagram = async function() {
     const user = auth.currentUser;
     if (!user) return alert('請先登入');
 
-    const config = OAUTH_CONFIG[platform];
-    if (!config) return alert('尚未支援此平台');
-
-    // 產生隨機 State 以防止 CSRF 攻擊，並將 userId 藏在裡面以便 callback 時知道是誰
-    const state = btoa(JSON.stringify({ uid: user.uid, platform: platform, nonce: Date.now() }));
-    localStorage.setItem('oauth_state', state); // 暫存比對用
-
-    let url = '';
+    // 1. 設定 Facebook 提供者
+    const provider = new FacebookAuthProvider();
     
-    if (platform === 'ig') {
-        url = `${config.authUrl}?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(config.redirectUri)}&scope=${config.scope}&response_type=code&state=${state}`;
-    } else if (platform === 'tt') {
-        url = `${config.authUrl}?client_key=${config.clientKey}&redirect_uri=${encodeURIComponent(config.redirectUri)}&scope=${config.scope}&response_type=code&state=${state}`;
+    // 2. 加入 Instagram 商業帳號需要的權限 (非常重要)
+    provider.addScope('instagram_basic');
+    provider.addScope('instagram_manage_insights');
+    provider.addScope('pages_show_list');
+    provider.addScope('pages_read_engagement'); // 讀取互動率需要這個
+
+    try {
+        // 3. 彈出視窗登入 (這會自動解決 Redirect URI 的複雜問題)
+        const result = await signInWithPopup(auth, provider);
+
+        // 4. 取得 Access Token
+        const credential = FacebookAuthProvider.credentialFromResult(result);
+        const accessToken = credential.accessToken;
+
+        console.log("拿到 Token 了！", accessToken);
+
+        // 5. 存入 Firestore (這會觸發你的 Cloud Function)
+        // 注意：這裡需要 import doc, setDoc, serverTimestamp
+        // 假設你的 module 已經 import 了這些
+        const userRef = doc(db, 'users', user.uid, 'tokens', 'facebook');
+        await setDoc(userRef, {
+            accessToken: accessToken,
+            updatedAt: serverTimestamp()
+        });
+
+        alert("連結成功！後端正在分析 IG 數據...");
+
+    } catch (error) {
+        console.error("連結失敗:", error);
+        // 如果錯誤是 "popup-closed-by-user"，代表使用者自己關掉視窗，不用報錯
+        if (error.code !== 'auth/popup-closed-by-user') {
+            alert("連結失敗: " + error.message);
+        }
     }
-
-    // 開啟授權視窗 (或是直接導頁)
-    window.location.href = url; 
 };
-
 // 3. 監聽 Firestore 數據並更新圖表 (取代原本的 mock updateAnalyticsUI)
 let unsubSocialStats = null;
 
