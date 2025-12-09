@@ -1391,32 +1391,66 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                     </header>
 
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
-                        <div id="merchant-dashboard-content" class="dashboard-content active">
-<div id="company-card" class="bg-white p-6 rounded-xl shadow mb-6 hidden">
-  <div class="flex items-start gap-4">
-    <img id="company-card-logo" class="w-14 h-14 rounded-lg object-cover bg-slate-100" src="" alt="">
-    <div class="flex-1">
-      <div class="flex items-center gap-3">
-        <h3 id="company-card-name" class="text-xl font-bold text-slate-800">公司名稱</h3>
-        <span id="company-card-regno" class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600"></span>
-      </div>
-      <div id="company-card-lines" class="text-sm text-gray-600 flex flex-wrap gap-x-4 mt-1">
-        <span id="company-card-phone"></span>
-        <span id="company-card-address"></span>
-        <a id="company-card-website" class="text-teal-600 hover:underline" target="_blank" rel="noopener"></a>
-      </div>
+<div id="merchant-dashboard-content" class="dashboard-content active">
+    <div class="mb-8 flex justify-between items-end">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-800">早安，<span id="m-dash-name">商家</span> 👋</h2>
+            <p class="text-gray-500 mt-1">這是您目前的行銷活動概況</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm text-gray-400" id="current-date">2023/10/24</p>
+        </div>
     </div>
-  </div>
-</div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總花費</h3><p class="text-3xl font-bold text-slate-800 mt-2">NT$ 150,000</p></div>
-                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">總曝光數</h3><p class="text-3xl font-bold text-slate-800 mt-2">1.2M</p></div>
-                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">平均 ROAS</h3><p class="text-3xl font-bold text-green-500 mt-2">350%</p></div>
-                                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-sm font-medium text-gray-500">進行中活動</h3><p class="text-3xl font-bold text-slate-800 mt-2">3</p></div>
-                            </div>
-                            <div class="bg-slate-700 text-white rounded-xl p-8 flex justify-between items-center"><h2 class="text-2xl font-bold">準備好發起新的行銷活動了嗎？</h2><button onclick="openAIChat()" class="bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-600 transition-transform hover:scale-105">與 AI 顧問開始</button></div>
-                        </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">進行中活動</h3>
+            <p id="m-stat-active" class="text-3xl font-bold text-slate-800 mt-2">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-yellow-500">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">待審核網紅</h3>
+            <p id="m-stat-pending" class="text-3xl font-bold text-slate-800 mt-2">0</p>
+            <p class="text-xs text-yellow-600 mt-1">請盡快處理</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">累積總花費</h3>
+            <p id="m-stat-spend" class="text-3xl font-bold text-slate-800 mt-2">NT$ 0</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-purple-500">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">總觸及人數 (預估)</h3>
+            <p id="m-stat-reach" class="text-3xl font-bold text-slate-800 mt-2">0</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 bg-white rounded-xl shadow p-6">
+            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="w-2 h-6 bg-teal-500 rounded-full"></span> 待辦事項 (Action Items)
+            </h3>
+            <div id="m-action-list" class="space-y-3">
+                <p class="text-gray-400 text-center py-4">目前沒有待辦事項 🎉</p>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 text-white shadow-lg">
+                <h3 class="font-bold text-lg mb-2">發起新活動</h3>
+                <p class="text-slate-400 text-sm mb-4">透過 AI 快速媒合適合的網紅人選。</p>
+                <button onclick="openModal('new-campaign-modal')" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 rounded-lg transition">＋ 建立活動</button>
+            </div>
+            
+            <div id="company-card" class="bg-white p-6 rounded-xl shadow hidden">
+                <div class="flex items-start gap-4">
+                    <img id="company-card-logo" class="w-14 h-14 rounded-lg object-cover bg-slate-100" src="" alt="">
+                    <div class="flex-1">
+                        <h3 id="company-card-name" class="text-xl font-bold text-slate-800"></h3>
+                        <a id="company-card-website" class="text-teal-600 hover:underline text-sm" target="_blank"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                         
                         <div id="merchant-campaign-detail-content" class="dashboard-content"></div>
 
@@ -1611,49 +1645,133 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
                         <div id="influencer-dashboard-content" class="dashboard-content active">
-                            <div id="influencer-overview-card" class="bg-white rounded-xl shadow p-6 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 hidden">
-                                <img id="overview-inf-avatar" src="" class="w-24 h-24 rounded-full object-cover border-4 border-slate-50 bg-slate-200">
-                                <div class="flex-1 text-center md:text-left">
-                                    <h2 id="overview-inf-name" class="text-2xl font-bold text-slate-800"></h2>
-                                    <p id="overview-inf-email" class="text-sm text-gray-500 mb-2"></p>
-            
-                                    <div id="overview-badges" class="flex justify-center md:justify-start gap-2 mb-3"></div>
-            
-                                    <p id="overview-inf-bio" class="text-gray-600 text-sm line-clamp-2"></p>
-                                </div>
-                                <button onclick="switchTab('influencer', 'settings')" class="text-sm text-teal-600 border border-teal-600 px-4 py-2 rounded hover:bg-teal-50 transition-colors">
-                                    編輯資料
-                                </button>
-                            </div>
-                            <div class="h-80 mb-8"><canvas id="valueRadarChart"></canvas>
-                            </div>
+    <div id="inf-dashboard-card-container" class="bg-white rounded-xl shadow p-6 mb-8 flex flex-col md:flex-row items-center gap-6">
+        <div class="relative">
+            <img id="dash-inf-avatar" src="https://placehold.co/100" class="w-24 h-24 rounded-full object-cover border-4 border-slate-50 shadow-md">
+            <div class="absolute bottom-0 right-0 bg-green-500 w-6 h-6 rounded-full border-4 border-white" title="Active"></div>
+        </div>
+        <div class="flex-1 text-center md:text-left">
+            <h2 id="dash-inf-name" class="text-2xl font-bold text-slate-800">歡迎回來</h2>
+            <p id="dash-inf-bio" class="text-gray-500 text-sm mt-1 line-clamp-1">正在載入個人資料...</p>
+            <div class="flex gap-2 justify-center md:justify-start mt-3">
+                <span class="px-3 py-1 bg-slate-100 rounded-full text-xs font-bold text-slate-600">🔥 活躍創作者</span>
+                <span class="px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-bold" id="dash-collab-count">合作 0 次</span>
+            </div>
+        </div>
+        <button onclick="switchTab('influencer', 'settings')" class="text-sm text-gray-500 border px-4 py-2 rounded hover:bg-gray-50">編輯檔案</button>
+    </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow border-t-4 border-teal-500">
+            <p class="text-gray-500 text-xs font-bold uppercase">本月預估收益</p>
+            <p id="inf-stat-income" class="text-3xl font-bold text-slate-800 mt-2">NT$ 0</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow border-t-4 border-blue-500">
+            <p class="text-gray-500 text-xs font-bold uppercase">進行中合作</p>
+            <p id="inf-stat-active" class="text-3xl font-bold text-slate-800 mt-2">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow border-t-4 border-purple-500">
+            <p class="text-gray-500 text-xs font-bold uppercase">綜合價值分數</p>
+            <p id="inf-stat-score" class="text-3xl font-bold text-slate-800 mt-2">--</p>
+        </div>
+    </div>
 
-                            <div class="border-t pt-6">
-                                <h2 class="text-xl font-bold text-slate-800 mb-6">進行中的工作 (Active Collaborations)</h2>
-                                <div id="influencer-active-jobs-list" class="space-y-6">
-                                    <p class="text-gray-500">目前沒有進行中的工作。</p>
-                                </div>
-                            </div>
-                        </div>
+    <div class="bg-white rounded-xl shadow p-6">
+        <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">進行中的工作 (Active Jobs)</h3>
+        <div id="influencer-active-jobs-list" class="space-y-6">
+            <p class="text-gray-500 text-center py-8">目前沒有進行中的工作</p>
+        </div>
+    </div>
+</div>
                         <div id="influencer-value-content" class="dashboard-content">
-                          <div class="bg-white rounded-xl shadow p-6"><h3 class="text-lg font-bold text-slate-800 mb-4">點擊社群平台查看詳細分析報告</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              <div onclick="showPlatformDetail('instagram')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/E1306C/FFFFFF?text=IG" class="rounded-full" />
-                                <div><p class="font-bold">hsi_daily</p><p class="text-sm text-gray-500">Instagram</p>
-                                </div>
-                              </div>
-                              <div onclick="showPlatformDetail('youtube')" class="p-4 border rounded-lg flex items-center space-x-4 cursor-pointer hover:bg-slate-50"><img src="https://placehold.co/48x48/FF0000/FFFFFF?text=YT" class="rounded-full" />
-                                <div><p class="font-bold">小希的探索頻道</p><p class="text-sm text-gray-500">YouTube</p>
-                                </div>
-                              </div>
-                              <div class="p-4 border border-dashed rounded-lg flex items-center space-x-4 text-gray-400"><img src="https://placehold.co/48x48/000000/FFFFFF?text=TK" class="rounded-full" />
-                                <div><p class="font-bold">連結 TikTok</p><p class="text-sm">尚未連結</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+    
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+        <h3 class="text-xl font-bold text-slate-800 mb-4">連結社交平台帳戶</h3>
+        <p class="text-gray-500 text-sm mb-6">連結後，系統將自動分析您的粉絲輪廓與互動數據，為您生成「價值報告」並推薦更適合的廠商。</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-ig">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white flex items-center justify-center text-xl"><i class="fab fa-instagram"></i></div>
+                    <div>
+                        <p class="font-bold text-slate-700">Instagram</p>
+                        <p class="text-xs text-gray-400" id="status-ig">尚未連結</p>
+                    </div>
+                </div>
+                <button onclick="connectRealPlatform('ig')" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100" id="btn-connect-ig">連結</button>
+            </div>
+
+            <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-yt">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center text-xl"><i class="fab fa-youtube"></i></div>
+                    <div>
+                        <p class="font-bold text-slate-700">YouTube</p>
+                        <p class="text-xs text-gray-400" id="status-yt">尚未連結</p>
+                    </div>
+                </div>
+                <button onclick="simulateConnect('yt')" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100" id="btn-connect-yt">連結</button>
+            </div>
+
+            <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-tt">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-xl"><i class="fab fa-tiktok"></i></div>
+                    <div>
+                        <p class="font-bold text-slate-700">TikTok</p>
+                        <p class="text-xs text-gray-400" id="status-tt">尚未連結</p>
+                    </div>
+                </div>
+                <button onclick="simulateConnect('tt')" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100" id="btn-connect-tt">連結</button>
+            </div>
+
+            <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-fb">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl"><i class="fab fa-facebook-f"></i></div>
+                    <div>
+                        <p class="font-bold text-slate-700">Facebook</p>
+                        <p class="text-xs text-gray-400" id="status-fb">尚未連結</p>
+                    </div>
+                </div>
+                <button onclick="simulateConnect('fb')" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100" id="btn-connect-fb">連結</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="analytics-dashboard" class="hidden space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+                <p class="text-indigo-100 text-sm font-bold uppercase">AI 綜合影響力分數</p>
+                <div class="flex items-end gap-2 mt-2">
+                    <span class="text-5xl font-extrabold" id="score-val">85</span>
+                    <span class="text-lg text-indigo-200 mb-1">/ 100</span>
+                </div>
+                <p class="text-xs text-indigo-200 mt-2">超越了 72% 的同類創作者</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-center items-center">
+                <p class="text-gray-500 text-xs font-bold uppercase mb-2">總粉絲數 (Total Fans)</p>
+                <p class="text-3xl font-bold text-slate-800" id="total-fans">0</p>
+                <p class="text-green-500 text-xs mt-1">↑ 2.4% last 30 days</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-center items-center">
+                <p class="text-gray-500 text-xs font-bold uppercase mb-2">平均互動率 (Avg. ER)</p>
+                <p class="text-3xl font-bold text-slate-800" id="avg-er">0%</p>
+                <p class="text-green-500 text-xs mt-1">表現優異</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="font-bold text-slate-800 mb-4">粉絲成長趨勢 (Follower Growth)</h3>
+                <div class="h-64"><canvas id="chart-followers"></canvas></div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="font-bold text-slate-800 mb-4">受眾年齡分佈 (Demographics)</h3>
+                <div class="h-64"><canvas id="chart-demo"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
                         <div id="influencer-invitations-content" class="dashboard-content">
                           <h2 class="text-xl font-bold text-slate-800 mb-6">合作邀請 (新活動)</h2>
                           <div id="influencer-invitations-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2106,7 +2224,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
         const firebaseConfig = {
           apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
-          authDomain: "influenceai.tw",
+          authDomain: "test-b493a.firebaseapp.com",
           projectId: "test-b493a",
           //storageBucket: "test-b493a.appspot.com",
           storageBucket: "test-b493a.firebasestorage.app",
@@ -4066,7 +4184,103 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     };
 
+// === 1. 商家總覽邏輯 (統計數據 + 待辦事項) ===
+    function initMerchantDashboard(uid) {
+        // 設定日期
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString();
+        
+        // 監聽 Briefs (計算花費與總數)
+        const qBriefs = query(collection(db, "briefs"), where("merchantId", "==", uid), where("isDeleted", "==", false));
+        onSnapshot(qBriefs, (snap) => {
+            let activeCount = 0;
+            let totalSpend = 0;
+            let totalImpressions = 0;
+            
+            snap.forEach(doc => {
+                const data = doc.data();
+                if (data.status === 'in_progress' || data.status === 'pending_match') activeCount++;
+                totalSpend += (data.budget || 0);
+                totalImpressions += (data.impressions || 0);
+            });
 
+            document.getElementById('m-stat-active').textContent = activeCount;
+            document.getElementById('m-stat-spend').textContent = `NT$ ${totalSpend.toLocaleString()}`;
+            document.getElementById('m-stat-reach').textContent = totalImpressions.toLocaleString();
+        });
+
+        // 監聽 Collaborations (找出待審核的)
+        // 注意：這裡需要複合索引，如果報錯請按 Console 連結建立
+        const qCollabs = query(collection(db, "collaborations"), where("merchantId", "==", uid));
+        onSnapshot(qCollabs, (snap) => {
+            const listEl = document.getElementById('m-action-list');
+            listEl.innerHTML = '';
+            let pendingReviewCount = 0;
+
+            snap.forEach(docSnap => {
+                const col = docSnap.data();
+                // 待審核狀態
+                if (col.status === 'reviewing' || col.status === 'submitting') {
+                    pendingReviewCount++;
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center justify-between p-3 bg-yellow-50 border border-yellow-100 rounded-lg hover:bg-yellow-100 transition cursor-pointer';
+                    item.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-700">網紅提交了新素材</p>
+                                <p class="text-xs text-gray-500">${col.influencerEmail}</p>
+                            </div>
+                        </div>
+                        <button class="text-xs bg-white border border-gray-300 px-3 py-1 rounded shadow-sm">前往審核</button>
+                    `;
+                    item.onclick = () => switchTab('merchant', 'campaigns'); // 簡單導向
+                    listEl.appendChild(item);
+                }
+            });
+
+            document.getElementById('m-stat-pending').textContent = pendingReviewCount;
+            
+            if (pendingReviewCount === 0) {
+                listEl.innerHTML = '<p class="text-gray-400 text-center py-4 text-sm">目前沒有待辦事項，一切順利！🎉</p>';
+            }
+        });
+    }
+
+    // === 2. 網紅總覽邏輯 (統計收益 + 個人資料) ===
+    function initInfluencerDashboard(uid) {
+        // 監聽合作案統計
+        const q = query(collection(db, "collaborations"), where("influencerId", "==", uid));
+        onSnapshot(q, (snap) => {
+            let activeCount = 0;
+            let totalCount = 0;
+            // 這裡無法直接算收益，因為 collab 沒存金額 (金額在 brief)，簡化顯示
+            // 實務上應該在接單時把 price 寫入 collaboration
+            
+            snap.forEach(doc => {
+                const s = doc.data().status;
+                totalCount++;
+                if (s === 'accepted' || s === 'changes_requested' || s === 'reviewing') activeCount++;
+            });
+
+            document.getElementById('inf-stat-active').textContent = activeCount;
+            document.getElementById('dash-collab-count').textContent = `合作 ${totalCount} 次`;
+            
+            // 順便呼叫渲染列表 (原本的函式)
+            if(typeof renderInfluencerActiveJobs === 'function') {
+                renderInfluencerActiveJobs();
+            }
+        });
+
+        // 監聽財務 (餘額) -> 顯示本月收益
+        // 這裡直接讀取我們之前做的 influencer_balance
+        const financeRef = doc(db, 'users', uid, 'finance', 'influencer_balance');
+        onSnapshot(financeRef, (snap) => {
+            if(snap.exists()) {
+                const amt = snap.data().amount || 0;
+                document.getElementById('inf-stat-income').textContent = `NT$ ${amt.toLocaleString()}`;
+            }
+        });
+    }
 
 
 
@@ -4182,6 +4396,8 @@ window.sendChatMessage = async function sendChatMessage() {
                 // ⭐ 3. 網紅端財務管理：可提領金額
                 listenForInfluencerBalance(user.uid);
                 listenInfluencerProfile(user.uid);
+                initMerchantDashboard(user.uid);   // 新增
+                initInfluencerDashboard(user.uid); // 新增
                 navigateTo('role-selection-view');
             } else {
                 console.log('使用者已登出，停止監聽。');
@@ -4579,6 +4795,196 @@ try {
   window.addEventListener('popstate', checkHash);
   new MutationObserver(function(){ ensureGlow(); }).observe(document.body, {childList:true, subtree:true});
 })();
+
+// === 網紅價值：模擬社群連結與數據視覺化 ===
+    
+    // 模擬資料庫 (Mock Data)
+    const mockPlatformData = {
+        ig: { followers: 12500, er: 3.2, growth: [12000, 12100, 12250, 12380, 12500] },
+        yt: { followers: 5600, er: 4.5, growth: [5400, 5450, 5500, 5550, 5600] },
+        tt: { followers: 28000, er: 5.1, growth: [26000, 26500, 27200, 27800, 28000] },
+        fb: { followers: 8000, er: 1.8, growth: [7950, 7960, 7980, 7990, 8000] }
+    };
+
+    let connectedPlatforms = new Set(); // 暫存已連線的平台
+
+    // === 真實社群連結邏輯 ===
+
+// 1. 定義各平台的授權 URL (請替換為你申請到的 Client ID)
+const OAUTH_CONFIG = {
+    // Meta (IG/FB) 設定
+    ig: {
+        authUrl: 'https://api.instagram.com/oauth/authorize',
+        clientId: 'Y790282070637943', // ★ 請替換成你的 App ID
+        redirectUri: 'https://test-b493a.firebaseapp.com/__/auth/handler', // 你的回調網址
+        scope: 'user_profile,user_media'
+    },
+};
+
+// 2. 發起連結 (取代原本的 simulateConnect)
+window.connectRealPlatform = function(platform) {
+    const user = auth.currentUser;
+    if (!user) return alert('請先登入');
+
+    const config = OAUTH_CONFIG[platform];
+    if (!config) return alert('尚未支援此平台');
+
+    // 產生隨機 State 以防止 CSRF 攻擊，並將 userId 藏在裡面以便 callback 時知道是誰
+    const state = btoa(JSON.stringify({ uid: user.uid, platform: platform, nonce: Date.now() }));
+    localStorage.setItem('oauth_state', state); // 暫存比對用
+
+    let url = '';
+    
+    if (platform === 'ig') {
+        url = `${config.authUrl}?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(config.redirectUri)}&scope=${config.scope}&response_type=code&state=${state}`;
+    } else if (platform === 'tt') {
+        url = `${config.authUrl}?client_key=${config.clientKey}&redirect_uri=${encodeURIComponent(config.redirectUri)}&scope=${config.scope}&response_type=code&state=${state}`;
+    }
+
+    // 開啟授權視窗 (或是直接導頁)
+    window.location.href = url; 
+};
+
+// 3. 監聽 Firestore 數據並更新圖表 (取代原本的 mock updateAnalyticsUI)
+let unsubSocialStats = null;
+
+window.listenForSocialStats = function(uid) {
+    if (unsubSocialStats) unsubSocialStats();
+
+    // 假設後端抓完資料後，會存在 users/{uid}/social_stats/current 文件中
+    const ref = doc(db, 'users', uid, 'social_stats', 'current');
+
+    unsubSocialStats = onSnapshot(ref, (docSnap) => {
+        const dashboard = document.getElementById('analytics-dashboard');
+        
+        if (!docSnap.exists()) {
+            // 如果還沒資料，隱藏儀表板或顯示空狀態
+            // dashboard.classList.add('hidden'); 
+            return;
+        }
+
+        dashboard.classList.remove('hidden');
+        const data = docSnap.data();
+
+        // --- 更新 UI 數字 ---
+        // 假設資料結構: { ig: { followers: 100, er: 0.05 }, totalFans: 100, avgEr: 0.05 }
+        document.getElementById('total-fans').textContent = (data.totalFans || 0).toLocaleString();
+        document.getElementById('avg-er').textContent = `${((data.avgEr || 0) * 100).toFixed(2)}%`;
+        
+        // 計算分數 (簡單範例)
+        const score = Math.min(100, Math.round((data.totalFans / 1000) * 0.5 + (data.avgEr * 1000) * 0.5));
+        document.getElementById('score-val').textContent = score;
+
+        // --- 更新連結按鈕狀態 ---
+        ['ig', 'yt', 'tt', 'fb'].forEach(p => {
+            const statusEl = document.getElementById(`status-${p}`);
+            const btnEl = document.getElementById(`btn-connect-${p}`);
+            
+            if (data[p] && data[p].connected) {
+                statusEl.textContent = '✅ 已連結';
+                statusEl.className = 'text-xs text-green-600 font-bold';
+                btnEl.textContent = '更新數據'; // 連結後變更新
+                btnEl.onclick = () => alert('請求後端重新抓取數據...');
+            }
+        });
+
+        // --- 繪製真實圖表 ---
+        // 這裡需要後端有存歷史數據 (ex: history array)
+        if (data.history) {
+            renderCharts(data.history);
+        }
+    });
+};
+
+// 修改 onAuthStateChanged，登入後啟動監聽
+// 在原本的 onAuthStateChanged 內加入:
+// if (role === 'influencer') { listenForSocialStats(user.uid); }
+
+    function updateAnalyticsUI() {
+        const dashboard = document.getElementById('analytics-dashboard');
+        if (connectedPlatforms.size > 0) {
+            dashboard.classList.remove('hidden');
+        }
+
+        // 匯總數據
+        let totalFans = 0;
+        let totalEr = 0;
+        let count = 0;
+        let growthData = [0, 0, 0, 0, 0]; // 5 個時間點
+
+        connectedPlatforms.forEach(p => {
+            const data = mockPlatformData[p];
+            totalFans += data.followers;
+            totalEr += data.er;
+            count++;
+            // 累加成長數據
+            data.growth.forEach((val, idx) => growthData[idx] += val);
+        });
+
+        const avgEr = count > 0 ? (totalEr / count).toFixed(1) : 0;
+        const score = Math.min(100, Math.round(30 + (totalFans / 1000) + (avgEr * 5))); // 隨便算的公式
+
+        // 填入數字
+        document.getElementById('score-val').textContent = score;
+        document.getElementById('total-fans').textContent = totalFans.toLocaleString();
+        document.getElementById('avg-er').textContent = `${avgEr}%`;
+
+        // 繪製圖表 (Chart.js)
+        renderCharts(growthData);
+    }
+
+    let chartInstanceFollowers = null;
+    let chartInstanceDemo = null;
+
+    function renderCharts(growthData) {
+        const ctxF = document.getElementById('chart-followers').getContext('2d');
+        const ctxD = document.getElementById('chart-demo').getContext('2d');
+
+        // 銷毀舊圖表以防重疊
+        if (chartInstanceFollowers) chartInstanceFollowers.destroy();
+        if (chartInstanceDemo) chartInstanceDemo.destroy();
+
+        // 1. 粉絲成長折線圖
+        chartInstanceFollowers = new Chart(ctxF, {
+            type: 'line',
+            data: {
+                labels: ['4週前', '3週前', '2週前', '上週', '本週'],
+                datasets: [{
+                    label: '總粉絲數',
+                    data: growthData,
+                    borderColor: '#0d9488', // Teal
+                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 2. 受眾分佈長條圖 (靜態模擬數據)
+        chartInstanceDemo = new Chart(ctxD, {
+            type: 'bar',
+            data: {
+                labels: ['13-17', '18-24', '25-34', '35-44', '45+'],
+                datasets: [{
+                    label: '男性',
+                    data: [5, 15, 20, 10, 5],
+                    backgroundColor: '#93c5fd' // Blue
+                }, {
+                    label: '女性',
+                    data: [8, 25, 35, 15, 8],
+                    backgroundColor: '#fca5a5' // Pink
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { x: { stacked: true }, y: { stacked: true } }
+            }
+        });
+    }
+
+
 </script>
 
 </body>
