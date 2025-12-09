@@ -1698,7 +1698,9 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                         <p class="text-xs text-gray-400" id="status-ig">尚未連結</p>
                     </div>
                 </div>
-                <button onclick="connectRealPlatform('ig')" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100" id="btn-connect-ig">連結</button>
+                <button onclick="connectInstagram()" class="..." id="btn-connect-ig">
+                    真實連結 IG
+                </button>
             </div>
 
             <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-yt">
@@ -2138,7 +2140,8 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             signInWithRedirect, 
             getRedirectResult,
             signInWithPopup,
-            sendPasswordResetEmail
+            sendPasswordResetEmail,
+            FacebookAuthProvider
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
     // === 修改部分 START：從 Firestore 匯入更多我們需要的功能 ===
@@ -2160,6 +2163,8 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
       let influencerSelectedFiles = {};
+
+
 
     // === 新增：執行註冊的函式 (給 register-view 使用) ===
         window.handlePerformRegistration = async function() {
@@ -3959,6 +3964,45 @@ window.sendChatMessage = async function sendChatMessage() {
                 alert("Google 登入時發生錯誤: " + error.message);
             }
         };
+
+
+    // === 新增：真實連結 Instagram 的函式 ===
+    window.connectInstagram = async function() {
+        const user = auth.currentUser;
+        if (!user) return alert('請先登入');
+
+        const provider = new FacebookAuthProvider();
+        // 這些權限很重要，確保有申請到讀取數據的權限
+        provider.addScope('instagram_basic');
+        provider.addScope('instagram_manage_insights');
+        provider.addScope('pages_show_list');
+        provider.addScope('pages_read_engagement');
+
+        try {
+            // 這行會彈出正確的 FB 視窗
+            const result = await signInWithPopup(auth, provider);
+
+            const credential = FacebookAuthProvider.credentialFromResult(result);
+            const accessToken = credential.accessToken;
+
+            console.log("拿到 Token 了！準備存入資料庫...");
+
+            // 存入資料庫觸發後端
+            // 注意：這裡使用了 doc, setDoc, serverTimestamp，請確認這三個也都有在上方 import 進來
+            // (你的檔案原本應該已經有 import 這三個了)
+            const userRef = doc(db, 'users', user.uid, 'tokens', 'facebook');
+            await setDoc(userRef, {
+                accessToken: accessToken,
+                updatedAt: serverTimestamp()
+            });
+
+            alert("連結成功！後端正在分析數據...");
+
+        } catch (error) {
+            console.error("連結失敗:", error);
+            alert("連結失敗: " + error.message);
+        }
+    };
 
 
 // === 網紅財務變數 ===
