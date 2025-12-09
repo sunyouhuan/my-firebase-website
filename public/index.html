@@ -3973,13 +3973,11 @@ window.sendChatMessage = async function sendChatMessage() {
 
         const provider = new FacebookAuthProvider();
         // 這些權限很重要，確保有申請到讀取數據的權限
-        //provider.addScope('instagram_basic');
-        //provider.addScope('instagram_manage_insights');
-        //provider.addScope('pages_show_list');
-        //provider.addScope('pages_read_engagement');
-        provider.addScope('instagram_business_basic');
-        provider.addScope('instagram_manage_comments');
-        provider.addScope('instagram_business_manage_messages');
+        provider.addScope('instagram_basic');
+        provider.addScope('instagram_manage_insights');
+        provider.addScope('pages_show_list');
+        provider.addScope('pages_read_engagement');
+
 
 
         try {
@@ -4877,13 +4875,11 @@ window.connectInstagram = async function() {
     const provider = new FacebookAuthProvider();
     
     // 2. 加入 Instagram 商業帳號需要的權限 (非常重要)
-    //  provider.addScope('instagram_basic');
-    //  provider.addScope('instagram_manage_insights');
-    //  provider.addScope('pages_show_list');
-    //  provider.addScope('pages_read_engagement'); // 讀取互動率需要這個
-    provider.addScope('instagram_business_basic');
-    provider.addScope('instagram_manage_comments'); 
-    provider.addScope('instagram_business_manage_messages');
+      provider.addScope('instagram_basic');
+      provider.addScope('instagram_manage_insights');
+      provider.addScope('pages_show_list');
+    provider.addScope('pages_read_engagement'); // 讀取互動率需要這個
+   
 
     try {
         // 3. 彈出視窗登入 (這會自動解決 Redirect URI 的複雜問題)
