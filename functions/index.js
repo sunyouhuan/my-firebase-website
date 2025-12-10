@@ -17,7 +17,7 @@ admin.initializeApp();
 
 const IG_CLIENT_ID = "790282070637943";
 const IG_CLIENT_SECRET = "6d9c4bb8ebd42cd68b5018636f47257a";
-const IG_REDIRECT_URI = "https://influenceai.tw/#"; // 必須與後台設定完全一致
+const IG_REDIRECT_URI = "https://influenceai.tw/"; // 必須與後台設定完全一致
 
 // 讀取 Gemini API Key (從環境變數或直接填寫)
 const API_KEY = process.env.GOOGLE_APIKEY; 
