@@ -1698,9 +1698,14 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                         <p class="text-xs text-gray-400" id="status-ig">尚未連結</p>
                     </div>
                 </div>
-                <button onclick="connectInstagram()" class="..." id="btn-connect-ig">
-                    真實連結 IG
-                </button>
+                <button
+  id="btn-connect-ig"
+  onclick="connectInstagram()"
+  class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100"
+>
+  連結
+</button>
+
             </div>
 
             <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-yt">
@@ -2128,6 +2133,10 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     // --- v2 (本次修改): 從 firebase/storage 匯入必要功能 ---
     import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js';
 
+    import {  getFunctions,httpsCallable,} 
+       from "https://www.gstatic.com/firebasejs/12.3.0/firebase-functions.js";
+
+
     // --- 1. Firebase 初始化 (這部分不變) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { 
@@ -2140,8 +2149,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             signInWithRedirect, 
             getRedirectResult,
             signInWithPopup,
-            sendPasswordResetEmail,
-            FacebookAuthProvider
+            sendPasswordResetEmail
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
     // === 修改部分 START：從 Firestore 匯入更多我們需要的功能 ===
@@ -2162,13 +2170,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             limit
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-        // 請加在原本的 import 區域，例如 firebase-auth.js 的下面
-import { getFunctions, httpsCallable 
-} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-functions.js";
-
       let influencerSelectedFiles = {};
-
-
 
     // === 新增：執行註冊的函式 (給 register-view 使用) ===
         window.handlePerformRegistration = async function() {
@@ -2233,7 +2235,7 @@ import { getFunctions, httpsCallable
 
         const firebaseConfig = {
           apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
-          authDomain: "influenceai.tw",
+          authDomain: "test-b493a.firebaseapp.com",
           projectId: "test-b493a",
           //storageBucket: "test-b493a.appspot.com",
           storageBucket: "test-b493a.firebasestorage.app",
@@ -2247,6 +2249,11 @@ import { getFunctions, httpsCallable
         window.auth = auth; // expose for console
         const db = getFirestore(app);
         const storage = getStorage(app); // v2 (本次修改): 初始化 Storage
+        const functions = getFunctions(app);
+
+// Cloud Functions：呼叫 exchangeIgToken（之後你還可以用這個 functions 呼叫 askGemini）
+const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
+
 
         // v3 (新功能): 用於暫存 "建立新活動" 時上傳的圖片 URL
         let uploadedImageUrls = []; 
@@ -3970,9 +3977,6 @@ window.sendChatMessage = async function sendChatMessage() {
         };
 
 
-    // === 新增：真實連結 Instagram 的函式 ===
-    
-
 // === 網紅財務變數 ===
     let currentInfluencerBalance = 0; // 用來暫存從資料庫讀到的餘額
     let unsubInfBalance = null; // 監聽器
@@ -4820,197 +4824,157 @@ try {
 
     let connectedPlatforms = new Set(); // 暫存已連線的平台
 
-    // === 真實社群連結邏輯 ===
+    window.simulateConnect = function(platform) {
+        const btn = document.getElementById(`btn-connect-${platform}`);
+        const status = document.getElementById(`status-${platform}`);
+        
+        // 1. 模擬 OAuth 彈窗效果
+        const width = 500;
+        const height = 600;
+        const left = (screen.width / 2) - (width / 2);
+        const top = (screen.height / 2) - (height / 2);
+        
+        // 開一個假的空白視窗，製造「正在去 IG 登入」的假象
+        const popup = window.open("", "Connect", `width=${width},height=${height},top=${top},left=${left}`);
+        popup.document.write(`<h2 style="text-align:center;font-family:sans-serif;margin-top:50px;">正在連接至 ${platform.toUpperCase()}...</h2><p style="text-align:center;">請稍候，正在安全驗證中...</p>`);
+        
+        btn.textContent = '連線中...';
+        btn.disabled = true;
 
-// 1. 定義各平台的授權 URL (請替換為你申請到的 Client ID)
-const OAUTH_CONFIG = {
-    // Meta (IG/FB) 設定
-    ig: {
-        authUrl: 'https://api.instagram.com/oauth/authorize',
-        clientId: '790282070637943', // ★ 請替換成你的 App ID
-        redirectUri: 'https://test-b493a.firebaseapp.com/__/auth/handler', // 你的回調網址
-        scope: 'user_profile,user_media'
-    },
-};
-
-
-
-
-// ============================================================
-//  ★ 新版：純 Instagram 登入 (Method B - 彈出視窗版)
-// ============================================================
-
-// 1. 設定區 (請填入你的資訊)
-// 請去 Meta 開發者後台 -> 應用程式設定 -> 基本資料 -> 複製「應用程式編號」
-const IG_APP_ID = "790282070637943"; 
-
-// 這必須跟 Meta 後台「有效的 OAuth 重新導向 URI」設定的一模一樣 (連斜線都要有)
-const REDIRECT_URI = "https://influenceai.tw/#"; 
-
-// 初始化 Cloud Functions (用來呼叫後端)
-const functions = getFunctions(app); // app 是你原本就有的 firebase app 變數
-
-// 2. 主要函式：點擊按鈕時執行
-window.connectInstagram = function() {
-    const user = auth.currentUser;
-    if (!user) return alert('請先登入');
-
-    // 定義我們要向 IG 請求的權限 (讀取個人資料、讀取媒體)
-    const scope = "user_profile,user_media"; 
-    
-    // 組合 IG 官方的授權網址
-    const authUrl = `https://api.instagram.com/oauth/authorize` +
-        `?client_id=${IG_APP_ID}` +
-        `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-        `&scope=${scope}` +
-        `&response_type=code`; // 我們需要拿到 code，再交給後端換 token
-
-    // 計算視窗位置，讓它置中
-    const width = 600;
-    const height = 700;
-    const left = (window.innerWidth - width) / 2;
-    const top = (window.innerHeight - height) / 2;
-    
-    // 開啟彈出視窗
-    const popup = window.open(authUrl, "IG_Auth", `width=${width},height=${height},top=${top},left=${left}`);
-
-    if (!popup) {
-        return alert("彈出視窗被瀏覽器攔截了，請允許本網站開啟彈出視窗。");
-    }
-
-    // 3. 監聽彈出視窗 (偵測使用者是否授權完成)
-    const timer = setInterval(() => {
-        try {
-            // 嘗試讀取 popup 的網址
-            const currentUrl = popup.location.href;
+        // 2. 模擬延遲後成功
+        setTimeout(() => {
+            popup.close();
             
-            // 如果網址變成了我們的 REDIRECT_URI，且後面帶有 code=...
-            if (currentUrl && currentUrl.includes("code=")) {
-                // 停止監聽
-                clearInterval(timer);
-                
-                // 抓取網址裡的 code
-                const urlParams = new URL(currentUrl).searchParams;
-                const code = urlParams.get("code");
-                
-                // 關閉彈出視窗
-                popup.close();
+            // 更新 UI
+            status.textContent = '✅ 已連結';
+            status.className = 'text-xs text-green-600 font-bold';
+            btn.textContent = '斷開';
+            btn.className = 'text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100';
+            btn.onclick = () => alert('模擬斷開連結'); // 簡化處理
 
-                // 呼叫後端處理剩下的事
-                handleExchangeToken(code);
-            }
-        } catch (e) {
-            // 這是正常的錯誤：當使用者還在 instagram.com 頁面時，我們無權讀取網址
-            // 只有當他被導回 influenceai.tw 時，我們才能讀取
-        }
-        
-        // 如果使用者手動關掉視窗，也停止監聽
-        if (popup.closed) {
-            clearInterval(timer);
-        }
-    }, 500); // 每 0.5 秒檢查一次
+            // 記錄並更新報表
+            connectedPlatforms.add(platform);
+            updateAnalyticsUI();
+            
+            alert(`${platform.toUpperCase()} 帳戶連結成功！數據已匯入。`);
+        }, 1500);
+    };
+
+    // === Instagram OAuth（第二種方式：直接 IG 登入） ===
+
+// 與 functions/index.js 裡設定保持一致（CLIENT ID 可以公開，SECRET 一定只能放後端）
+const INSTAGRAM_CLIENT_ID = "790282070637943"; // 替換成你自己的，但要跟後端 IG_CLIENT_ID 一樣
+const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/#"; // 要跟 IG 後台 + functions/index.js 完全一致
+
+// 使用者按下「連結 IG」時呼叫
+window.connectInstagram = function () {
+  if (!auth.currentUser) {
+    alert("請先登入帳號，再連結 Instagram。");
+    return;
+  }
+
+  // 產生一個 state，放在 localStorage，用來防止被亂用／方便比對
+  const state =
+    window.crypto && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+
+  localStorage.setItem("ig_oauth_state", state);
+
+  const authUrl =
+    "https://api.instagram.com/oauth/authorize" +
+    `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
+    `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
+    `&scope=${encodeURIComponent("user_profile,user_media")}` +
+    `&response_type=code` +
+    `&state=${encodeURIComponent(state)}`;
+
+  // 導向 IG 授權畫面
+  window.location.href = authUrl;
 };
 
-// 4. 輔助函式：將 Code 傳給後端 Cloud Function
-async function handleExchangeToken(code) {
-    console.log("拿到 IG 授權碼了，正在呼叫後端...", code);
-    
-    // 找一下畫面上有沒有顯示狀態的文字 (有的話就更新它)
-    const statusEl = document.getElementById('status-ig'); 
-    const btnEl = document.getElementById('btn-connect-ig');
-    
-    if(statusEl) statusEl.textContent = '正在連結中...';
-    if(btnEl) {
-        btnEl.disabled = true;
-        btnEl.textContent = '處理中...';
+
+// IG 回呼處理：如果網址上有 ?code=...，就把它交給後端換 Token
+async function handleInstagramOAuthRedirect() {
+  const url = new URL(window.location.href);
+  const params = url.searchParams;
+
+  const code = params.get("code");
+  const state = params.get("state");
+  const error = params.get("error");
+
+  // 如果沒有 code、也沒有錯誤，就不是 IG 回呼，直接結束
+  if (!code && !error) return;
+
+  // 有錯誤（例如使用者按取消）
+  if (error) {
+    console.warn("Instagram 授權失敗：", error, params.get("error_description"));
+    alert("Instagram 授權失敗或被取消，請再試一次。");
+    // 把網址上的參數清掉，避免重新整理一直觸發
+    url.searchParams.delete("code");
+    url.searchParams.delete("state");
+    url.searchParams.delete("error");
+    url.searchParams.delete("error_description");
+    window.history.replaceState({}, document.title, url.pathname + url.hash);
+    return;
+  }
+
+  // 確認 state 跟我們存在 localStorage 裡的是同一個
+  const savedState = localStorage.getItem("ig_oauth_state");
+  if (savedState && state !== savedState) {
+    console.warn("IG OAuth state 不符，可能不是我們發的請求，忽略。");
+    return;
+  }
+  localStorage.removeItem("ig_oauth_state");
+
+  if (!auth.currentUser) {
+    alert("目前尚未登入，請先登入帳號再連結 IG。");
+    return;
+  }
+
+  try {
+    // 呼叫 Cloud Functions：exchangeIgToken
+    const result = await exchangeIgTokenFn({ code });
+    console.log("exchangeIgToken 回傳：", result.data);
+
+    alert("Instagram 連結成功！系統正在匯入你的 IG 數據。");
+
+    // 更新 IG 卡片的 UI
+    const status = document.getElementById("status-ig");
+    const btn = document.getElementById("btn-connect-ig");
+    if (status && btn) {
+      status.textContent = "✅ 已連結 (真實數據)";
+      status.className = "text-xs text-green-600 font-bold";
+      btn.textContent = "已連結";
+      btn.disabled = true;
+      btn.className =
+        "text-xs bg-gray-200 text-gray-500 border border-gray-300 px-3 py-1.5 rounded-lg font-bold cursor-default";
     }
 
-    try {
-        // 呼叫我們在 index.js 寫好的 'exchangeIgToken' 功能
-        const exchangeIgToken = httpsCallable(functions, 'exchangeIgToken');
-        await exchangeIgToken({ code: code });
-        
-        alert("Instagram 連結成功！");
-        
-        if(statusEl) {
-            statusEl.textContent = '✅ 已連結';
-            statusEl.classList.add('text-green-600');
-        }
-        
-        // 重新整理頁面或重新抓取數據
-        if (window.listenForSocialStats && auth.currentUser) {
-            window.listenForSocialStats(auth.currentUser.uid);
-        }
-
-    } catch (error) {
-        console.error("Token 交換失敗", error);
-        alert("連結失敗: " + error.message);
-        if(statusEl) statusEl.textContent = '連結失敗';
-    } finally {
-        if(btnEl) {
-            btnEl.disabled = false;
-            btnEl.textContent = '連結 IG';
-        }
+    // 告訴你的「網紅價值分析」模組，IG 已經連結
+    if (typeof connectedPlatforms !== "undefined") {
+      connectedPlatforms.add("ig");
+      updateAnalyticsUI();
     }
+  } catch (err) {
+    console.error("交換 IG token 失敗：", err);
+    alert("連結 Instagram 失敗，請稍後再試一次。");
+  } finally {
+    // 無論成功或失敗，都把網址上的參數清掉
+    url.searchParams.delete("code");
+    url.searchParams.delete("state");
+    url.searchParams.delete("error");
+    url.searchParams.delete("error_description");
+    window.history.replaceState({}, document.title, url.pathname + url.hash);
+  }
 }
 
+// 頁面載入完成時檢查一次（你的檔案本來就有別的 DOMContentLoaded，不會衝突）
+document.addEventListener("DOMContentLoaded", () => {
+  handleInstagramOAuthRedirect();
+});
 
 
-
-// 3. 監聽 Firestore 數據並更新圖表 (取代原本的 mock updateAnalyticsUI)
-let unsubSocialStats = null;
-
-window.listenForSocialStats = function(uid) {
-    if (unsubSocialStats) unsubSocialStats();
-
-    // 假設後端抓完資料後，會存在 users/{uid}/social_stats/current 文件中
-    const ref = doc(db, 'users', uid, 'social_stats', 'current');
-
-    unsubSocialStats = onSnapshot(ref, (docSnap) => {
-        const dashboard = document.getElementById('analytics-dashboard');
-        
-        if (!docSnap.exists()) {
-            // 如果還沒資料，隱藏儀表板或顯示空狀態
-            // dashboard.classList.add('hidden'); 
-            return;
-        }
-
-        dashboard.classList.remove('hidden');
-        const data = docSnap.data();
-
-        // --- 更新 UI 數字 ---
-        // 假設資料結構: { ig: { followers: 100, er: 0.05 }, totalFans: 100, avgEr: 0.05 }
-        document.getElementById('total-fans').textContent = (data.totalFans || 0).toLocaleString();
-        document.getElementById('avg-er').textContent = `${((data.avgEr || 0) * 100).toFixed(2)}%`;
-        
-        // 計算分數 (簡單範例)
-        const score = Math.min(100, Math.round((data.totalFans / 1000) * 0.5 + (data.avgEr * 1000) * 0.5));
-        document.getElementById('score-val').textContent = score;
-
-        // --- 更新連結按鈕狀態 ---
-        ['ig', 'yt', 'tt', 'fb'].forEach(p => {
-            const statusEl = document.getElementById(`status-${p}`);
-            const btnEl = document.getElementById(`btn-connect-${p}`);
-            
-            if (data[p] && data[p].connected) {
-                statusEl.textContent = '✅ 已連結';
-                statusEl.className = 'text-xs text-green-600 font-bold';
-                btnEl.textContent = '更新數據'; // 連結後變更新
-                btnEl.onclick = () => alert('請求後端重新抓取數據...');
-            }
-        });
-
-        // --- 繪製真實圖表 ---
-        // 這裡需要後端有存歷史數據 (ex: history array)
-        if (data.history) {
-            renderCharts(data.history);
-        }
-    });
-};
-
-// 修改 onAuthStateChanged，登入後啟動監聽
-// 在原本的 onAuthStateChanged 內加入:
-// if (role === 'influencer') { listenForSocialStats(user.uid); }
 
     function updateAnalyticsUI() {
         const dashboard = document.getElementById('analytics-dashboard');
