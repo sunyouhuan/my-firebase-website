@@ -4864,7 +4864,7 @@ try {
 
 // 與 functions/index.js 裡設定保持一致（CLIENT ID 可以公開，SECRET 一定只能放後端）
 const INSTAGRAM_CLIENT_ID = "1206014388258225"; // 替換成你自己的，但要跟後端 IG_CLIENT_ID 一樣
-const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/"; // 要跟 IG 後台 + functions/index.js 完全一致
+const INSTAGRAM_REDIRECT_URI = "https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1206014388258225&redirect_uri=https://influenceai.tw/&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights"; // 要跟 IG 後台 + functions/index.js 完全一致
 
 // 使用者按下「連結 IG」時呼叫
 window.connectInstagram = function () {
