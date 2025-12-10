@@ -2162,6 +2162,10 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             limit
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
+        // 請加在原本的 import 區域，例如 firebase-auth.js 的下面
+import { getFunctions, httpsCallable 
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-functions.js";
+
       let influencerSelectedFiles = {};
 
 
@@ -3967,45 +3971,7 @@ window.sendChatMessage = async function sendChatMessage() {
 
 
     // === 新增：真實連結 Instagram 的函式 ===
-    window.connectInstagram = async function() {
-        const user = auth.currentUser;
-        if (!user) return alert('請先登入');
-
-        const provider = new FacebookAuthProvider();
-        // 這些權限很重要，確保有申請到讀取數據的權限
-        provider.addScope('instagram_basic');
-        provider.addScope('instagram_manage_insights');
-        provider.addScope('pages_show_list');
-        provider.addScope('pages_read_engagement');
-
-
-
-        try {
-            // 這行會彈出正確的 FB 視窗
-            const result = await signInWithPopup(auth, provider);
-
-            const credential = FacebookAuthProvider.credentialFromResult(result);
-            const accessToken = credential.accessToken;
-
-            console.log("拿到 Token 了！準備存入資料庫...");
-
-            // 存入資料庫觸發後端
-            // 注意：這裡使用了 doc, setDoc, serverTimestamp，請確認這三個也都有在上方 import 進來
-            // (你的檔案原本應該已經有 import 這三個了)
-            const userRef = doc(db, 'users', user.uid, 'tokens', 'facebook');
-            await setDoc(userRef, {
-                accessToken: accessToken,
-                updatedAt: serverTimestamp()
-            });
-
-            alert("連結成功！後端正在分析數據...");
-
-        } catch (error) {
-            console.error("連結失敗:", error);
-            alert("連結失敗: " + error.message);
-        }
-    };
-
+    
 
 // === 網紅財務變數 ===
     let currentInfluencerBalance = 0; // 用來暫存從資料庫讀到的餘額
@@ -4867,49 +4833,130 @@ const OAUTH_CONFIG = {
     },
 };
 
-window.connectInstagram = async function() {
+
+
+
+// ============================================================
+//  ★ 新版：純 Instagram 登入 (Method B - 彈出視窗版)
+// ============================================================
+
+// 1. 設定區 (請填入你的資訊)
+// 請去 Meta 開發者後台 -> 應用程式設定 -> 基本資料 -> 複製「應用程式編號」
+const IG_APP_ID = "790282070637943"; 
+
+// 這必須跟 Meta 後台「有效的 OAuth 重新導向 URI」設定的一模一樣 (連斜線都要有)
+const REDIRECT_URI = "https://influenceai.tw/"; 
+
+// 初始化 Cloud Functions (用來呼叫後端)
+const functions = getFunctions(app); // app 是你原本就有的 firebase app 變數
+
+// 2. 主要函式：點擊按鈕時執行
+window.connectInstagram = function() {
     const user = auth.currentUser;
     if (!user) return alert('請先登入');
 
-    // 1. 設定 Facebook 提供者
-    const provider = new FacebookAuthProvider();
+    // 定義我們要向 IG 請求的權限 (讀取個人資料、讀取媒體)
+    const scope = "user_profile,user_media"; 
     
-    // 2. 加入 Instagram 商業帳號需要的權限 (非常重要)
-      provider.addScope('instagram_basic');
-      provider.addScope('instagram_manage_insights');
-      provider.addScope('pages_show_list');
-    provider.addScope('pages_read_engagement'); // 讀取互動率需要這個
-   
+    // 組合 IG 官方的授權網址
+    const authUrl = `https://api.instagram.com/oauth/authorize` +
+        `?client_id=${IG_APP_ID}` +
+        `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+        `&scope=${scope}` +
+        `&response_type=code`; // 我們需要拿到 code，再交給後端換 token
+
+    // 計算視窗位置，讓它置中
+    const width = 600;
+    const height = 700;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+    
+    // 開啟彈出視窗
+    const popup = window.open(authUrl, "IG_Auth", `width=${width},height=${height},top=${top},left=${left}`);
+
+    if (!popup) {
+        return alert("彈出視窗被瀏覽器攔截了，請允許本網站開啟彈出視窗。");
+    }
+
+    // 3. 監聽彈出視窗 (偵測使用者是否授權完成)
+    const timer = setInterval(() => {
+        try {
+            // 嘗試讀取 popup 的網址
+            const currentUrl = popup.location.href;
+            
+            // 如果網址變成了我們的 REDIRECT_URI，且後面帶有 code=...
+            if (currentUrl && currentUrl.includes("code=")) {
+                // 停止監聽
+                clearInterval(timer);
+                
+                // 抓取網址裡的 code
+                const urlParams = new URL(currentUrl).searchParams;
+                const code = urlParams.get("code");
+                
+                // 關閉彈出視窗
+                popup.close();
+
+                // 呼叫後端處理剩下的事
+                handleExchangeToken(code);
+            }
+        } catch (e) {
+            // 這是正常的錯誤：當使用者還在 instagram.com 頁面時，我們無權讀取網址
+            // 只有當他被導回 influenceai.tw 時，我們才能讀取
+        }
+        
+        // 如果使用者手動關掉視窗，也停止監聽
+        if (popup.closed) {
+            clearInterval(timer);
+        }
+    }, 500); // 每 0.5 秒檢查一次
+};
+
+// 4. 輔助函式：將 Code 傳給後端 Cloud Function
+async function handleExchangeToken(code) {
+    console.log("拿到 IG 授權碼了，正在呼叫後端...", code);
+    
+    // 找一下畫面上有沒有顯示狀態的文字 (有的話就更新它)
+    const statusEl = document.getElementById('status-ig'); 
+    const btnEl = document.getElementById('btn-connect-ig');
+    
+    if(statusEl) statusEl.textContent = '正在連結中...';
+    if(btnEl) {
+        btnEl.disabled = true;
+        btnEl.textContent = '處理中...';
+    }
 
     try {
-        // 3. 彈出視窗登入 (這會自動解決 Redirect URI 的複雜問題)
-        const result = await signInWithPopup(auth, provider);
-
-        // 4. 取得 Access Token
-        const credential = FacebookAuthProvider.credentialFromResult(result);
-        const accessToken = credential.accessToken;
-
-        console.log("拿到 Token 了！", accessToken);
-
-        // 5. 存入 Firestore (這會觸發你的 Cloud Function)
-        // 注意：這裡需要 import doc, setDoc, serverTimestamp
-        // 假設你的 module 已經 import 了這些
-        const userRef = doc(db, 'users', user.uid, 'tokens', 'facebook');
-        await setDoc(userRef, {
-            accessToken: accessToken,
-            updatedAt: serverTimestamp()
-        });
-
-        alert("連結成功！後端正在分析 IG 數據...");
+        // 呼叫我們在 index.js 寫好的 'exchangeIgToken' 功能
+        const exchangeIgToken = httpsCallable(functions, 'exchangeIgToken');
+        await exchangeIgToken({ code: code });
+        
+        alert("Instagram 連結成功！");
+        
+        if(statusEl) {
+            statusEl.textContent = '✅ 已連結';
+            statusEl.classList.add('text-green-600');
+        }
+        
+        // 重新整理頁面或重新抓取數據
+        if (window.listenForSocialStats && auth.currentUser) {
+            window.listenForSocialStats(auth.currentUser.uid);
+        }
 
     } catch (error) {
-        console.error("連結失敗:", error);
-        // 如果錯誤是 "popup-closed-by-user"，代表使用者自己關掉視窗，不用報錯
-        if (error.code !== 'auth/popup-closed-by-user') {
-            alert("連結失敗: " + error.message);
+        console.error("Token 交換失敗", error);
+        alert("連結失敗: " + error.message);
+        if(statusEl) statusEl.textContent = '連結失敗';
+    } finally {
+        if(btnEl) {
+            btnEl.disabled = false;
+            btnEl.textContent = '連結 IG';
         }
     }
-};
+}
+
+
+
+
 // 3. 監聽 Firestore 數據並更新圖表 (取代原本的 mock updateAnalyticsUI)
 let unsubSocialStats = null;
 
