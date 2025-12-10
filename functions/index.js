@@ -1,22 +1,61 @@
-// index.js (需補上新的 import)
+
+
+
+// functions/index.js 完整合併版
+
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const logger = require("firebase-functions/logger");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const admin = require("firebase-admin");
-const axios = require("axios"); // 確保有安裝 axios
-const FormData = require('form-data'); // 可能需要 npm install form-data
+const axios = require("axios");
+const FormData = require('form-data'); // 記得確認有 npm install form-data
 
-// 如果還沒初始化，請保留原本的 admin.initializeApp();
+admin.initializeApp();
 
-// ==========================================
-// 設定：請填入 Meta 後台的資訊 (建議用環境變數，這裡示範先寫死)
-// ==========================================
+// === 設定區 (請填入你的 Meta 後台資訊) ===
+
 const IG_CLIENT_ID = "790282070637943";
 const IG_CLIENT_SECRET = "6d9c4bb8ebd42cd68b5018636f47257a";
-const IG_REDIRECT_URI = "https://influenceai.tw/"; // 必須與後台設定完全一致
+const IG_REDIRECT_URI = "https://influenceai.tw/#"; // 必須與後台設定完全一致
+
+// 讀取 Gemini API Key (從環境變數或直接填寫)
+const API_KEY = process.env.GOOGLE_APIKEY; 
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 // ==========================================
-// 功能 3 (新): 交換 Instagram Token (這是 Method B 的核心)
+// 功能 1：AI 行銷顧問 (askGemini) - 保留舊功能
+// ==========================================
+exports.askGemini = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "請先登入後再使用。");
+  }
+
+  const userMessage = request.data.prompt;
+  // 檢查訊息是否有效
+  if (!userMessage || typeof userMessage !== "string") {
+    throw new HttpsError("invalid-argument", "請輸入有效的訊息。");
+  }
+
+  logger.info(`收到用戶 ${request.auth.uid} 的 AI 請求: ${userMessage}`);
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const fullPrompt = `你是一個專業的網紅行銷顧問，名叫 'MatchAI 顧問'。你的任務是協助品牌主（商家）發想、規劃、並優化他們的網紅行銷活動。請用繁體中文、友善且專業的語氣回答以下用戶的問題：\n\n用戶問題：${userMessage}`;
+
+    const result = await model.generateContent(fullPrompt);
+    const response = result.response;
+    const text = response.text();
+
+    return { response: text };
+  } catch (error) {
+    logger.error("Gemini API 錯誤:", error);
+    throw new HttpsError("internal", "呼叫 Gemini API 失敗。", error);
+  }
+});
+
+// ==========================================
+// 功能 2 (新)：交換 Instagram Token
 // ==========================================
 exports.exchangeIgToken = onCall(async (request) => {
     // 1. 檢查用戶是否登入
@@ -32,7 +71,6 @@ exports.exchangeIgToken = onCall(async (request) => {
 
     try {
         // 3. 向 Instagram 交換 "短效 Token"
-        // 官方文件: https://developers.facebook.com/docs/instagram-basic-display-api/guides/getting-access-tokens-and-permissions
         const formData = new FormData();
         formData.append('client_id', IG_CLIENT_ID);
         formData.append('client_secret', IG_CLIENT_SECRET);
@@ -45,9 +83,9 @@ exports.exchangeIgToken = onCall(async (request) => {
         });
         
         const shortToken = tokenRes.data.access_token;
-        const igUserId = tokenRes.data.user_id; // 這是 Instagram User ID
+        const igUserId = tokenRes.data.user_id;
 
-        // 4. (選用) 將 "短效 Token" 換成 "長效 Token" (效期 60 天)
+        // 4. 將 "短效 Token" 換成 "長效 Token" (效期 60 天)
         const longTokenRes = await axios.get('https://graph.instagram.com/access_token', {
             params: {
                 grant_type: 'ig_exchange_token',
@@ -58,12 +96,11 @@ exports.exchangeIgToken = onCall(async (request) => {
         
         const longToken = longTokenRes.data.access_token;
 
-        // 5. 存入 Firestore
-        // 我們改存到 tokens/instagram 而不是 facebook，以示區別
+        // 5. 存入 Firestore (改存到 tokens/instagram)
         await admin.firestore().collection("users").doc(request.auth.uid).collection("tokens").doc("instagram").set({
             accessToken: longToken,
             igUserId: igUserId,
-            provider: 'instagram_direct', // 標記這是純 IG 登入
+            provider: 'instagram_direct',
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
@@ -76,9 +113,8 @@ exports.exchangeIgToken = onCall(async (request) => {
 });
 
 // ==========================================
-// 功能 2 (修改版): 自動抓取 Instagram 數據 (支援純 IG 登入)
+// 功能 3：自動抓取 Instagram 數據 (更新版)
 // ==========================================
-// 監聽路徑改為監聽所有 tokens (或是你可以另外寫一個函式監聽 tokens/instagram)
 exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{providerId}", async (event) => {
     const snapshot = event.data && event.data.after;
     if (!snapshot) return null;
@@ -87,7 +123,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
     const userId = event.params.userId;
     const providerId = event.params.providerId;
 
-    // 只處理 instagram 或 facebook 的 token
+    // 只處理 instagram 或 facebook
     if (providerId !== 'instagram' && providerId !== 'facebook') return null;
     
     const accessToken = data.accessToken;
@@ -100,10 +136,6 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
 
         if (providerId === 'instagram') {
             // === 情況 A: 純 IG 登入 (Method B) ===
-            // 直接呼叫 Instagram Graph API
-            // 權限需求: instagram_graph_user_profile, instagram_graph_user_media
-            
-            // 1. 拿 User Info
             const meRes = await axios.get(`https://graph.instagram.com/me`, {
                 params: {
                     fields: 'id,username,account_type,media_count',
@@ -111,54 +143,51 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 }
             });
             
-            // 注意：Instagram Basic API 無法直接拿到 "followers_count" (粉絲數)
-            // 如果是 "Instagram Login for Business"，你需要用不同的 Endpoint
-            // 這裡假設是 Instagram Graph API (Business)
-            
-            /* 注意：如果你的 App 是申請 "Instagram Login" (非 Basic Display)，
-               你會拿到一個 Token，可以用來呼叫 Graph API。
-               如果是商業帳號，我們可以嘗試抓取更多資訊。
-            */
-           
-            // 為了簡化，這裡示範 Basic Display 的欄位 (如果不夠，需要切換到 Business Discovery)
             igData = {
                 id: meRes.data.id,
                 username: meRes.data.username,
-                followers_count: 0, // Basic Display API 不給粉絲數，這是硬傷
+                followers_count: 0, // Basic API 無法取得粉絲數，暫設為 0
                 media_count: meRes.data.media_count,
-                profile_picture_url: "" // Basic API 也不一定給頭像
+                profile_picture_url: "" 
             };
-
-            // 如果你是用 "Instagram for Business" 的 Scope，你可以嘗試以下：
-            try {
-                 const businessRes = await axios.get(`https://graph.facebook.com/v18.0/me`, {
-                    params: {
-                        fields: 'instagram_business_account',
-                        access_token: accessToken
-                    }
-                 });
-                 // 這裡邏輯會比較複雜，因為純 IG Login 通常是針對 Basic Display。
-                 // 如果要拿粉絲數，通常還是建議走 Facebook Login (Method A) 或是極高權限的 Business Login。
-            } catch(e) {
-                // ignore
-            }
-
         } else {
             // === 情況 B: 透過 FB 連結 (原本的邏輯) ===
-            // ... (保留你原本的 FB 邏輯) ...
-            // 為了篇幅，這裡省略原本代碼，你可以直接貼上你原有的 FB 邏輯
-            return null; // 暫時跳過
+            const pagesRes = await axios.get(
+                `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
+            );
+
+            let instagramId = null;
+            for (const page of pagesRes.data.data) {
+                const pageRes = await axios.get(
+                  `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`
+                );
+                if (pageRes.data.instagram_business_account) {
+                  instagramId = pageRes.data.instagram_business_account.id;
+                  break;
+                }
+            }
+
+            if (!instagramId) return null;
+
+            const igRes = await axios.get(
+                `https://graph.facebook.com/v18.0/${instagramId}?fields=biography,id,username,profile_picture_url,website,followers_count,media_count&access_token=${accessToken}`
+            );
+            igData = igRes.data;
         }
 
-        // 存回 Firestore (部分數據可能為 0)
+        // 存回 Firestore
         await admin.firestore().collection("users").doc(userId).set({
             social_stats: {
                 current: {
-                    totalFans: igData.followers_count || 0, // 如果抓不到設為 0
+                    totalFans: igData.followers_count || 0,
+                    avgEr: 0.035, // 模擬數據
                     ig: {
                         connected: true,
-                        username: igData.username,
                         id: igData.id,
+                        username: igData.username,
+                        followers: igData.followers_count || 0,
+                        mediaCount: igData.media_count,
+                        avatar: igData.profile_picture_url || "",
                         lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                     }
                 }
