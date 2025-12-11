@@ -4893,6 +4893,8 @@ const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/"; // 要跟 IG 後台 + 
  // window.location.href = authUrl;
 //};
 
+// === Instagram OAuth（直接 IG 登入，Basic Display） ===
+
 // 與 functions/index.js 保持一致
 const INSTAGRAM_CLIENT_ID = "1206014388258225";
 // 這裡只放「你的網站」，不要放整串 Instagram URL
@@ -4904,34 +4906,22 @@ window.connectInstagram = function () {
     return;
   }
 
-  // 產生 state，預防 CSRF 也方便回來比對
   const state =
-    (window.crypto && crypto.randomUUID)
+    window.crypto && crypto.randomUUID
       ? crypto.randomUUID()
       : Math.random().toString(36).slice(2);
 
   localStorage.setItem("ig_oauth_state", state);
 
-  const scope = [
-    "instagram_business_basic",
-    "instagram_business_content_publish",
-    "instagram_business_manage_comments",
-    "instagram_business_manage_messages",
-    "instagram_business_manage_insights",
-  ].join(",");
-
   const authUrl =
     "https://api.instagram.com/oauth/authorize" +
     `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
     `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
+    `&scope=${encodeURIComponent("user_profile,user_media")}` +
     `&response_type=code` +
-    `&scope=${encodeURIComponent(scope)}` +
     `&state=${encodeURIComponent(state)}`;
 
-  // 導向 IG 授權畫面
   window.location.href = authUrl;
-};
-
 
 
 // IG 回呼處理：如果網址上有 ?code=...，就把它交給後端換 Token
