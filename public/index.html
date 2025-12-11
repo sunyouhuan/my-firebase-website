@@ -4893,13 +4893,17 @@ const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/"; // 要跟 IG 後台 + 
  // window.location.href = authUrl;
 //};
 
+// 與 functions/index.js 保持一致
+const INSTAGRAM_CLIENT_ID = "1206014388258225";
+// 這裡只放「你的網站」，不要放整串 Instagram URL
+const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/";  // ★★ 重點 ★★
+
 window.connectInstagram = function () {
   if (!auth.currentUser) {
     alert("請先登入帳號，再連結 Instagram。");
     return;
   }
 
-  // 產生 state (這段保留，這是為了安全性)
   const state =
     window.crypto && crypto.randomUUID
       ? crypto.randomUUID()
@@ -4907,18 +4911,14 @@ window.connectInstagram = function () {
 
   localStorage.setItem("ig_oauth_state", state);
 
-  // ✅ 這裡修正了：網域改成 www，並且填入正確的商業權限 (Scope)
-  // 注意：redirect_uri 變數必須確保是 "https://influenceai.tw/"
   const authUrl =
-    "https://www.instagram.com/oauth/authorize" + 
+    "https://api.instagram.com/oauth/authorize" +
     `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
     `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
+    `&scope=${encodeURIComponent("user_profile,user_media")}` +
     `&response_type=code` +
-    `&scope=${encodeURIComponent("instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights")}` +
-    `&force_reauth=true` +  // 加上強制重新登入
     `&state=${encodeURIComponent(state)}`;
 
-  // 導向 IG 授權畫面
   window.location.href = authUrl;
 };
 
