@@ -2689,127 +2689,6 @@ window.sendChatMessage = async function sendChatMessage() {
             });
         }
 
-
-        // ==============================================
-// ★ 新增功能：監聽真實的社群數據 (取代假資料)
-// ==============================================
-let unsubSocialStats = null; // 用來存放「取消監聽」的開關
-
-function listenForSocialStats(uid) {
-    // 1. 如果之前有在監聽，先關掉，避免重複
-    if (unsubSocialStats) unsubSocialStats(); 
-
-    console.log("正在啟動社群數據監聽...");
-
-    // 2. 指定要監聽的文件：users 集合底下的 [你的 User ID] 文件
-    const userDocRef = doc(db, "users", uid);
-
-    // 3. 開始監聽 (onSnapshot 會在資料有變動時自動執行)
-    unsubSocialStats = onSnapshot(userDocRef, (docSnap) => {
-        
-        // 如果文件還不存在，直接跳過
-        if (!docSnap.exists()) return;
-
-        const data = docSnap.data();
-        // 抓取後端寫入的 social_stats 欄位
-        const stats = data.social_stats; 
-
-        // 4. 檢查有沒有數據 (剛註冊可能還是空的)
-        if (!stats || !stats.current) {
-            console.log("目前還沒有社群數據，等待後端抓取中...");
-            return;
-        }
-
-        console.log("🔥 收到真實數據了！", stats);
-
-        // --- A. 更新 IG 連接狀態的按鈕 ---
-        // 檢查 social_stats.current.ig.connected 是否為 true
-        if (stats.current.ig && stats.current.ig.connected) {
-            const btn = document.getElementById('btn-connect-ig');
-            const statusLabel = document.getElementById('status-ig');
-            const card = document.getElementById('card-connect-ig');
-
-            // 如果按鈕還在，把它變成「已連結」的樣子
-            if (btn) {
-                btn.textContent = "已連結";
-                btn.disabled = true; // 鎖住不讓按
-                btn.className = "text-xs bg-gray-100 text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg font-bold cursor-not-allowed";
-            }
-            // 更新狀態文字為 IG 帳號名稱
-            if (statusLabel) {
-                statusLabel.textContent = `✅ @${stats.current.ig.username}`;
-                statusLabel.className = "text-xs text-green-600 font-bold";
-            }
-            // 把卡片背景變綠色，更有成就感
-            if (card) {
-                card.classList.add("bg-green-50", "border-green-300");
-            }
-        }
-
-        // --- B. 更新儀表板上的數字 ---
-        const dashboard = document.getElementById('analytics-dashboard');
-        if (dashboard) dashboard.classList.remove('hidden'); // 顯示儀表板
-
-        // 1. 總粉絲數
-        const totalFans = stats.current.totalFans || 0;
-        const fansEl = document.getElementById('total-fans');
-        if(fansEl) fansEl.textContent = totalFans.toLocaleString(); // 加千分位逗號
-
-        // 2. 互動率 (如果是 0.035 轉成 3.5%)
-        const avgEr = stats.current.avgEr || 0;
-        const erEl = document.getElementById('avg-er');
-        if(erEl) erEl.textContent = (avgEr * 100).toFixed(2) + '%';
-
-        // 3. 綜合分數 (簡單算一下)
-        const score = Math.min(100, Math.floor((totalFans / 1000) + 60)); 
-        document.getElementById('score-val').textContent = score;
-
-        // --- C. 更新圖表 (用真實數據畫圖) ---
-        updateChartsWithRealData(totalFans);
-
-    }, (error) => {
-        console.error("監聽社群數據失敗:", error);
-    });
-}
-
-// 輔助函式：用真實數據重繪圖表
-function updateChartsWithRealData(currentFans) {
-    const ctxF = document.getElementById('chart-followers');
-    if (!ctxF) return; 
-
-    // 因為剛抓到只有 1 筆數據，為了讓圖表好看，我們模擬一條平緩的線
-    const simulatedData = [
-        currentFans * 0.98, 
-        currentFans * 0.99, 
-        currentFans * 0.995, 
-        currentFans, 
-        currentFans
-    ];
-
-    // 如果圖表已經存在，先銷毀舊的 (不然滑鼠指上去會閃爍)
-    if (window.chartInstanceFollowers) window.chartInstanceFollowers.destroy();
-    
-    // 繪製新圖表
-    window.chartInstanceFollowers = new Chart(ctxF, {
-        type: 'line',
-        data: {
-            labels: ['4週前', '3週前', '2週前', '上週', '目前'],
-            datasets: [{
-                label: '總粉絲數 (IG)',
-                data: simulatedData,
-                borderColor: '#0d9488', 
-                backgroundColor: 'rgba(13, 148, 136, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-}
-
-
-
-
 // === 修正版：商家詳情頁 (支援影片顯示) ===
     window.showCampaignDetail = async function(campaignId) {
         if (!campaignId) return;
@@ -4524,127 +4403,46 @@ function updateChartsWithRealData(currentFans) {
 
 
     // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
-     //    onAuthStateChanged(auth, async (user) => {
-     //        if (user) {
-     // //            console.log('使用者已登入:', user.uid);
-        
-        // 1. 基本初始化 (原本的邏輯)
- //                listenForCampaigns();
-    //             listenForAccountBalance(user.uid);
-       //          listenForInfluencerBalance(user.uid);
-          //       listenInfluencerProfile(user.uid);
-             //    initMerchantDashboard(user.uid);
-                // initInfluencerDashboard(user.uid);
-                 //listenForSocialStats(user.uid);
-        
-        // 2. 判斷是否為 OAuth 回調 (檢查網址有沒有 code)
- //                const urlParams = new URLSearchParams(window.location.search);
-    //             const authCode = urlParams.get("code");
-
-       //          if (authCode) {
-          //           console.log("偵測到 IG OAuth 回傳代碼，準備交換 Token...");
-            
-            // A. 先切換 UI 到網紅儀表板，讓使用者知道正在處理
-             //        navigateTo('influencer-dashboard-view');
-                //     switchTab('influencer', 'value'); // 切換到「我的價值」分頁
-            
-            // B. 顯示一個 Loading 提示 (選用，或是直接用 alert)
-            // 你可以在 UI 上加一個 loading spinner，這裡先用簡單的方式
-                   //  const btn = document.getElementById('btn-connect-ig');
-                     //if(btn) {
- //                        btn.textContent = "驗證中...";
-    //                     btn.disabled = true;
-       //              }
-
-            // C. 執行交換 Token
-          //           await handleInstagramOAuthRedirect(authCode);
-             //    } else {
-            // 一般登入，導向角色選擇
-  //                   navigateTo('role-selection-view');
-     //            }
-        //     } else {
-           //      console.log('使用者已登出，停止監聽。');
-              //   // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
-                 //if (unsubscribeCampaigns) {
-                    // unsubscribeCampaigns();
-  //                   unsubscribeCampaigns = null;
-     //            }
-        //         if (unsubscribeBalance) { // v2 (本次修改): 取消餘額監聽
-           //          unsubscribeBalance();
-              //       unsubscribeBalance = null;
-                 //}
-                // ⭐ 停止監聽網紅可提領金額
- //                if (unsubInfBalance) {
-    //                 unsubInfBalance();
-       //              unsubInfBalance = null;
-          //       }
-                // v2 (本次修改): 重設餘額顯示
-             //    const balanceEl = document.getElementById('finance-account-balance');
-                // if (balanceEl) balanceEl.textContent = 'NT$ 0';
-
-
- //                const infEl = document.getElementById('inf-balance-display');
-    //             if (infEl) infEl.textContent = 'NT$ 0';
-
-       //          navigateTo('login-view');
-          //   }
-      //   });
-    // === 修改部分 END ===
-
-
-        // === 監聽登入狀態與 OAuth 回調處理 ===
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            console.log('使用者已登入:', user.uid);
-
-            // 1. 啟動所有監聽器 (包含原本的與新增的)
-            listenForCampaigns();
-            listenForAccountBalance(user.uid);
-            listenForInfluencerBalance(user.uid);
-            listenInfluencerProfile(user.uid);
-            
-            // ★★★ 新增：監聽真實社群數據 ★★★
-            listenForSocialStats(user.uid);
-            
-            // 初始化儀表板
-            initMerchantDashboard(user.uid);
-            initInfluencerDashboard(user.uid);
-
-            // 2. 檢查是否為 Instagram OAuth 授權回來的網址
-            const urlParams = new URLSearchParams(window.location.search);
-            const authCode = urlParams.get("code");
-
-            if (authCode) {
-                console.log("偵測到 IG 授權碼，正在處理...");
-                // 如果帶有 code，強制切換到網紅的「我的價值」頁面
-                navigateTo('influencer-dashboard-view');
-                switchTab('influencer', 'value');
-                
-                // 執行 Token 交換 (這個函式我們在上一輪已經定義在 module 裡了)
-                await handleInstagramOAuthRedirect(authCode);
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('使用者已登入，開始監聽活動...');
+                // 當用戶登入後，立刻開始監聽他/她的活動資料
+                listenForCampaigns();
+                listenForAccountBalance(user.uid); // v2 (本次修改): 啟動餘額監聽
+                // ⭐ 3. 網紅端財務管理：可提領金額
+                listenForInfluencerBalance(user.uid);
+                listenInfluencerProfile(user.uid);
+                initMerchantDashboard(user.uid);   // 新增
+                initInfluencerDashboard(user.uid); // 新增
+                navigateTo('role-selection-view');
             } else {
-                // 3. 如果沒有 code，就是一般登入
-                // 為了不干擾網紅頁面的重新整理，我們加一個判斷：
-                // 如果網址沒有包含 dashboard (代表是在首頁或登入頁)，才跳轉去角色選擇
-                if (!window.location.hash.includes('dashboard')) {
-                    navigateTo('role-selection-view');
+                console.log('使用者已登出，停止監聽。');
+                // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
+                if (unsubscribeCampaigns) {
+                    unsubscribeCampaigns();
+                    unsubscribeCampaigns = null;
                 }
+                if (unsubscribeBalance) { // v2 (本次修改): 取消餘額監聽
+                    unsubscribeBalance();
+                    unsubscribeBalance = null;
+                }
+                // ⭐ 停止監聽網紅可提領金額
+                if (unsubInfBalance) {
+                    unsubInfBalance();
+                    unsubInfBalance = null;
+                }
+                // v2 (本次修改): 重設餘額顯示
+                const balanceEl = document.getElementById('finance-account-balance');
+                if (balanceEl) balanceEl.textContent = 'NT$ 0';
+
+
+                const infEl = document.getElementById('inf-balance-display');
+                if (infEl) infEl.textContent = 'NT$ 0';
+
+                navigateTo('login-view');
             }
-
-        } else {
-            console.log('使用者已登出，停止監聽。');
-
-            // ★★★ 登出時關閉所有監聽器 ★★★
-            if (unsubSocialStats) unsubSocialStats();
-            if (unsubscribeCampaigns) unsubscribeCampaigns();
-            if (typeof unsubscribeBalance !== 'undefined' && unsubscribeBalance) unsubscribeBalance();
-            if (typeof unsubInfBalance !== 'undefined' && unsubInfBalance) unsubInfBalance();
-            if (typeof unsubInfProfile !== 'undefined' && unsubInfProfile) unsubInfProfile();
-
-            // 回到登入頁
-            navigateTo('login-view');
-        }
-    });
+        });
+    // === 修改部分 END ===
     
 
 // === 公司設定：Firestore 文件位置 ===
@@ -4791,123 +4589,6 @@ try {
     }
   });
 } catch (e) { console.warn('onAuthStateChanged 尚未可用'); }
-
-
-
-  // === Instagram OAuth（第二種方式：直接 IG 登入） ===
-
-// 與 functions/index.js 裡設定保持一致（CLIENT ID 可以公開，SECRET 一定只能放後端）
-const INSTAGRAM_CLIENT_ID = "1206014388258225"; // 替換成你自己的，但要跟後端 IG_CLIENT_ID 一樣
-const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/"; // 要跟 IG 後台 + functions/index.js 完全一致
-
-// 使用者按下「連結 IG」時呼叫
-//window.connectInstagram = function () {
-//  if (!auth.currentUser) {
- //   alert("請先登入帳號，再連結 Instagram。");
- //   return;
- // }
-
-  // 產生一個 state，放在 localStorage，用來防止被亂用／方便比對
- // const state =
- //   window.crypto && crypto.randomUUID
- //     ? crypto.randomUUID()
- //     : Math.random().toString(36).slice(2);
-
- // localStorage.setItem("ig_oauth_state", state);
-
- // const authUrl =
- //   "https://api.instagram.com/oauth/authorize" +
- //   `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
- //   `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
- //   `&scope=${encodeURIComponent("user_profile,user_media")}` +
- //   `&response_type=code` +
- //   `&state=${encodeURIComponent(state)}`;
-
-  // 導向 IG 授權畫面
- // window.location.href = authUrl;
-//};
-
-window.connectInstagram = function () {
-  if (!auth.currentUser) {
-    alert("請先登入帳號，再連結 Instagram。");
-    return;
-  }
-
-  // 產生 state (這段保留，這是為了安全性)
-  const state =
-    window.crypto && crypto.randomUUID
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2);
-
-  localStorage.setItem("ig_oauth_state", state);
-
-  // ✅ 這裡修正了：網域改成 www，並且填入正確的商業權限 (Scope)
-  // 注意：redirect_uri 變數必須確保是 "https://influenceai.tw/"
-  const authUrl =
-    `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1206014388258225&redirect_uri=https://influenceai.tw/&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights`;
-
-  // 導向 IG 授權畫面
-  window.location.href = authUrl;
-};
-
-
-
-// 定義在 module 內，供 onAuthStateChanged 呼叫
-async function handleInstagramOAuthRedirect(code) {
-    // 這裡不需要再 parse URL 了，因為參數傳進來了
-    // const url = new URL(window.location.href); ... (省略)
-    
-    try {
-        console.log("正在呼叫後端 exchangeIgToken...");
-        
-        // 呼叫 Cloud Function
-        const result = await exchangeIgTokenFn({ code: code });
-        
-        console.log("Token 交換成功！", result.data);
-        alert("Instagram 連結成功！數據正在同步中...");
-
-        // 更新 UI 狀態
-        const btn = document.getElementById('btn-connect-ig');
-        const status = document.getElementById('status-ig');
-        if(btn && status) {
-            btn.textContent = "已連結";
-            btn.disabled = true;
-            status.textContent = "✅ 已連結";
-            status.className = "text-xs text-green-600 font-bold";
-        }
-
-        // 重要：清除網址列的 code，避免重新整理後又跑一次
-        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.replaceState({ path: newUrl }, '', newUrl);
-
-        // 觸發數據更新 (模擬或重新抓取)
-        if(typeof updateAnalyticsUI === 'function') {
-            connectedPlatforms.add('ig'); // 暫時標記
-            updateAnalyticsUI();
-        }
-
-    } catch (err) {
-        console.error("連結失敗詳細錯誤：", err);
-        alert("連結失敗：" + (err.message || "未知錯誤，請查看 Console"));
-        
-        // 失敗也要把按鈕復原
-        const btn = document.getElementById('btn-connect-ig');
-        if(btn) {
-            btn.textContent = "連結";
-            btn.disabled = false;
-        }
-    }
-}
-
-
-
-
-    
-
-    let chartInstanceFollowers = null;
-    let chartInstanceDemo = null;
-
-
 
 </script>
 
@@ -5134,12 +4815,280 @@ async function handleInstagramOAuthRedirect(code) {
 // === 網紅價值：模擬社群連結與數據視覺化 ===
     
     // 模擬資料庫 (Mock Data)
-    
+    const mockPlatformData = {
+        ig: { followers: 12500, er: 3.2, growth: [12000, 12100, 12250, 12380, 12500] },
+        yt: { followers: 5600, er: 4.5, growth: [5400, 5450, 5500, 5550, 5600] },
+        tt: { followers: 28000, er: 5.1, growth: [26000, 26500, 27200, 27800, 28000] },
+        fb: { followers: 8000, er: 1.8, growth: [7950, 7960, 7980, 7990, 8000] }
+    };
+
     let connectedPlatforms = new Set(); // 暫存已連線的平台
 
-    
+    window.simulateConnect = function(platform) {
+        const btn = document.getElementById(`btn-connect-${platform}`);
+        const status = document.getElementById(`status-${platform}`);
+        
+        // 1. 模擬 OAuth 彈窗效果
+        const width = 500;
+        const height = 600;
+        const left = (screen.width / 2) - (width / 2);
+        const top = (screen.height / 2) - (height / 2);
+        
+        // 開一個假的空白視窗，製造「正在去 IG 登入」的假象
+        const popup = window.open("", "Connect", `width=${width},height=${height},top=${top},left=${left}`);
+        popup.document.write(`<h2 style="text-align:center;font-family:sans-serif;margin-top:50px;">正在連接至 ${platform.toUpperCase()}...</h2><p style="text-align:center;">請稍候，正在安全驗證中...</p>`);
+        
+        btn.textContent = '連線中...';
+        btn.disabled = true;
 
-  
+        // 2. 模擬延遲後成功
+        setTimeout(() => {
+            popup.close();
+            
+            // 更新 UI
+            status.textContent = '✅ 已連結';
+            status.className = 'text-xs text-green-600 font-bold';
+            btn.textContent = '斷開';
+            btn.className = 'text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100';
+            btn.onclick = () => alert('模擬斷開連結'); // 簡化處理
+
+            // 記錄並更新報表
+            connectedPlatforms.add(platform);
+            updateAnalyticsUI();
+            
+            alert(`${platform.toUpperCase()} 帳戶連結成功！數據已匯入。`);
+        }, 1500);
+    };
+
+    // === Instagram OAuth（第二種方式：直接 IG 登入） ===
+
+// 與 functions/index.js 裡設定保持一致（CLIENT ID 可以公開，SECRET 一定只能放後端）
+const INSTAGRAM_CLIENT_ID = "1206014388258225"; // 替換成你自己的，但要跟後端 IG_CLIENT_ID 一樣
+const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/"; // 要跟 IG 後台 + functions/index.js 完全一致
+
+// 使用者按下「連結 IG」時呼叫
+//window.connectInstagram = function () {
+//  if (!auth.currentUser) {
+ //   alert("請先登入帳號，再連結 Instagram。");
+ //   return;
+ // }
+
+  // 產生一個 state，放在 localStorage，用來防止被亂用／方便比對
+ // const state =
+ //   window.crypto && crypto.randomUUID
+ //     ? crypto.randomUUID()
+ //     : Math.random().toString(36).slice(2);
+
+ // localStorage.setItem("ig_oauth_state", state);
+
+ // const authUrl =
+ //   "https://api.instagram.com/oauth/authorize" +
+ //   `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
+ //   `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
+ //   `&scope=${encodeURIComponent("user_profile,user_media")}` +
+ //   `&response_type=code` +
+ //   `&state=${encodeURIComponent(state)}`;
+
+  // 導向 IG 授權畫面
+ // window.location.href = authUrl;
+//};
+
+// === Instagram OAuth（直接 IG 登入，Basic Display） ===
+
+// 與 functions/index.js 保持一致
+const INSTAGRAM_CLIENT_ID = "1206014388258225";
+// 這裡只放「你的網站」，不要放整串 Instagram URL
+const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/";  // ★★ 重點 ★★
+
+window.connectInstagram = function () {
+  if (!auth.currentUser) {
+    alert("請先登入帳號，再連結 Instagram。");
+    return;
+  }
+
+  const state =
+    window.crypto && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+
+  localStorage.setItem("ig_oauth_state", state);
+
+  const authUrl =
+    "https://api.instagram.com/oauth/authorize" +
+    `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
+    `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
+    `&scope=${encodeURIComponent("user_profile,user_media")}` +
+    `&response_type=code` +
+    `&state=${encodeURIComponent(state)}`;
+
+  window.location.href = authUrl;
+
+
+// IG 回呼處理：如果網址上有 ?code=...，就把它交給後端換 Token
+async function handleInstagramOAuthRedirect() {
+  const url = new URL(window.location.href);
+  const params = url.searchParams;
+
+  const code = params.get("code");
+  const state = params.get("state");
+  const error = params.get("error");
+
+  // 如果沒有 code、也沒有錯誤，就不是 IG 回呼，直接結束
+  if (!code && !error) return;
+
+  // 有錯誤（例如使用者按取消）
+  if (error) {
+    console.warn("Instagram 授權失敗：", error, params.get("error_description"));
+    alert("Instagram 授權失敗或被取消，請再試一次。");
+    // 把網址上的參數清掉，避免重新整理一直觸發
+    url.searchParams.delete("code");
+    url.searchParams.delete("state");
+    url.searchParams.delete("error");
+    url.searchParams.delete("error_description");
+    window.history.replaceState({}, document.title, url.pathname + url.hash);
+    return;
+  }
+
+  // 確認 state 跟我們存在 localStorage 裡的是同一個
+  const savedState = localStorage.getItem("ig_oauth_state");
+  if (savedState && state !== savedState) {
+    console.warn("IG OAuth state 不符，可能不是我們發的請求，忽略。");
+    return;
+  }
+  localStorage.removeItem("ig_oauth_state");
+
+  if (!auth.currentUser) {
+    alert("目前尚未登入，請先登入帳號再連結 IG。");
+    return;
+  }
+
+  try {
+    // 呼叫 Cloud Functions：exchangeIgToken
+    const result = await exchangeIgTokenFn({ code });
+    console.log("exchangeIgToken 回傳：", result.data);
+
+    alert("Instagram 連結成功！系統正在匯入你的 IG 數據。");
+
+    // 更新 IG 卡片的 UI
+    const status = document.getElementById("status-ig");
+    const btn = document.getElementById("btn-connect-ig");
+    if (status && btn) {
+      status.textContent = "✅ 已連結 (真實數據)";
+      status.className = "text-xs text-green-600 font-bold";
+      btn.textContent = "已連結";
+      btn.disabled = true;
+      btn.className =
+        "text-xs bg-gray-200 text-gray-500 border border-gray-300 px-3 py-1.5 rounded-lg font-bold cursor-default";
+    }
+
+    // 告訴你的「網紅價值分析」模組，IG 已經連結
+    if (typeof connectedPlatforms !== "undefined") {
+      connectedPlatforms.add("ig");
+      updateAnalyticsUI();
+    }
+  } catch (err) {
+    console.error("交換 IG token 失敗：", err);
+    alert("連結 Instagram 失敗，請稍後再試一次。");
+  } finally {
+    // 無論成功或失敗，都把網址上的參數清掉
+    url.searchParams.delete("code");
+    url.searchParams.delete("state");
+    url.searchParams.delete("error");
+    url.searchParams.delete("error_description");
+    window.history.replaceState({}, document.title, url.pathname + url.hash);
+  }
+}
+
+// 頁面載入完成時檢查一次（你的檔案本來就有別的 DOMContentLoaded，不會衝突）
+document.addEventListener("DOMContentLoaded", () => {
+  handleInstagramOAuthRedirect();
+});
+
+
+
+    function updateAnalyticsUI() {
+        const dashboard = document.getElementById('analytics-dashboard');
+        if (connectedPlatforms.size > 0) {
+            dashboard.classList.remove('hidden');
+        }
+
+        // 匯總數據
+        let totalFans = 0;
+        let totalEr = 0;
+        let count = 0;
+        let growthData = [0, 0, 0, 0, 0]; // 5 個時間點
+
+        connectedPlatforms.forEach(p => {
+            const data = mockPlatformData[p];
+            totalFans += data.followers;
+            totalEr += data.er;
+            count++;
+            // 累加成長數據
+            data.growth.forEach((val, idx) => growthData[idx] += val);
+        });
+
+        const avgEr = count > 0 ? (totalEr / count).toFixed(1) : 0;
+        const score = Math.min(100, Math.round(30 + (totalFans / 1000) + (avgEr * 5))); // 隨便算的公式
+
+        // 填入數字
+        document.getElementById('score-val').textContent = score;
+        document.getElementById('total-fans').textContent = totalFans.toLocaleString();
+        document.getElementById('avg-er').textContent = `${avgEr}%`;
+
+        // 繪製圖表 (Chart.js)
+        renderCharts(growthData);
+    }
+
+    let chartInstanceFollowers = null;
+    let chartInstanceDemo = null;
+
+    function renderCharts(growthData) {
+        const ctxF = document.getElementById('chart-followers').getContext('2d');
+        const ctxD = document.getElementById('chart-demo').getContext('2d');
+
+        // 銷毀舊圖表以防重疊
+        if (chartInstanceFollowers) chartInstanceFollowers.destroy();
+        if (chartInstanceDemo) chartInstanceDemo.destroy();
+
+        // 1. 粉絲成長折線圖
+        chartInstanceFollowers = new Chart(ctxF, {
+            type: 'line',
+            data: {
+                labels: ['4週前', '3週前', '2週前', '上週', '本週'],
+                datasets: [{
+                    label: '總粉絲數',
+                    data: growthData,
+                    borderColor: '#0d9488', // Teal
+                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 2. 受眾分佈長條圖 (靜態模擬數據)
+        chartInstanceDemo = new Chart(ctxD, {
+            type: 'bar',
+            data: {
+                labels: ['13-17', '18-24', '25-34', '35-44', '45+'],
+                datasets: [{
+                    label: '男性',
+                    data: [5, 15, 20, 10, 5],
+                    backgroundColor: '#93c5fd' // Blue
+                }, {
+                    label: '女性',
+                    data: [8, 25, 35, 15, 8],
+                    backgroundColor: '#fca5a5' // Pink
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { x: { stacked: true }, y: { stacked: true } }
+            }
+        });
+    }
 
 
 </script>
