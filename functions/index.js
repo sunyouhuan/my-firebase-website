@@ -17,7 +17,7 @@ admin.initializeApp();
 
 const IG_CLIENT_ID = "1206014388258225";
 const IG_CLIENT_SECRET = "04d790448d03c01fa3bfb99bddce8fda";
-const IG_REDIRECT_URI = "https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1206014388258225&redirect_uri=https://influenceai.tw/&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights"; // 必須與後台設定完全一致
+const IG_REDIRECT_URI = "https://influenceai.tw/"; // 必須與後台設定完全一致
 
 // 讀取 Gemini API Key (從環境變數或直接填寫)
 const API_KEY = process.env.GOOGLE_APIKEY; 
