@@ -1,4 +1,7 @@
-// functions/index.js 完整修正版
+
+
+
+// functions/index.js 完整合併版
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
@@ -6,23 +9,22 @@ const logger = require("firebase-functions/logger");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const admin = require("firebase-admin");
 const axios = require("axios");
-const FormData = require('form-data'); 
+const FormData = require('form-data'); // 記得確認有 npm install form-data
 
 admin.initializeApp();
 
 // === 設定區 (請填入你的 Meta 後台資訊) ===
 
 const IG_CLIENT_ID = "1206014388258225";
-const IG_CLIENT_SECRET = "04d790448d03c01fa3bfb99bddce8fda"; 
-// ✅ 修正：必須與 Meta 後台設定完全一致，不能有參數，也不能是長網址
-const IG_REDIRECT_URI = "https://influenceai.tw/"; 
+const IG_CLIENT_SECRET = "04d790448d03c01fa3bfb99bddce8fda";
+const IG_REDIRECT_URI = "https://influenceai.tw/"; // 必須與後台設定完全一致
 
-// 讀取 Gemini API Key
+// 讀取 Gemini API Key (從環境變數或直接填寫)
 const API_KEY = process.env.GOOGLE_APIKEY; 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 // ==========================================
-// 功能 1：AI 行銷顧問 (askGemini)
+// 功能 1：AI 行銷顧問 (askGemini) - 保留舊功能
 // ==========================================
 exports.askGemini = onCall(async (request) => {
   if (!request.auth) {
@@ -30,6 +32,7 @@ exports.askGemini = onCall(async (request) => {
   }
 
   const userMessage = request.data.prompt;
+  // 檢查訊息是否有效
   if (!userMessage || typeof userMessage !== "string") {
     throw new HttpsError("invalid-argument", "請輸入有效的訊息。");
   }
@@ -52,7 +55,7 @@ exports.askGemini = onCall(async (request) => {
 });
 
 // ==========================================
-// 功能 2 (修正版)：交換 Token (改為走 Facebook 通道)
+// 功能 2 (新)：交換 Instagram Token
 // ==========================================
 exports.exchangeIgToken = onCall(async (request) => {
     // 1. 檢查用戶是否登入
@@ -67,38 +70,50 @@ exports.exchangeIgToken = onCall(async (request) => {
     }
 
     try {
-        // 3. ✅ 修正：向 Facebook Graph API 交換 Token (因為前端改用了 Facebook Login)
-        // 這是取得 IG 商業帳號權限的唯一正確方式
-        const tokenRes = await axios.get('https://graph.facebook.com/v18.0/oauth/access_token', {
+        // 3. 向 Instagram 交換 "短效 Token"
+        const formData = new FormData();
+        formData.append('client_id', IG_CLIENT_ID);
+        formData.append('client_secret', IG_CLIENT_SECRET);
+        formData.append('grant_type', 'authorization_code');
+        formData.append('redirect_uri', IG_REDIRECT_URI);
+        formData.append('code', code);
+
+        const tokenRes = await axios.post('https://api.instagram.com/oauth/access_token', formData, {
+            headers: formData.getHeaders()
+        });
+        
+        const shortToken = tokenRes.data.access_token;
+        const igUserId = tokenRes.data.user_id;
+
+        // 4. 將 "短效 Token" 換成 "長效 Token" (效期 60 天)
+        const longTokenRes = await axios.get('https://graph.instagram.com/access_token', {
             params: {
-                client_id: IG_CLIENT_ID,
+                grant_type: 'ig_exchange_token',
                 client_secret: IG_CLIENT_SECRET,
-                redirect_uri: IG_REDIRECT_URI, // 必須是 https://influenceai.tw/
-                code: code
+                access_token: shortToken
             }
         });
         
-        const accessToken = tokenRes.data.access_token;
-        // Facebook 回傳的通常已經是長效 Token (60天)，不需要再換一次
+        const longToken = longTokenRes.data.access_token;
 
-        // 4. 存入 Firestore (存到 tokens/facebook)
-        // 改存為 facebook 是因為這個 Token 屬於 Facebook 體系，可以用來管理 FB 粉專和連結的 IG
-        await admin.firestore().collection("users").doc(request.auth.uid).collection("tokens").doc("facebook").set({
-            accessToken: accessToken,
-            provider: 'facebook', // 標記來源
+        // 5. 存入 Firestore (改存到 tokens/instagram)
+        await admin.firestore().collection("users").doc(request.auth.uid).collection("tokens").doc("instagram").set({
+            accessToken: longToken,
+            igUserId: igUserId,
+            provider: 'instagram_direct',
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
         return { success: true };
 
     } catch (error) {
-        logger.error("Token 交換失敗:", error.response ? error.response.data : error.message);
+        logger.error("IG Token 交換失敗:", error.response ? error.response.data : error.message);
         throw new HttpsError("internal", "無法連結 Instagram，請稍後再試。");
     }
 });
 
 // ==========================================
-// 功能 3：自動抓取 Instagram 數據 (配合 Facebook Token)
+// 功能 3：自動抓取 Instagram 數據 (更新版)
 // ==========================================
 exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{providerId}", async (event) => {
     const snapshot = event.data && event.data.after;
@@ -108,7 +123,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
     const userId = event.params.userId;
     const providerId = event.params.providerId;
 
-    // 只處理 facebook (新的流程) 或 instagram (舊流程相容)
+    // 只處理 instagram 或 facebook
     if (providerId !== 'instagram' && providerId !== 'facebook') return null;
     
     const accessToken = data.accessToken;
@@ -119,40 +134,8 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
     try {
         let igData = {};
 
-        if (providerId === 'facebook') {
-            // === 情況 B: 透過 FB 連結 (正確的 IG 商業帳號流程) ===
-            
-            // 1. 先抓用戶管理的粉絲專頁
-            const pagesRes = await axios.get(
-                `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
-            );
-
-            let instagramId = null;
-            // 2. 遍歷粉專，找出有連結 IG 商業帳號的那個
-            for (const page of pagesRes.data.data) {
-                const pageRes = await axios.get(
-                  `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`
-                );
-                if (pageRes.data.instagram_business_account) {
-                  instagramId = pageRes.data.instagram_business_account.id;
-                  break; // 找到了！
-                }
-            }
-
-            if (!instagramId) {
-                console.log("此 Facebook 帳號下沒有連結 Instagram 商業帳號");
-                return null;
-            }
-
-            // 3. 用這個 IG ID 去抓詳細數據
-            const igRes = await axios.get(
-                `https://graph.facebook.com/v18.0/${instagramId}?fields=biography,id,username,profile_picture_url,website,followers_count,media_count&access_token=${accessToken}`
-            );
-            igData = igRes.data;
-
-        } else if (providerId === 'instagram') {
-            // === 情況 A: 純 IG 登入 (Basic Display API - 舊版/非商業) ===
-            // 備註：這個分支在新流程下不會被觸發，保留僅作相容
+        if (providerId === 'instagram') {
+            // === 情況 A: 純 IG 登入 (Method B) ===
             const meRes = await axios.get(`https://graph.instagram.com/me`, {
                 params: {
                     fields: 'id,username,account_type,media_count',
@@ -163,10 +146,33 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
             igData = {
                 id: meRes.data.id,
                 username: meRes.data.username,
-                followers_count: 0, 
+                followers_count: 0, // Basic API 無法取得粉絲數，暫設為 0
                 media_count: meRes.data.media_count,
                 profile_picture_url: "" 
             };
+        } else {
+            // === 情況 B: 透過 FB 連結 (原本的邏輯) ===
+            const pagesRes = await axios.get(
+                `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
+            );
+
+            let instagramId = null;
+            for (const page of pagesRes.data.data) {
+                const pageRes = await axios.get(
+                  `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`
+                );
+                if (pageRes.data.instagram_business_account) {
+                  instagramId = pageRes.data.instagram_business_account.id;
+                  break;
+                }
+            }
+
+            if (!instagramId) return null;
+
+            const igRes = await axios.get(
+                `https://graph.facebook.com/v18.0/${instagramId}?fields=biography,id,username,profile_picture_url,website,followers_count,media_count&access_token=${accessToken}`
+            );
+            igData = igRes.data;
         }
 
         // 存回 Firestore

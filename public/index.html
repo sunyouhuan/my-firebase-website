@@ -2371,13 +2371,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
       // ✅ 修正：改用 Facebook 的 OAuth 網址 (取得商業權限的唯一路徑)
       const authUrl =
-        "https://www.facebook.com/v18.0/dialog/oauth" + 
-        `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
-        `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
-        `&response_type=code` +
-        // 這些權限需要透過 Facebook 登入頁面來授權
-        `&scope=${encodeURIComponent("instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights")}` +
-        `&state=${encodeURIComponent(state)}`;
+        `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1206014388258225&redirect_uri=https://influenceai.tw/&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights`;
 
       // 導向 Facebook 授權畫面
       window.location.href = authUrl;
