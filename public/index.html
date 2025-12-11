@@ -2129,7 +2129,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
       - 在主要的 script module 中，同時 import storage 相關功能
       - 這是為了讓後續新增的 handleSubmitTransferProof 函式可以順利運作
     -->
-    <script type="module">
+<script type="module">
     // --- v2 (本次修改): 從 firebase/storage 匯入必要功能 ---
     import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js';
 
@@ -2137,7 +2137,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
        from "https://www.gstatic.com/firebasejs/12.3.0/firebase-functions.js";
 
 
-    // --- 1. Firebase 初始化 (這部分不變) ---
+    // --- 1. Firebase 初始化 ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { 
             getAuth, 
@@ -2152,7 +2152,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             sendPasswordResetEmail
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
-    // === 修改部分 START：從 Firestore 匯入更多我們需要的功能 ===
+    // === Firestore 匯入 ===
         import { 
             getFirestore, 
             collection, 
@@ -2163,16 +2163,16 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             doc,
             getDoc,
             setDoc,
-            updateDoc,       // 新增：用於更新文件 (例如：軟刪除)
-            onSnapshot,      // 新增：用於即時監聽資料變化
-            orderBy,       // 新增：用於排序查詢結果
-            serverTimestamp,   // ⬅️ 新增
+            updateDoc,       
+            onSnapshot,      
+            orderBy,       
+            serverTimestamp,   
             limit
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
       let influencerSelectedFiles = {};
 
-    // === 新增：執行註冊的函式 (給 register-view 使用) ===
+    // === 註冊功能 ===
         window.handlePerformRegistration = async function() {
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
@@ -2192,12 +2192,11 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             }
 
             try {
-                // 使用我們匯入的 createUserWithEmailAndPassword
                 await createUserWithEmailAndPassword(auth, email, password);
                 alert('註冊成功！將為您導向登入頁面。');
-                navigateTo('login-view'); // 註冊成功後跳回登入頁
-                document.getElementById('register-form').reset(); // 清空註冊表單
-                document.getElementById('email').value = email; // 貼心地幫使用者填上 email
+                navigateTo('login-view');
+                document.getElementById('register-form').reset();
+                document.getElementById('email').value = email;
             } catch (error) {
                 console.error("註冊失敗:", error);
                 if (error.code === 'auth/email-already-in-use') {
@@ -2208,7 +2207,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             }
         };
 
-        // === 新增：處理忘記密碼的函式 ===
+        // === 忘記密碼 ===
         window.handleForgotPassword = async function() {
             const email = document.getElementById('forgot-email').value;
             if (!email) {
@@ -2217,7 +2216,6 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             }
 
             try {
-                // 使用我們匯入的 sendPasswordResetEmail
                 await sendPasswordResetEmail(auth, email);
                 alert('密碼重設信件已寄出，請檢查您的信箱 (包含垃圾郵件匣)。');
                 closeModal('forgot-password-modal');
@@ -2231,13 +2229,11 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                 }
             }
         };    
-    // === 修改部分 END ===
 
         const firebaseConfig = {
           apiKey: "AIzaSyCtOwoKYJfrSshSfkipfMH9lTngRsfQLDc",
           authDomain: "test-b493a.firebaseapp.com",
           projectId: "test-b493a",
-          //storageBucket: "test-b493a.appspot.com",
           storageBucket: "test-b493a.firebasestorage.app",
           messagingSenderId: "1089014108157",
           appId: "1:1089014108157:web:2ac36c728f861795909394",
@@ -2246,16 +2242,14 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        window.auth = auth; // expose for console
+        window.auth = auth; 
         const db = getFirestore(app);
-        const storage = getStorage(app); // v2 (本次修改): 初始化 Storage
+        const storage = getStorage(app); 
         const functions = getFunctions(app);
 
-// Cloud Functions：呼叫 exchangeIgToken（之後你還可以用這個 functions 呼叫 askGemini）
-const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
+        // Cloud Functions 呼叫
+        const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
 
-
-        // v3 (新功能): 用於暫存 "建立新活動" 時上傳的圖片 URL
         let uploadedImageUrls = []; 
 
         getRedirectResult(auth)
@@ -2268,8 +2262,6 @@ const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
                 alert('Google 登入時發生錯誤：' + error.message);
             });
 
-/* 功能：在單頁應用（SPA）中切換 .view 區塊的顯示狀態，並回到頁面頂部。*/
-    // --- 2. 核心 UI 導航與控制函式 ---
         function navigateTo(viewId) {
             document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
             const targetView = document.getElementById(viewId);
@@ -2284,53 +2276,39 @@ const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
             influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
         };
     
-// === 修改後的 switchTab (切換分頁時，順便載入資料) ===
     window.switchTab = function(role, tabId) {
-        // 1. 處理側邊欄按鈕樣式 (Active 狀態)
         const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
         sidebarLinks.forEach(link => {
             link.classList.remove('active');
-            // 特殊處理：如果是詳情頁 (campaign-detail)，側邊欄維持在 'campaigns' 亮起
             const linkTab = tabId === 'campaign-detail' ? 'campaigns' : tabId;
-            // 檢查 onclick 屬性是否包含目標 tab
             if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(`'${linkTab}'`)) {
                 link.classList.add('active');
             }
         });
 
-        // 2. 處理內容區塊顯示 (隱藏其他，顯示目前的)
         const contents = document.querySelectorAll(`#${role}-dashboard-view .dashboard-content`);
         contents.forEach(content => content.classList.remove('active'));
         
         const activeContent = document.getElementById(`${role}-${tabId}-content`);
         if (activeContent) activeContent.classList.add('active');
     
-        // 3. 更新頁面標題 (Header Title)
         const headerTitle = document.getElementById(`${role}-header-title`);
-        // 確保 headerTitles 物件存在 (這是全域變數)
         if (typeof headerTitles !== 'undefined' && headerTitles[role] && headerTitles[role][tabId]) {
             headerTitle.textContent = headerTitles[role][tabId];
         }
 
-        // ==========================================
-        // NEW: 這裡就是新增的邏輯！
-        // 當切換到特定分頁時，自動觸發資料載入函式
-        // ==========================================
         if (role === 'influencer') {
             if (tabId === 'invitations') {
-                // 如果切換到「合作邀請」，就去資料庫撈邀請
                 if (typeof renderInfluencerInvitations === 'function') {
                     renderInfluencerInvitations();
                 }
             } else if (tabId === 'dashboard') {
-                // 如果切換到「總覽」，就去資料庫撈進行中的工作
                 if (typeof renderInfluencerActiveJobs === 'function') {
                     renderInfluencerActiveJobs();
                 }
             }
         }
     };
-
 
     window.toggleMenu = function(role) {
         const sidebar = document.getElementById(`${role}-sidebar`);
@@ -2339,166 +2317,248 @@ const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
         if (overlay) overlay.classList.toggle('hidden');
     };
     
-    // 確保 navigateTo 也有被掛載 (保留原本邏輯)
     window.navigateTo = navigateTo;
 
-
-
-        window.openModal = function(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.classList.remove('opacity-0');
-                    modal.querySelector('div > div').classList.remove('scale-95');
-                }, 10);
-            }
-/* 功能：關閉對話框（加回 opacity-0 / scale-95，結束後加回 hidden）。*/
+    window.openModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div > div').classList.remove('scale-95');
+            }, 10);
         }
-        
-        // === v3 (新功能): 修改 closeModal，使其在關閉 "new-campaign-modal" 時清空暫存 ===
-        window.closeModal = function(modalId) {
-            const modal = document.getElementById(modalId);
-            if(modal) {
-                modal.classList.add('opacity-0');
-                modal.querySelector('div > div').classList.add('scale-95');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    
-                    // v3: 清空 "建立新活動" 表單的暫存資料
-                    if (modalId === 'new-campaign-modal') {
-                        uploadedImageUrls = []; // 清空 URL 陣列
-                        document.getElementById('image-preview-area').innerHTML = ''; // 清空預覽
-                        document.getElementById('upload-status-text').textContent = ''; // 清空狀態
-                        document.getElementById('upload-progress-bar').classList.add('hidden'); // 隱藏進度條
-                        document.getElementById('campaign-form').reset(); // 重設表單
-                    }
-                }, 300);
-            }
+    }
+    
+    window.closeModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if(modal) {
+            modal.classList.add('opacity-0');
+            modal.querySelector('div > div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                if (modalId === 'new-campaign-modal') {
+                    uploadedImageUrls = []; 
+                    document.getElementById('image-preview-area').innerHTML = ''; 
+                    document.getElementById('upload-status-text').textContent = ''; 
+                    document.getElementById('upload-progress-bar').classList.add('hidden'); 
+                    document.getElementById('campaign-form').reset(); 
+                }
+            }, 300);
+        }
+    }
+
+    // ==========================================
+    //  IG / Facebook 連結相關程式碼 (修正版)
+    // ==========================================
+
+    const INSTAGRAM_CLIENT_ID = "1206014388258225"; 
+    // ✅ 修正：這裡必須是網站首頁，不能是長網址
+    const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/"; 
+
+    // 使用者按下「連結 IG」時呼叫
+    window.connectInstagram = function () {
+      if (!auth.currentUser) {
+        alert("請先登入帳號，再連結 Instagram。");
+        return;
+      }
+
+      const state = window.crypto && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).slice(2);
+
+      localStorage.setItem("ig_oauth_state", state);
+
+      // ✅ 修正：改用 Facebook 的 OAuth 網址 (取得商業權限的唯一路徑)
+      const authUrl =
+        "https://www.facebook.com/v18.0/dialog/oauth" + 
+        `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
+        `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
+        `&response_type=code` +
+        // 這些權限需要透過 Facebook 登入頁面來授權
+        `&scope=${encodeURIComponent("instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights")}` +
+        `&state=${encodeURIComponent(state)}`;
+
+      // 導向 Facebook 授權畫面
+      window.location.href = authUrl;
+    };
+
+    // OAuth 回呼處理
+    async function handleInstagramOAuthRedirect() {
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
+
+      const code = params.get("code");
+      const state = params.get("state");
+      const error = params.get("error");
+
+      if (!code && !error) return;
+
+      if (error) {
+        console.warn("授權失敗：", error, params.get("error_description"));
+        alert("連結失敗或被取消，請再試一次。");
+        url.searchParams.delete("code");
+        url.searchParams.delete("state");
+        url.searchParams.delete("error");
+        url.searchParams.delete("error_description");
+        window.history.replaceState({}, document.title, url.pathname + url.hash);
+        return;
+      }
+
+      const savedState = localStorage.getItem("ig_oauth_state");
+      if (savedState && state !== savedState) {
+        console.warn("OAuth state 不符，可能不是我們發的請求，忽略。");
+        return;
+      }
+      localStorage.removeItem("ig_oauth_state");
+
+      if (!auth.currentUser) {
+        alert("目前尚未登入，請先登入帳號再連結。");
+        return;
+      }
+
+      try {
+        // 呼叫後端交換 Token
+        const result = await exchangeIgTokenFn({ code });
+        console.log("exchangeIgToken 回傳：", result.data);
+
+        alert("連結成功！系統正在匯入您的 Instagram 商業數據。");
+
+        // 更新 UI
+        const status = document.getElementById("status-ig");
+        const btn = document.getElementById("btn-connect-ig");
+        if (status && btn) {
+          status.textContent = "✅ 已連結 (商業數據)";
+          status.className = "text-xs text-green-600 font-bold";
+          btn.textContent = "已連結";
+          btn.disabled = true;
+          btn.className = "text-xs bg-gray-200 text-gray-500 border border-gray-300 px-3 py-1.5 rounded-lg font-bold cursor-default";
         }
 
-// ========== Gemini Chat（Firestore 擴充程式）整合 ==========
+        if (typeof connectedPlatforms !== "undefined") {
+          connectedPlatforms.add("ig");
+          updateAnalyticsUI();
+        }
+      } catch (err) {
+        console.error("交換 Token 失敗：", err);
+        alert("連結失敗，請稍後再試一次 (請確認您已將 IG 連結到 FB 粉專)。");
+      } finally {
+        url.searchParams.delete("code");
+        url.searchParams.delete("state");
+        url.searchParams.delete("error");
+        url.searchParams.delete("error_description");
+        window.history.replaceState({}, document.title, url.pathname + url.hash);
+      }
+    }
 
-// 讓聊天快取目前的監聽器，關閉視窗時取消監聽
-let chatUnsub = null;
-
-// 將一則訊息渲染到視窗
-function appendChatBubble(text, role = 'bot') {
-  const $chat = document.getElementById('chat-window');
-  if (!$chat) return;
-  const wrap = document.createElement('div');
-  wrap.className = role === 'me'
-    ? 'bg-slate-700 text-white rounded-xl px-4 py-3 max-w-[80%] ml-auto'
-    : 'bg-slate-100 text-slate-800 rounded-xl px-4 py-3 max-w-[80%]';
-  wrap.textContent = text;
-  const row = document.createElement('div');
-  row.className = 'w-full flex ' + (role === 'me' ? 'justify-end' : 'justify-start');
-  row.appendChild(wrap);
-  $chat.appendChild(row);
-  $chat.scrollTop = $chat.scrollHeight;
-}
-
-// 清空視窗
-function resetChatWindow() {
-  const $chat = document.getElementById('chat-window');
-  if ($chat) $chat.innerHTML = '';
-}
-
-// 啟動監聽：依 createTime 由小到大顯示最新 100 則
-function startChatListener(uid) {
-  if (chatUnsub) chatUnsub(); // 先關舊監聽，避免重複
-
-  const msgsRef = collection(db, 'users', uid, 'messages');
-  // ✅ 用 createTimeMs 排序，立即穩定
-  const q = query(msgsRef, orderBy('createTimeMs', 'asc'), limit(100));
-
-  chatUnsub = onSnapshot(q, (snap) => {
-    // ✅ 全量重繪，永遠會吃到 modified 後的 response
-    const $chat = document.getElementById('chat-window');
-    if (!$chat) return;
-    $chat.innerHTML = '';
-
-    snap.docs.forEach(docSnap => {
-      const d = docSnap.data();
-      if (d.prompt) appendChatBubble(d.prompt, 'me');
-      if (d.response) appendChatBubble(d.response, 'bot');
-      else if (d.status) appendChatBubble(`（狀態：${d.status}）`, 'bot');
+    // 頁面載入時檢查是否有 code
+    document.addEventListener("DOMContentLoaded", () => {
+      handleInstagramOAuthRedirect();
     });
 
-    $chat.scrollTop = $chat.scrollHeight;
-  }, (err) => {
-    console.error('聊天監聽失敗：', err);
-    appendChatBubble('系統：監聽訊息時發生錯誤，請稍後重試。', 'bot');
-  });
-}
+    // ==========================================
+    //  其他功能 (Chat, Charts, etc.)
+    // ==========================================
 
-// === 給 HTML 呼叫的 3 個函式 ===
-window.openAIChat = function openAIChat() {
-  const user = auth.currentUser;
-  if (!user) {
-    alert('請先登入後再使用 AI 顧問');
-    return;
-  }
-  // 打開 modal（沿用你現有的開關動畫邏輯）
-  const modal = document.getElementById('ai-chat-modal');
-  modal.classList.remove('hidden');
-  setTimeout(() => {
-    modal.classList.remove('opacity-0');
-    modal.querySelector('div > div').classList.remove('scale-95');
-  }, 10);
+    let chatUnsub = null;
 
-  resetChatWindow();
-  appendChatBubble('👋 我是你的 AI 行銷顧問，輸入你的需求吧！', 'bot');
+    function appendChatBubble(text, role = 'bot') {
+      const $chat = document.getElementById('chat-window');
+      if (!$chat) return;
+      const wrap = document.createElement('div');
+      wrap.className = role === 'me'
+        ? 'bg-slate-700 text-white rounded-xl px-4 py-3 max-w-[80%] ml-auto'
+        : 'bg-slate-100 text-slate-800 rounded-xl px-4 py-3 max-w-[80%]';
+      wrap.textContent = text;
+      const row = document.createElement('div');
+      row.className = 'w-full flex ' + (role === 'me' ? 'justify-end' : 'justify-start');
+      row.appendChild(wrap);
+      $chat.appendChild(row);
+      $chat.scrollTop = $chat.scrollHeight;
+    }
 
-  // 開始監聽 Firestore 訊息
-  startChatListener(user.uid);
-};
+    function resetChatWindow() {
+      const $chat = document.getElementById('chat-window');
+      if ($chat) $chat.innerHTML = '';
+    }
 
-window.closeAIChat = function closeAIChat() {
-  // 關閉監聽
-  if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+    function startChatListener(uid) {
+      if (chatUnsub) chatUnsub(); 
 
-  // 關閉 modal（沿用你現有的動畫）
-  const modal = document.getElementById('ai-chat-modal');
-  modal.classList.add('opacity-0');
-  modal.querySelector('div > div').classList.add('scale-95');
-  setTimeout(() => { modal.classList.add('hidden'); }, 300);
-};
+      const msgsRef = collection(db, 'users', uid, 'messages');
+      const q = query(msgsRef, orderBy('createTimeMs', 'asc'), limit(100));
 
-window.sendChatMessage = async function sendChatMessage() {
-  const user = auth.currentUser;
-  if (!user) return alert('請先登入');
+      chatUnsub = onSnapshot(q, (snap) => {
+        const $chat = document.getElementById('chat-window');
+        if (!$chat) return;
+        $chat.innerHTML = '';
 
-  const $input = document.getElementById('chat-input');
-  const text = ($input.value || '').trim();
-  if (!text) return;
+        snap.docs.forEach(docSnap => {
+          const d = docSnap.data();
+          if (d.prompt) appendChatBubble(d.prompt, 'me');
+          if (d.response) appendChatBubble(d.response, 'bot');
+          else if (d.status) appendChatBubble(`（狀態：${d.status}）`, 'bot');
+        });
 
-  // 立刻在前端先顯示使用者訊息（好有即時感）
-  appendChatBubble(text, 'me');
+        $chat.scrollTop = $chat.scrollHeight;
+      }, (err) => {
+        console.error('聊天監聽失敗：', err);
+        appendChatBubble('系統：監聽訊息時發生錯誤，請稍後重試。', 'bot');
+      });
+    }
 
-  try {
-    const msgsRef = collection(db, 'users', user.uid, 'messages');
-    await addDoc(msgsRef, {
-      prompt: text,              // 擴充程式讀這個欄位
-      createTime: serverTimestamp(),
-      createTimeMs: Date.now() 
-      // 你也可在這裡嘗試擴充程式支援的參數（若版本支援）：
-      // temperature: 0.4, topP: 0.95, topK: 32,
-    });
-    // 擴充程式會在背景呼叫 Gemini，幾秒後把 response 寫回同筆文件
-  } catch (err) {
-    console.error('送出失敗：', err);
-    appendChatBubble('（送出失敗，請稍後重試）', 'bot');
-  } finally {
-    $input.value = '';
-    $input.focus();
-  }
-};
+    window.openAIChat = function openAIChat() {
+      const user = auth.currentUser;
+      if (!user) {
+        alert('請先登入後再使用 AI 顧問');
+        return;
+      }
+      const modal = document.getElementById('ai-chat-modal');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('div > div').classList.remove('scale-95');
+      }, 10);
 
-    // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
+      resetChatWindow();
+      appendChatBubble('👋 我是你的 AI 行銷顧問，輸入你的需求吧！', 'bot');
+      startChatListener(user.uid);
+    };
 
-    // === v3 (新功能): 上傳行銷活動圖片 (Request 2) ===
-    // === 修正版：上傳行銷素材 (路徑改回 logos，並支援影片預覽) ===
+    window.closeAIChat = function closeAIChat() {
+      if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+      const modal = document.getElementById('ai-chat-modal');
+      modal.classList.add('opacity-0');
+      modal.querySelector('div > div').classList.add('scale-95');
+      setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    };
+
+    window.sendChatMessage = async function sendChatMessage() {
+      const user = auth.currentUser;
+      if (!user) return alert('請先登入');
+
+      const $input = document.getElementById('chat-input');
+      const text = ($input.value || '').trim();
+      if (!text) return;
+
+      appendChatBubble(text, 'me');
+
+      try {
+        const msgsRef = collection(db, 'users', user.uid, 'messages');
+        await addDoc(msgsRef, {
+          prompt: text,              
+          createTime: serverTimestamp(),
+          createTimeMs: Date.now() 
+        });
+      } catch (err) {
+        console.error('送出失敗：', err);
+        appendChatBubble('（送出失敗，請稍後重試）', 'bot');
+      } finally {
+        $input.value = '';
+        $input.focus();
+      }
+    };
+
     window.handleUploadCampaignImages = async function() {
         const user = auth.currentUser;
         if (!user) return alert('請先登入');
@@ -2510,25 +2570,21 @@ window.sendChatMessage = async function sendChatMessage() {
         const statusEl = document.getElementById('upload-status-text');
         const previewEl = document.getElementById('image-preview-area');
         const uploadBtn = document.getElementById('upload-images-btn');
-        const progressEl = document.getElementById('upload-progress-bar'); // 確保進度條存在
+        const progressEl = document.getElementById('upload-progress-bar'); 
 
         uploadBtn.disabled = true;
         uploadBtn.textContent = '上傳中...';
         statusEl.textContent = '準備上傳...';
         if(progressEl) progressEl.classList.remove('hidden');
 
-        // 使用 Promise 來包裝每一個上傳任務
         const uploadPromises = Array.from(files).map(file => {
             return new Promise((resolve, reject) => {
-                // ★ 關鍵修正 1：改回原本的路徑結構 (logos/...) 避免權限錯誤
                 const path = `logos/${user.uid}/campaign_uploads/${Date.now()}_${file.name}`;
                 const ref = storageRef(storage, path);
                 const uploadTask = uploadBytesResumable(ref, file);
 
-                // ★ 關鍵修正 2：改回使用 .on('state_changed') 監聽，這是最穩定的寫法
                 uploadTask.on('state_changed', 
                     (snapshot) => {
-                        // 顯示進度
                         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                         statusEl.textContent = `上傳中... ${Math.round(progress)}%`;
                         if(progressEl) progressEl.value = progress;
@@ -2538,27 +2594,20 @@ window.sendChatMessage = async function sendChatMessage() {
                         reject(error);
                     },
                     async () => {
-                        // 上傳成功！開始處理預覽圖
                         const url = await getDownloadURL(uploadTask.snapshot.ref);
-                        
-                        // ★ 這裡插入「影片 vs 圖片」的判斷邏輯
                         const isVideo = file.type.startsWith('video');
-                        
-                        const el = isVideo 
-                            ? document.createElement('video') 
-                            : document.createElement('img');
-                        
+                        const el = isVideo ? document.createElement('video') : document.createElement('img');
                         el.src = url;
                         el.className = 'w-20 h-20 object-cover rounded border bg-black';
                         
                         if (isVideo) {
-                            el.muted = true;      // 靜音
-                            el.autoplay = false;  // 不自動播放
-                            el.controls = true;   // 顯示播放控制條 (讓商家可以點擊檢查)
+                            el.muted = true;      
+                            el.autoplay = false; 
+                            el.controls = true;   
                         }
 
                         previewEl.appendChild(el);
-                        resolve(url); // 回傳網址
+                        resolve(url);
                     }
                 );
             });
@@ -2568,10 +2617,10 @@ window.sendChatMessage = async function sendChatMessage() {
             const newUrls = await Promise.all(uploadPromises);
             uploadedImageUrls = uploadedImageUrls.concat(newUrls);
             statusEl.textContent = `成功上傳 ${newUrls.length} 個檔案！`;
-            fileInput.value = ''; // 清空選擇
+            fileInput.value = ''; 
         } catch (e) {
             console.error("上傳過程發生錯誤:", e);
-            statusEl.textContent = '上傳失敗，請查看 Console 錯誤訊息';
+            statusEl.textContent = '上傳失敗';
             alert('上傳失敗，可能是網路問題或權限不足');
         } finally {
             uploadBtn.disabled = false;
@@ -2580,7 +2629,6 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     };
 
-// === 修正版：商家活動列表 (支援影片封面) ===
     function renderCampaigns(campaigns) {
         const listElement = document.getElementById('campaigns-list');
         if (!listElement) return;
@@ -2595,7 +2643,6 @@ window.sendChatMessage = async function sendChatMessage() {
             const data = campaign.data;
             const id = campaign.id;
 
-            // --- ★ 修改開始：智慧封面 ---
             let coverImage = `<div class="w-full h-32 bg-slate-100 flex items-center justify-center text-gray-400">無封面</div>`;
             
             if (data.imageUrls && data.imageUrls.length > 0) {
@@ -2605,7 +2652,6 @@ window.sendChatMessage = async function sendChatMessage() {
                               url.toLowerCase().includes('.webm');
                 
                 if (isVideo) {
-                    // 影片封面：滑鼠滑過自動播放
                     coverImage = `
                         <video src="${url}" class="w-full h-32 object-cover bg-black" 
                             muted loop playsinline
@@ -2613,13 +2659,10 @@ window.sendChatMessage = async function sendChatMessage() {
                             onmouseout="this.pause();this.currentTime=0;"
                         ></video>`;
                 } else {
-                    // 圖片封面
                     coverImage = `<img src="${url}" alt="${data.productName}" class="w-full h-32 object-cover" onerror="this.style.display='none'">`;
                 }
             }
-            // --- ★ 修改結束 ---
 
-            // 狀態標籤
             const statusMap = {
                 'pending_match': { text: '正在配對中', color: 'bg-yellow-100 text-yellow-800' },
                 'matched': { text: '配對完成', color: 'bg-green-100 text-green-800' },
@@ -2628,7 +2671,6 @@ window.sendChatMessage = async function sendChatMessage() {
             const st = statusMap[data.status] || { text: '未知', color: 'bg-gray-100 text-gray-800' };
             const statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${st.color}">${st.text}</span>`;
 
-            // 刪除按鈕邏輯
             let deleteButtonHTML = '';
             const now = Date.now();
             const createdTime = data.createdAt ? data.createdAt.toMillis() : 0;
@@ -2666,30 +2708,27 @@ window.sendChatMessage = async function sendChatMessage() {
         listElement.innerHTML = campaignsHTML;
     }
 
-    // 功能 2: 建立一個即時監聽器，當資料庫有變化時自動更新畫面
-        let unsubscribeCampaigns = null; 
-        function listenForCampaigns() {
-            const user = auth.currentUser;
-            if (!user) return;
-            if (unsubscribeCampaigns) unsubscribeCampaigns();
+    let unsubscribeCampaigns = null; 
+    function listenForCampaigns() {
+        const user = auth.currentUser;
+        if (!user) return;
+        if (unsubscribeCampaigns) unsubscribeCampaigns();
 
-            const briefsRef = collection(db, "briefs");
-            const q = query(briefsRef, 
-                where("merchantId", "==", user.uid),// 只查詢屬於當前商家的
-                where("isDeleted", "==", false),// 只查詢未被軟刪除的
-                orderBy("createdAt", "desc")
-            );
+        const briefsRef = collection(db, "briefs");
+        const q = query(briefsRef, 
+            where("merchantId", "==", user.uid),
+            where("isDeleted", "==", false),
+            orderBy("createdAt", "desc")
+        );
 
-            unsubscribeCampaigns = onSnapshot(q, (querySnapshot) => {
-                const campaigns = querySnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-                renderCampaigns(campaigns);// 將獲取的資料傳遞給渲染函式
-            }, (error) => {
-                console.error("監聽活動失敗: ", error);
-                 // 可以在此處加入錯誤提示 UI
-            });
-        }
+        unsubscribeCampaigns = onSnapshot(q, (querySnapshot) => {
+            const campaigns = querySnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+            renderCampaigns(campaigns);
+        }, (error) => {
+            console.error("監聽活動失敗: ", error);
+        });
+    }
 
-// === 修正版：商家詳情頁 (支援影片顯示) ===
     window.showCampaignDetail = async function(campaignId) {
         if (!campaignId) return;
         try {
@@ -2697,30 +2736,21 @@ window.sendChatMessage = async function sendChatMessage() {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 
-                // --- ★ 修改開始：智慧判斷素材類型 ---
                 let imagesHTML = '<p class="text-gray-500">無素材</p>';
-                
                 if (data.imageUrls && data.imageUrls.length > 0) {
                     const items = data.imageUrls.map(url => {
-                        // 判斷副檔名
                         const isVideo = url.toLowerCase().includes('.mp4') || 
                                       url.toLowerCase().includes('.mov') || 
                                       url.toLowerCase().includes('.webm');
-                        
                         if (isVideo) {
-                            // 如果是影片：顯示播放器 (controls)
                             return `<video src="${url}" class="w-full h-24 object-cover rounded-md border bg-black" controls></video>`;
                         } else {
-                            // 如果是圖片：維持原本的點擊放大
                             return `<a href="${url}" target="_blank"><img src="${url}" class="w-full h-24 object-cover rounded-md border hover:opacity-80"></a>`;
                         }
                     }).join('');
-                    
                     imagesHTML = `<div class="grid grid-cols-4 gap-2">${items}</div>`;
                 }
-                // --- ★ 修改結束 ---
 
-                // 設定 HTML 框架
                 const contentArea = document.getElementById('merchant-campaign-detail-content');
                 contentArea.innerHTML = `
                     <div class="bg-white rounded-xl shadow p-6 mb-6">
@@ -2769,45 +2799,39 @@ window.sendChatMessage = async function sendChatMessage() {
         } catch (e) { console.error(e); alert("讀取詳情錯誤"); }
     };
 
+    window.handleSaveBrief = async function() {
+        const user = auth.currentUser;
+        if (!user) return alert('請先登入！');
 
+        const briefData = {
+            productName: document.getElementById('brief-product-name').value,
+            productDesc: document.getElementById('brief-product-desc').value,
+            category: document.getElementById('brief-category').value,
+            impressions: parseInt(document.getElementById('brief-impressions').value) || 0,
+            budget: parseInt(document.getElementById('brief-budget').value) || 0,
+            influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
+            followerRange: document.getElementById('brief-follower-range').value,
+            platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
+            imageUrls: uploadedImageUrls, 
+            status: 'pending_match',
+            isDeleted: false, 
+            merchantId: user.uid,
+            merchantEmail: user.email,
+            createdAt: serverTimestamp() 
+        };
 
-    // === v3 (新功能): 修改 handleSaveBrief 以儲存 imageUrls ===
-        window.handleSaveBrief = async function() {
-            const user = auth.currentUser;
-            if (!user) return alert('請先登入！');
+        if (!briefData.productName) return alert('請至少填寫產品名稱！');
 
-            const briefData = {
-                productName: document.getElementById('brief-product-name').value,
-                productDesc: document.getElementById('brief-product-desc').value,
-                category: document.getElementById('brief-category').value,
-                impressions: parseInt(document.getElementById('brief-impressions').value) || 0,
-                budget: parseInt(document.getElementById('brief-budget').value) || 0,
-                influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
-                followerRange: document.getElementById('brief-follower-range').value,
-                platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
-                imageUrls: uploadedImageUrls, // v3: 儲存上傳的圖片 URL
-                status: 'pending_match',
-                isDeleted: false, // 新增：軟刪除標記
-                merchantId: user.uid,
-                merchantEmail: user.email,
-                createdAt: serverTimestamp() // v2 (本次修改): 使用 serverTimestamp()
-            };
-
-            if (!briefData.productName) return alert('請至少填寫產品名稱！');
-
-            try {
-                await addDoc(collection(db, "briefs"), briefData);
-                alert('您的需求已成功送出！');
-                closeModal('new-campaign-modal'); // closeModal 會自動清空表單和暫存
-            } catch (error) {
-                console.error("儲存需求單失敗:", error);
-                alert('儲存失敗，請查看 console 的錯誤訊息。');
-            }
+        try {
+            await addDoc(collection(db, "briefs"), briefData);
+            alert('您的需求已成功送出！');
+            closeModal('new-campaign-modal'); 
+        } catch (error) {
+            console.error("儲存需求單失敗:", error);
+            alert('儲存失敗，請查看 console 的錯誤訊息。');
         }
-    // === 修改部分 END ===
+    }
 
-
-        // === 新增功能：打開活動詳情彈窗 ===
     window.openBriefDetail = async function(briefId, showAcceptBtn = false) {
         try {
             const docRef = doc(db, 'briefs', briefId);
@@ -2817,21 +2841,18 @@ window.sendChatMessage = async function sendChatMessage() {
             
             const data = snap.data();
             
-            // 1. 填寫文字資料
             document.getElementById('modal-brief-title').textContent = data.productName;
             document.getElementById('modal-brief-desc').textContent = data.productDesc;
             document.getElementById('modal-brief-budget').textContent = `NT$ ${data.budget.toLocaleString()}`;
             document.getElementById('modal-brief-count').textContent = `${data.influencerCount} 人`;
             document.getElementById('modal-brief-platform').textContent = data.platforms ? data.platforms.join(', ') : '不限';
 
-            // 2. 處理標籤
             const tagContainer = document.getElementById('modal-brief-tags');
             tagContainer.innerHTML = `
                 <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">#${data.category}</span>
                 <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">預估曝光: ${data.impressions}</span>
             `;
 
-            // 3. 處理素材 (圖片/影片)
             const assetContainer = document.getElementById('modal-brief-assets');
             if (data.imageUrls && data.imageUrls.length > 0) {
                 let assetsHtml = '';
@@ -2856,11 +2877,9 @@ window.sendChatMessage = async function sendChatMessage() {
                 assetContainer.innerHTML = '<p class="text-gray-400 col-span-full text-center py-4">商家未上傳參考素材</p>';
             }
 
-            // 4. 設定接單按鈕 (如果是從「合作邀請」點進來，顯示按鈕；如果是「已接單」點進來，隱藏按鈕)
             const acceptBtn = document.getElementById('modal-btn-accept');
             if(showAcceptBtn) {
                 acceptBtn.classList.remove('hidden');
-                // 綁定接單事件
                 acceptBtn.onclick = function() {
                     handleAcceptInvite(briefId, data.merchantId);
                     closeModal('brief-detail-modal');
@@ -2877,23 +2896,6 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     };
 
-
-
-
-
-
-
-  // ==========================================
-    //  NEW: 網紅端 - 合作流程核心邏輯 (貼在 handleSaveBrief 之後)
-    // ==========================================
-
-// ============================================================
-    //  修復後的網紅端邏輯 (解決 ... 問題、重複接單問題、修改上傳問題)
-    // ============================================================
-
-
-
-    // === 修正版：網紅合作邀請列表 (修復影片破圖問題) ===
     window.renderInfluencerInvitations = async function() {
         const user = auth.currentUser;
         const listEl = document.getElementById('influencer-invitations-list');
@@ -2902,11 +2904,9 @@ window.sendChatMessage = async function sendChatMessage() {
         listEl.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">正在尋找適合您的機會...</div>';
 
         try {
-            // 步驟 A: 先查出「我已經接過」的 briefId
             const myCollabsSnap = await getDocs(query(collection(db, "collaborations"), where("influencerId", "==", user.uid)));
             const myJoinedBriefIds = new Set(myCollabsSnap.docs.map(doc => doc.data().briefId));
 
-            // 步驟 B: 查出所有待媒合 (pending_match) 的活動
             const q = query(collection(db, "briefs"), 
                            where("status", "==", "pending_match"),
                            where("isDeleted", "==", false));
@@ -2920,23 +2920,19 @@ window.sendChatMessage = async function sendChatMessage() {
                 const briefId = docSnap.id;
                 const brief = docSnap.data();
 
-                // 過濾：如果我已經接過這個單，就跳過
                 if (myJoinedBriefIds.has(briefId)) return;
 
                 count++;
                 
-                // --- ★ 修改重點：智慧封面 (圖片/影片判斷) ---
                 let coverImg = `<div class="w-24 h-24 bg-slate-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">無素材</div>`;
                 
                 if (brief.imageUrls && brief.imageUrls.length > 0) {
                     const url = brief.imageUrls[0];
-                    // 簡單判斷副檔名
                     const isVideo = url.toLowerCase().includes('.mp4') || 
                                   url.toLowerCase().includes('.mov') || 
                                   url.toLowerCase().includes('.webm');
                     
                     if (isVideo) {
-                        // 影片：滑鼠滑過預覽播放
                         coverImg = `
                             <video src="${url}" 
                                 class="w-24 h-24 object-cover rounded-lg flex-shrink-0 bg-black border" 
@@ -2945,11 +2941,9 @@ window.sendChatMessage = async function sendChatMessage() {
                                 onmouseout="this.pause();this.currentTime=0;"
                             ></video>`;
                     } else {
-                        // 圖片
                         coverImg = `<img src="${url}" class="w-24 h-24 object-cover rounded-lg flex-shrink-0 bg-slate-200 border">`;
                     }
                 }
-                // ------------------------------------------
 
                 html += `
                     <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-6 items-start hover:shadow-lg transition-shadow border border-gray-100">
@@ -3004,7 +2998,6 @@ window.sendChatMessage = async function sendChatMessage() {
 
         } catch (error) {
             console.error("載入失敗:", error);
-            // 這裡也加上友善的錯誤提示，如果是索引錯誤就引導使用者
             if(error.message.includes("index")) {
                 listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">系統升級中 (缺少索引)，請管理員至 Console 點擊連結建立。</p>`;
             } else {
@@ -3013,34 +3006,19 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     };
 
-
-    // === 改良版：接單功能 (含除錯訊息) ===
     window.handleAcceptInvite = async function(briefId, merchantId) {
-        console.log("1. 點擊了接單按鈕", briefId, merchantId); // 除錯訊息
-
         const user = auth.currentUser;
         if (!user) return alert('請先登入');
 
-        // 確保 merchantId 有值，如果是 'undefined' 字串或空值，給個預設
         if(!merchantId || merchantId === 'undefined') {
             console.warn("商家 ID 缺失，可能是舊資料");
-            // 視情況決定是否要擋下，或是繼續
         }
         
-        // 使用 try-catch 包裹 confirm，防止某些瀏覽器阻擋
         try {
-            if(!confirm('確定要接受這個合作邀請嗎？')) {
-                console.log("使用者取消接單");
-                return;
-            }
-        } catch(e) {
-            console.error("Confirm 視窗錯誤:", e);
-        }
-
-        console.log("2. 開始檢查是否重複接單...");
+            if(!confirm('確定要接受這個合作邀請嗎？')) return;
+        } catch(e) {}
 
         try {
-            // ★ 這裡可能會因為缺索引而報錯，請看 Console 紅字
             const q = query(collection(db, "collaborations"), 
                 where("briefId", "==", briefId), 
                 where("influencerId", "==", user.uid));
@@ -3048,16 +3026,12 @@ window.sendChatMessage = async function sendChatMessage() {
             const existing = await getDocs(q);
             
             if (!existing.empty) {
-                console.log("檢查結果：已接過單");
                 return alert('您已經接受過這個邀請了，請至「總覽」查看進行中的工作。');
             }
 
-            console.log("3. 檢查通過，正在寫入資料庫...");
-
-            // 寫入 collaborations
             await addDoc(collection(db, "collaborations"), {
                 briefId: briefId,
-                merchantId: merchantId || 'unknown', // 防止 undefined
+                merchantId: merchantId || 'unknown', 
                 influencerId: user.uid,
                 influencerEmail: user.email,
                 status: 'accepted',
@@ -3066,16 +3040,11 @@ window.sendChatMessage = async function sendChatMessage() {
                 updatedAt: serverTimestamp()
             });
 
-            console.log("4. 寫入成功！");
             alert('接單成功！請至「總覽」分頁查看並開始製作素材。');
-            
-            // 切換分頁
             switchTab('influencer', 'dashboard'); 
 
         } catch (error) {
-            console.error("接單流程發生錯誤:", error); // 這行會在 Console 顯示詳細錯誤
-            
-            // 如果是索引錯誤，提示使用者
+            console.error("接單流程發生錯誤:", error); 
             if(error.message.includes("requires an index")) {
                 alert("系統升級中：請打開 F12 Console 點擊連結建立索引 (Index)。");
             } else {
@@ -3084,8 +3053,6 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     };
 
-// 2. 渲染「進行中的工作」 (修復：狀態判斷與修改上傳表單)
-    // === 網紅端：渲染進行中的工作 (含歷史紀錄、檔案刪除、成果上傳) ===
     window.renderInfluencerActiveJobs = async function() {
         const user = auth.currentUser;
         if (!user) return;
@@ -3105,14 +3072,12 @@ window.sendChatMessage = async function sendChatMessage() {
                 const collab = docSnap.data();
                 const collabId = docSnap.id;
                 
-                // 讀取標題
                 let briefTitle = '載入中...';
                 try {
                     const briefSnap = await getDoc(doc(db, 'briefs', collab.briefId));
                     if (briefSnap.exists()) briefTitle = briefSnap.data().productName;
                 } catch(e){}
 
-                // --- 1. 歷史紀錄渲染 ---
                 let historyHtml = '';
                 if (collab.history && collab.history.length > 0) {
                     historyHtml = `<div class="bg-slate-50 rounded-lg p-3 mb-4 max-h-60 overflow-y-auto border border-slate-200 space-y-3">
@@ -3123,7 +3088,6 @@ window.sendChatMessage = async function sendChatMessage() {
                         const align = isMe ? 'ml-auto bg-teal-50 border-teal-100' : 'mr-auto bg-white border-gray-200';
                         const title = isMe ? '我 (提交)' : '商家 (建議)';
                         
-                        // 歷史檔案顯示
                         let fileLink = '';
                         if(item.files && item.files.length > 0){
                             item.files.forEach(f => {
@@ -3146,23 +3110,18 @@ window.sendChatMessage = async function sendChatMessage() {
                     historyHtml += `</div>`;
                 }
 
-                // --- 2. 狀態 UI 與 連結邏輯 ---
                 let statusBadge = '';
                 let actionArea = '';
 
                 if (collab.status === 'accepted' || collab.status === 'changes_requested') {
-                    // === 提交/修改區塊 ===
                     if (collab.status === 'changes_requested') {
                         statusBadge = '<span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-bold">需修改 ⚠️</span>';
                     } else {
                         statusBadge = '<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-bold">製作中 🛠️</span>';
                     }
 
-                    // 檔案選擇與預覽區 (使用全域變數 influencerSelectedFiles)
-                    // 初始化該 ID 的陣列
                     if(!influencerSelectedFiles[collabId]) influencerSelectedFiles[collabId] = [];
                     
-                    // 產生預覽 HTML
                     let previewHtml = '';
                     if(influencerSelectedFiles[collabId].length > 0){
                         influencerSelectedFiles[collabId].forEach((f, idx) => {
@@ -3203,18 +3162,15 @@ window.sendChatMessage = async function sendChatMessage() {
                     actionArea = `<div class="p-3 bg-yellow-50 text-yellow-800 text-sm rounded border border-yellow-200">已提交素材，請等待商家審核。</div>`;
                 
                 } else if (collab.status === 'approved') {
-                    // === 需求 4: 連結生成邏輯 ===
                     statusBadge = '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-bold">已確認 ✅</span>';
                     
                     if (!collab.marketingLink) {
-                        // 階段 1: 等待產生連結
                         actionArea = `
                             <div class="p-4 bg-green-50 rounded border border-green-200 text-center space-y-2">
                                 <p class="text-green-800 font-bold">商家已通過您的素材！</p>
                                 <p class="text-sm text-gray-600 animate-pulse">⚙️ 系統正在產生專屬行銷連結，請稍候...</p>
                             </div>`;
                     } else {
-                        // 階段 2: 連結已產生 + 需求 5: 成果上傳
                         actionArea = `
                             <div class="space-y-4">
                                 <div class="p-4 bg-green-100 rounded border border-green-300 text-center">
@@ -3260,18 +3216,13 @@ window.sendChatMessage = async function sendChatMessage() {
         });
     };
 
-    // --- 輔助函式：檔案選擇與刪除 ---
     window.handleInfFileSelect = function(collabId, input) {
         if(input.files && input.files.length > 0){
             if(!influencerSelectedFiles[collabId]) influencerSelectedFiles[collabId] = [];
-            // 將新選的檔案加入陣列
             Array.from(input.files).forEach(f => influencerSelectedFiles[collabId].push(f));
-            // 重新渲染該區塊 (這裡偷懶直接重新觸發 render，實務上可用 DOM 操作優化，但這樣最保險)
-            // 由於 render 是監聽 snapshot，我們這裡暫時只能手動更新 UI，或是等待下一次 snapshot
-            // 為了簡單，我們直接操作 DOM 更新預覽區
             updateInfFilePreview(collabId);
         }
-        input.value = ''; // 清空 input 讓同個檔案可再選
+        input.value = ''; 
     };
 
     window.removeInfFile = function(collabId, index) {
@@ -3295,24 +3246,18 @@ window.sendChatMessage = async function sendChatMessage() {
         container.innerHTML = html;
     }
 
-    // 4. 網紅上傳素材 (圖片或影片)
-// === 修改後：處理多檔上傳 ===
-    // === 修正版：網紅提交素材 (修復讀不到檔案與時間錯誤問題) ===
     window.handleSubmitContent = async function(collabId) {
-        // 1. 抓取 HTML 元素
         const textInput = document.getElementById(`text-${collabId}`);
-        const fileInput = document.getElementById(`files-${collabId}`); // 這是原本的 input
+        const fileInput = document.getElementById(`files-${collabId}`); 
         const progressDiv = document.getElementById(`progress-${collabId}`);
         const user = auth.currentUser;
         
         let files = [];
 
-        // 1) 先把 input 裡「還沒進預覽」的檔案撈出來（以防萬一）
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
             files = files.concat(Array.from(fileInput.files));
         }
 
-        // 2) 再把你存到預覽用陣列裡的檔案也加進來（★關鍵修正）
         if (influencerSelectedFiles[collabId] && influencerSelectedFiles[collabId].length > 0) {
             files = files.concat(influencerSelectedFiles[collabId]);
         }
@@ -3320,17 +3265,15 @@ window.sendChatMessage = async function sendChatMessage() {
         const text = textInput.value;
 
         if (files.length === 0 && !text) {
-            return alert('請至少上傳一種檔案或說明'); // 文案隨你
+            return alert('請至少上傳一種檔案或說明'); 
         }
 
         progressDiv.classList.remove('hidden');
         progressDiv.textContent = `準備上傳 ${files.length} 個檔案...`;
 
         try {
-            // 3. 上傳檔案到 Storage
             const uploadPromises = files.map(file => {
                 return new Promise((resolve, reject) => {
-                    // 路徑加上時間戳記避免檔名重複
                     const storagePath = `collaborations/${collabId}/${Date.now()}_${file.name}`;
                     const ref = storageRef(storage, storagePath);
                     const task = uploadBytesResumable(ref, file);
@@ -3353,38 +3296,31 @@ window.sendChatMessage = async function sendChatMessage() {
                 });
             });
 
-            // 等待所有檔案上傳完畢
             const newFilesData = await Promise.all(uploadPromises);
 
-            // 4. 更新 Firestore 資料庫
             const docRef = doc(db, "collaborations", collabId);
             
-            // 步驟 A: 先讀取目前的資料 (為了拿到舊的 history)
             const docSnap = await getDoc(docRef);
             if (!docSnap.exists()) throw new Error("找不到該合作案");
             
             const currentData = docSnap.data();
             const currentHistory = currentData.history || [];
 
-            // 步驟 B: 建立新的歷史紀錄物件
             const newHistoryItem = {
                 role: 'influencer',
                 action: 'submit',
                 text: text,
                 files: newFilesData,
-                // ★ 關鍵修正：改用 new Date()，解決 Timestamp is not defined 錯誤
                 time: new Date() 
             };
 
-            // 步驟 C: 將新紀錄加入陣列
             currentHistory.push(newHistoryItem);
 
-            // 步驟 D: 更新資料庫
             await updateDoc(docRef, {
-                contentData: newFilesData, // 更新主要顯示區 (顯示最新的)
-                history: currentHistory,   // 更新歷史紀錄陣列
-                status: 'reviewing',       // 狀態改為審核中
-                updatedAt: serverTimestamp() // 使用伺服器時間
+                contentData: newFilesData, 
+                history: currentHistory,   
+                status: 'reviewing',       
+                updatedAt: serverTimestamp() 
             });
             
             alert('提交成功！等待商家審核。');
@@ -3395,33 +3331,21 @@ window.sendChatMessage = async function sendChatMessage() {
             textInput.value = '';
             progressDiv.classList.add('hidden');
             
-            // 5. 清空輸入框與隱藏進度條
             fileInput.value = '';
             textInput.value = '';
-            // 如果有全域變數也要清空
             if(typeof influencerSelectedFiles !== 'undefined') {
                 influencerSelectedFiles[collabId] = [];
-                // 如果有預覽區塊也要清空 (假設函式存在)
                 if(typeof updateInfFilePreview === 'function') updateInfFilePreview(collabId);
             }
             progressDiv.classList.add('hidden');
 
         } catch (error) {
             console.error("提交失敗:", error);
-            // 這裡如果是權限錯誤，會顯示出來
             alert("提交失敗: " + error.message);
             progressDiv.classList.add('hidden');
         }
     };
 
-
-    // ==========================================
-    //  NEW: 商家端 - 審核流程 (接續在網紅邏輯後)
-    // ==========================================
-
-    // === 更新版：渲染網紅牆與狀態條 ===
-// 1. 商家詳細頁渲染 (網紅牆 + 狀態條) (Requirement #3 & #4)
-    // === 大改版：商家網紅牆 (含自動審核檢查 + 完整素材顯示) ===
     window.renderCampaignCollaborations = function(briefId, containerId, targetCount = 10) {
         const container = document.getElementById(containerId);
         if(!container) return;
@@ -3432,41 +3356,34 @@ window.sendChatMessage = async function sendChatMessage() {
             let stats = { accepted: 0, reviewing: 0, changes: 0, approved: 0, rejected: 0 };
             const currentTotal = snapshot.size;
             
-            // --- 準備 HTML ---
             let cardsHtml = '';
 
             snapshot.docs.forEach(docSnap => {
                 const collab = docSnap.data();
                 const cid = docSnap.id;
                 
-                // === 需求 4: 3天自動通過檢查 (Lazy Check) ===
                 if (collab.status === 'reviewing' || collab.status === 'submitting') {
                     const now = Date.now();
                     const lastUpdate = collab.updatedAt ? collab.updatedAt.toMillis() : now;
                     const diffHours = (now - lastUpdate) / (1000 * 60 * 60);
                     
-                    // 如果超過 72 小時 (3天)
                     if (diffHours > 72) {
                         console.log(`單號 ${cid} 超過 3 天未審核，自動通過。`);
                         updateDoc(doc(db, "collaborations", cid), {
                             status: 'approved',
                             updatedAt: serverTimestamp(),
-                            autoApproved: true // 做個記號
+                            autoApproved: true 
                         });
-                        // 這裡不需繼續渲染，因為 updateDoc 會觸發新的 snapshot，直接 return 等下次更新
                         return; 
                     }
                 }
-                // ============================================
 
-                // 統計狀態
                 if (collab.status === 'accepted') stats.accepted++;
                 else if (collab.status === 'reviewing' || collab.status === 'submitting') stats.reviewing++;
                 else if (collab.status === 'changes_requested') stats.changes++;
                 else if (collab.status === 'approved') stats.approved++;
                 else if (collab.status === 'rejected') stats.rejected++;
 
-                // === 需求 5: 顯示所有素材 (Loop Rendering) ===
                 let contentPreview = '';
                 let contentDataArr = Array.isArray(collab.contentData) ? collab.contentData : (collab.contentData ? [collab.contentData] : []);
                 
@@ -3492,16 +3409,12 @@ window.sendChatMessage = async function sendChatMessage() {
                 } else {
                     contentPreview = '<div class="h-20 bg-slate-50 rounded-lg flex items-center justify-center text-gray-400 text-sm mt-3">尚未上傳素材</div>';
                 }
-                // ==========================================
 
-                // === 需求 3: 修改按鈕邏輯 (次數限制) ===
                 let actions = '';
-                // 讀取已修改次數，預設 0
                 const changeCount = collab.changeRequestCount || 0;
                 const maxChanges = 2;
                 const remainingChanges = maxChanges - changeCount;
 
-                // 定義狀態 UI
                 const statusConfig = {
                     'accepted': { class: 'bg-blue-100 text-blue-800', label: '製作中' },
                     'reviewing': { class: 'bg-yellow-100 text-yellow-800', label: '待審核' },
@@ -3513,12 +3426,10 @@ window.sendChatMessage = async function sendChatMessage() {
                 const st = statusConfig[collab.status] || { class: 'bg-gray-100', label: collab.status };
 
                 if (collab.status === 'reviewing' || collab.status === 'submitting') {
-                    // 修改按鈕邏輯：如果有剩餘次數才顯示按鈕
                     let changeBtnHtml = '';
                     if (remainingChanges > 0) {
                         changeBtnHtml = `<button onclick="handleMerchantReview('${cid}', 'request_change', ${changeCount})" class="bg-orange-500 text-white text-xs font-bold py-2 px-3 rounded hover:bg-orange-600 flex-1">修改 (剩${remainingChanges}次)</button>`;
                     } else {
-                        // 次數用完，不顯示按鈕，或者顯示禁用按鈕
                         changeBtnHtml = `<button disabled class="bg-gray-300 text-white text-xs font-bold py-2 px-3 rounded cursor-not-allowed flex-1">修改次數已盡</button>`;
                     }
 
@@ -3538,7 +3449,6 @@ window.sendChatMessage = async function sendChatMessage() {
                      actions = `<div class="mt-3 text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200 text-center">系統自動通過 (超過3天未審核)</div>`;
                 }
 
-                // 組裝卡片
                 cardsHtml += `
                     <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col">
                         <div class="flex justify-between items-center mb-3">
@@ -3560,7 +3470,7 @@ window.sendChatMessage = async function sendChatMessage() {
                         ${actions}
                     </div>
                 `;
-            }); // end forEach
+            }); 
 
             cardsHtml = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${cardsHtml}</div>`;
             
@@ -3574,7 +3484,6 @@ window.sendChatMessage = async function sendChatMessage() {
                 container.innerHTML = cardsHtml;
             }
 
-            // 更新狀態條 (Status Bar) - 這部分代碼不變，維持原本的邏輯即可
             const activeCount = currentTotal - stats.rejected;
             const remainingSlots = Math.max(0, targetCount - activeCount);
             const barContainer = document.getElementById('status-bar-container');
@@ -3601,7 +3510,6 @@ window.sendChatMessage = async function sendChatMessage() {
         });
     };
 
-// === 全新：商家審核處理 (呼叫 Modal) ===
     let currentReviewCollabId = null;
     let currentReviewChangeCount = 0;
 
@@ -3615,7 +3523,6 @@ window.sendChatMessage = async function sendChatMessage() {
         const confirmText = document.getElementById('review-confirm-text');
         const btn = document.getElementById('btn-confirm-review');
 
-        // 重置 UI
         changeArea.classList.add('hidden');
         confirmText.classList.add('hidden');
         document.getElementById('review-comment').value = '';
@@ -3642,7 +3549,6 @@ window.sendChatMessage = async function sendChatMessage() {
             btn.onclick = () => submitMerchantReview('rejected');
         }
 
-        // 顯示 Modal
         modal.classList.remove('hidden');
         setTimeout(() => {
             modal.classList.remove('opacity-0');
@@ -3650,11 +3556,10 @@ window.sendChatMessage = async function sendChatMessage() {
         }, 10);
     };
 
-    // 1. 新增：商家選擇檔案後的預覽功能
     window.previewReviewFiles = function() {
         const input = document.getElementById('review-file');
         const container = document.getElementById('review-files-preview');
-        container.innerHTML = ''; // 清空舊預覽
+        container.innerHTML = ''; 
 
         if (input.files) {
             Array.from(input.files).forEach(file => {
@@ -3674,14 +3579,13 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     };
 
-    // 2. 修改後：商家送出審核 (支援多檔上傳)
     async function submitMerchantReview(status) {
         if(!currentReviewCollabId) return;
         
         const btn = document.getElementById('btn-confirm-review');
         const comment = document.getElementById('review-comment').value;
         const fileInput = document.getElementById('review-file');
-        const titleEl = document.getElementById('review-modal-title'); // 為了顯示進度
+        const titleEl = document.getElementById('review-modal-title'); 
         
         btn.disabled = true;
         btn.textContent = '處理中...';
@@ -3689,14 +3593,12 @@ window.sendChatMessage = async function sendChatMessage() {
         try {
             let uploadedFiles = [];
 
-            // 如果是要求修改，且有選擇檔案 -> 進行多檔上傳
             if (status === 'changes_requested' && fileInput.files.length > 0) {
                 const files = Array.from(fileInput.files);
                 titleEl.textContent = `正在上傳 ${files.length} 個檔案...`;
 
                 const uploadPromises = files.map(file => {
                     return new Promise((resolve, reject) => {
-                        // 存到 reviews 資料夾
                         const storagePath = `reviews/${currentReviewCollabId}/${Date.now()}_${file.name}`;
                         const ref = storageRef(storage, storagePath);
                         const task = uploadBytesResumable(ref, file);
@@ -3715,18 +3617,16 @@ window.sendChatMessage = async function sendChatMessage() {
                 uploadedFiles = await Promise.all(uploadPromises);
             }
 
-            // 建構歷史紀錄物件
             const newHistoryItem = {
                 role: 'merchant',
                 action: status,
                 text: status === 'changes_requested' ? comment : (status === 'approved' ? '商家已通過' : '商家已拒絕'),
-                files: uploadedFiles, // 這裡現在是陣列了
+                files: uploadedFiles, 
                 time: new Date()
             };
 
             const docRef = doc(db, "collaborations", currentReviewCollabId);
             
-            // 準備更新資料
             let updateData = {
                 status: status,
                 updatedAt: serverTimestamp()
@@ -3737,11 +3637,8 @@ window.sendChatMessage = async function sendChatMessage() {
                 updateData.changeRequestCount = currentReviewChangeCount + 1;
             }
 
-            // 更新 DB (狀態)
             await updateDoc(docRef, updateData);
             
-            // 更新 DB (歷史紀錄)
-            // 先讀取舊的，再 Push 新的 (比較穩定的做法)
             const snap = await getDoc(docRef);
             let currentHistory = snap.data().history || [];
             currentHistory.push(newHistoryItem);
@@ -3750,7 +3647,6 @@ window.sendChatMessage = async function sendChatMessage() {
 
             alert('操作成功！');
             
-            // 清空預覽區
             document.getElementById('review-files-preview').innerHTML = '';
             closeModal('merchant-review-modal');
 
@@ -3760,13 +3656,10 @@ window.sendChatMessage = async function sendChatMessage() {
         } finally {
             btn.disabled = false;
             btn.textContent = '確認送出';
-            // 還原標題
             document.getElementById('review-modal-title').textContent = '審核操作';
         }
     }
 
-    
-    // 3. 刪除活動 (Requirement #1: 10分鐘軟刪除限制)
     window.handleDeleteCampaign = async function(id, createdTimeMillis) {
         const now = Date.now();
         const diffMinutes = (now - createdTimeMillis) / 1000 / 60;
@@ -3779,7 +3672,6 @@ window.sendChatMessage = async function sendChatMessage() {
         if(!confirm('確定要刪除這個活動嗎？此操作無法復原。')) return;
 
         try {
-            // 執行軟刪除
             await updateDoc(doc(db, "briefs", id), {
                 isDeleted: true
             });
@@ -3790,36 +3682,24 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     };
 
-
-
-    // === v2 (本次修改): 財務管理相關函式 START ===
-
-    // 1. 切換付款方式 UI
     window.selectPaymentMethod = function(method) {
-        // 重設所有按鈕樣式
         document.querySelectorAll('.payment-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         
-        // 隱藏所有詳情區塊
         const bankDetails = document.getElementById('bank-transfer-details');
         if (bankDetails) bankDetails.classList.add('hidden');
-        // (未來可在此處新增其他支付方式的區塊)
 
-        // 啟用選中的項目
         if (method === 'bank') {
             document.getElementById('btn-pay-bank').classList.add('active');
             if (bankDetails) bankDetails.classList.remove('hidden');
         } else if (method === 'card') {
             document.getElementById('btn-pay-card').classList.add('active');
-            // (顯示信用卡表單)
         } else if (method === 'epay') {
             document.getElementById('btn-pay-epay').classList.add('active');
-            // (顯示電子支付選項)
         }
     }
 
-    // 2. 提交銀行轉帳證明
     window.handleSubmitTransferProof = async function() {
         const user = auth.currentUser;
         if (!user) {
@@ -3836,7 +3716,6 @@ window.sendChatMessage = async function sendChatMessage() {
         const amount = parseInt(amountInput.value);
         const file = fileInput.files[0];
 
-        // 驗證
         if (!amount || amount <= 0) {
             alert('請輸入有效的匯款金額！');
             return;
@@ -3853,13 +3732,10 @@ window.sendChatMessage = async function sendChatMessage() {
             progressEl.classList.remove('hidden');
             progressEl.value = 0;
 
-            // 1. 上傳圖片至 Storage
-            // 檔案路徑符合您的 Storage 規則: /logos/{userId}/{allPaths=**}
             const filePath = `logos/${user.uid}/transfer_proofs/${Date.now()}_${file.name}`;
             const fileRef = storageRef(storage, filePath);
             const uploadTask = uploadBytesResumable(fileRef, file);
 
-            // 監聽上傳進度
             uploadTask.on('state_changed', 
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -3867,7 +3743,6 @@ window.sendChatMessage = async function sendChatMessage() {
                     statusEl.textContent = `上傳中... ${Math.round(progress)}%`;
                 }, 
                 (error) => {
-                    // 處理上傳失敗
                     console.error('檔案上傳失敗:', error);
                     alert('檔案上傳失敗，請稍後再試。');
                     statusEl.textContent = '上傳失敗，請重試。';
@@ -3876,24 +3751,20 @@ window.sendChatMessage = async function sendChatMessage() {
                     progressEl.classList.add('hidden');
                 }, 
                 async () => {
-                    // 2. 上傳成功，取得下載 URL
                     statusEl.textContent = '上傳完成，正在儲存紀錄...';
                     const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                     
-                    // 3. 將紀錄寫入 Firestore
-                    // 資料路徑符合您的 Firestore 規則: /users/{userId}/{document=**}
                     const transferDocRef = doc(collection(db, 'users', user.uid, 'transfers'));
                     
                     await setDoc(transferDocRef, {
                         amount: amount,
                         proofImageUrl: downloadURL,
-                        status: 'pending', // 待審核
+                        status: 'pending', 
                         createdAt: serverTimestamp(),
                         userId: user.uid,
                         userEmail: user.email
                     });
 
-                    // 4. 完成後的回饋
                     alert('匯款證明已提交！我們將盡快為您審核並加值。');
                     amountInput.value = '';
                     fileInput.value = null;
@@ -3901,7 +3772,7 @@ window.sendChatMessage = async function sendChatMessage() {
                     submitBtn.disabled = false;
                     submitBtn.textContent = '提交匯款證明';
                     progressEl.classList.add('hidden');
-                    selectPaymentMethod(null); // 隱藏銀行轉帳區塊
+                    selectPaymentMethod(null); 
                 }
             );
 
@@ -3915,15 +3786,13 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     }
 
-    // 3. 監聽帳戶餘額
-    let unsubscribeBalance = null; // 用來儲存取消監聽的函式
+    let unsubscribeBalance = null; 
     function listenForAccountBalance(userId) {
-        if (unsubscribeBalance) unsubscribeBalance(); // 取消舊的監聽
+        if (unsubscribeBalance) unsubscribeBalance(); 
 
         const balanceEl = document.getElementById('finance-account-balance');
         if (!balanceEl) return;
         
-        // 假設餘額文件儲存在 /users/{userId}/finance/balance
         const balanceDocRef = doc(db, 'users', userId, 'finance', 'balance');
 
         unsubscribeBalance = onSnapshot(balanceDocRef, (docSnap) => {
@@ -3932,7 +3801,6 @@ window.sendChatMessage = async function sendChatMessage() {
                 const balance = data.currentBalance || 0;
                 balanceEl.textContent = `NT$ ${balance.toLocaleString()}`;
             } else {
-                // 如果文件不存在，顯示 0
                 balanceEl.textContent = 'NT$ 0';
                 console.log('尚未建立餘額文件 (finance/balance)。');
             }
@@ -3941,54 +3809,43 @@ window.sendChatMessage = async function sendChatMessage() {
             balanceEl.textContent = 'NT$ ---';
         });
     }
-    // === v2 (本次修改): 財務管理相關函式 END ===
 
+    window.handleLogin = async function() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            alert('登入失敗：' + error.message);
+        }
+    };
 
-        window.handleLogin = async function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                alert('登入失敗：' + error.message);
-            }
-/* 功能：登出目前使用者，並處理錯誤訊息顯示。*/
-        };
+    window.handleLogout = async function() {
+        try {
+        await signOut(auth);
+        } catch (error) {
+            alert('登出失敗：' + error.message);
+        }
+    };
 
-        window.handleLogout = async function() {
-            try {
-            await signOut(auth);
-            } catch (error) {
-                alert('登出失敗：' + error.message);
-            }
-/* 功能：以 Google 彈出視窗進行登入，成功後進入認證狀態。*/
-        };
+    window.handleGoogleLogin = async function() {
+        const provider = new GoogleAuthProvider();
+        try {
+            const result = await signInWithPopup(auth, provider);
+            console.log("Google 彈出視窗登入成功:", result.user);
+        } catch (error) {
+            console.error("Google 登入失敗，錯誤訊息:", error);
+            alert("Google 登入時發生錯誤: " + error.message);
+        }
+    };
 
-        window.handleGoogleLogin = async function() {
-            const provider = new GoogleAuthProvider();
-            try {
-                // 直接使用我們在頂部匯入的 signInWithPopup
-                const result = await signInWithPopup(auth, provider);
-                console.log("Google 彈出視窗登入成功:", result.user);
-            } catch (error) {
-                console.error("Google 登入失敗，錯誤訊息:", error);
-                alert("Google 登入時發生錯誤: " + error.message);
-            }
-        };
+    let currentInfluencerBalance = 0; 
+    let unsubInfBalance = null; 
 
-
-// === 網紅財務變數 ===
-    let currentInfluencerBalance = 0; // 用來暫存從資料庫讀到的餘額
-    let unsubInfBalance = null; // 監聽器
-
-    // 1. 監聽網紅的可提領餘額
-    // 資料位置：users/{uid}/finance/influencer_balance (欄位: amount)
-    // === 修改後的除錯版本 ===
     window.listenForInfluencerBalance = function(uid) {
         if (unsubInfBalance) unsubInfBalance(); 
 
-        console.log("正在監聽網紅財務，目標 UID:", uid); // 檢查 1: 確認監聽的 ID 對不對
-
+        console.log("正在監聽網紅財務，目標 UID:", uid); 
 
         const docRef = doc(db, 'users', uid, 'finance', 'influencer_balance');
         unsubInfBalance = onSnapshot(docRef, (docSnap) => {
@@ -3996,16 +3853,14 @@ window.sendChatMessage = async function sendChatMessage() {
             
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                console.log("找到資料了！內容是:", data); // 檢查 2: 確認有抓到資料
+                console.log("找到資料了！內容是:", data); 
                 
-                // 確保 amount 是數字，避免 undefined
                 currentInfluencerBalance = data.amount || 0;
             } else {
-                console.warn("找不到資料！請確認資料庫路徑是否為:", docRef.path); // 檢查 3: 路徑錯誤提示
+                console.warn("找不到資料！請確認資料庫路徑是否為:", docRef.path); 
                 currentInfluencerBalance = 0;
             }
             
-            // 更新畫面
             if(el) {
                 el.textContent = `NT$ ${currentInfluencerBalance.toLocaleString()}`;
                 console.log("畫面已更新為:", el.textContent);
@@ -4015,10 +3870,6 @@ window.sendChatMessage = async function sendChatMessage() {
         });
     };
 
-
-
-
-    // 2. 處理提領申請
     window.handleInfluencerWithdraw = async function() {
         const user = auth.currentUser;
         if (!user) return alert('請先登入');
@@ -4028,17 +3879,14 @@ window.sendChatMessage = async function sendChatMessage() {
         const amountStr = document.getElementById('inf-withdraw-amount').value;
         const amount = parseInt(amountStr);
 
-        // --- 驗證邏輯 ---
         if (!bankCode) return alert('請選擇提領銀行');
         if (!account) return alert('請輸入銀行帳號');
         if (!amount || amount <= 0) return alert('請輸入有效的金額');
         
-        // 規則 A: 金額是否大於餘額
         if (amount > currentInfluencerBalance) {
             return alert(`提領失敗：您的餘額不足 (目前餘額: ${currentInfluencerBalance})`);
         }
 
-        // 規則 B: 是否為 1000 的倍數
         if (amount % 1000 !== 0) {
             return alert('提領失敗：金額必須是 1,000 的倍數 (例如 1000, 2000, 5000)');
         }
@@ -4048,7 +3896,6 @@ window.sendChatMessage = async function sendChatMessage() {
         }
 
         try {
-        // ✅ 修改這裡：寫在 user 底下的 withdrawals 子集合
         await addDoc(
             collection(db, "users", user.uid, "withdrawals"),
             {
@@ -4058,14 +3905,12 @@ window.sendChatMessage = async function sendChatMessage() {
                 amount: amount,
                 bankCode: bankCode,
                 bankAccount: account,
-                status: 'pending',      // pending(待審核), approved(已撥款), rejected(拒絕)
+                status: 'pending',      
                 createdAt: serverTimestamp()
             }
         );
 
-
             alert('提領申請已送出！我們將由專人進行審核。');
-            // 清空輸入框
             document.getElementById('inf-withdraw-amount').value = '';
         } catch (error) {
             console.error("提領申請失敗:", error);
@@ -4073,16 +3918,6 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     };
 
-
-
-
-
-
-        // ============================================================
-    //  ★ 網紅個人資料與設定功能 (修復版：已搬入 Module 內)
-    // ============================================================
-
-    // 1. 上傳頭像功能
     window.uploadInfluencerAvatar = function() {
         const user = auth.currentUser;
         if (!user) return alert('請先登入');
@@ -4093,8 +3928,6 @@ window.sendChatMessage = async function sendChatMessage() {
         const statusEl = document.getElementById('inf-upload-status');
         statusEl.textContent = '上傳中...';
 
-        // 設定路徑：logos/使用者ID/檔名
-        // 注意：這裡使用 storageRef 就不會報錯了，因為我們在 module 裡面
         const path = `logos/${user.uid}/influencer_avatar_${Date.now()}.png`;
         const ref = storageRef(storage, path); 
         const task = uploadBytesResumable(ref, file);
@@ -4106,14 +3939,10 @@ window.sendChatMessage = async function sendChatMessage() {
                 alert('上傳失敗');
             },
             async () => {
-                // 上傳成功，取得網址
                 const url = await getDownloadURL(task.snapshot.ref);
                 
-                // 1. 填入隱藏欄位 (為了存檔用)
                 document.getElementById('inf-avatar-url').value = url;
-                // 2. 更新目前表單上的預覽圖
                 document.getElementById('inf-avatar-preview-form').src = url;
-                // 3. 更新右側預覽卡片的圖 (如果有的話)
                 const cardAvatar = document.getElementById('inf-card-avatar');
                 if(cardAvatar) cardAvatar.src = url;
                 
@@ -4122,8 +3951,6 @@ window.sendChatMessage = async function sendChatMessage() {
         );
     };
 
-
-    // === 新增：網紅上傳行銷成果 ===
     window.handleUploadResults = async function(collabId, briefId, influencerId) {
         const fileInput = document.getElementById(`result-file-${collabId}`);
         if (!fileInput.files || fileInput.files.length === 0) return alert('請選擇檔案');
@@ -4133,9 +3960,6 @@ window.sendChatMessage = async function sendChatMessage() {
         try {
             const uploadPromises = Array.from(fileInput.files).map(file => {
                 return new Promise((resolve, reject) => {
-                    // 需求路徑：briefs/{briefId}/results/{influencerId}/{fileName}
-                    // 但因為 briefs 結構我們可能不想動，或者你想用資料夾結構
-                    // 建議使用：campaign_results/{briefId}/{influencerId}/{fileName} 比較獨立清晰
                     const path = `campaign_results/${briefId}/${influencerId}/${Date.now()}_${file.name}`;
                     const ref = storageRef(storage, path);
                     const task = uploadBytesResumable(ref, file);
@@ -4149,17 +3973,11 @@ window.sendChatMessage = async function sendChatMessage() {
 
             const results = await Promise.all(uploadPromises);
 
-            // 寫入資料庫
-            // 寫在 collaborations 裡面做個紀錄
             await updateDoc(doc(db, "collaborations", collabId), {
-                finalResults: results, // 儲存成果連結
-                status: 'completed', // 標記為完全結束
+                finalResults: results, 
+                status: 'completed', 
                 updatedAt: serverTimestamp()
             });
-
-            // 也可以依照需求寫入 briefs 底下的子集合 (如果需要商家在 Brief 頁面看)
-            // const resultRef = doc(collection(db, 'briefs', briefId, 'results'), influencerId);
-            // await setDoc(resultRef, { files: results, influencerId: influencerId }, { merge: true });
 
             alert('成果上傳成功！');
 
@@ -4169,8 +3987,6 @@ window.sendChatMessage = async function sendChatMessage() {
         }
     };
 
-
-    // 2. 儲存個人資料功能
     window.handleSaveInfluencerProfile = async function() {
         const user = auth.currentUser;
         if(!user) return alert('請先登入');
@@ -4181,7 +3997,7 @@ window.sendChatMessage = async function sendChatMessage() {
             name: document.getElementById('inf-name').value,
             contactEmail: document.getElementById('inf-contact-email').value,
             bio: document.getElementById('inf-bio').value,
-            avatarUrl: document.getElementById('inf-avatar-url').value, // 記得存頭像
+            avatarUrl: document.getElementById('inf-avatar-url').value, 
             socials: {
                 instagram: document.getElementById('inf-ig').value,
                 youtube: document.getElementById('inf-yt').value,
@@ -4193,115 +4009,12 @@ window.sendChatMessage = async function sendChatMessage() {
         try {
             await setDoc(ref, data, { merge: true });
             alert('個人資料已更新！');
-            // 這裡不需要手動更新卡片，因為下面的監聽器會自動處理
         } catch(e) {
             console.error(e);
             alert('儲存失敗: ' + e.message);
         }
     };
 
-// === 1. 商家總覽邏輯 (統計數據 + 待辦事項) ===
-    function initMerchantDashboard(uid) {
-        // 設定日期
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString();
-        
-        // 監聽 Briefs (計算花費與總數)
-        const qBriefs = query(collection(db, "briefs"), where("merchantId", "==", uid), where("isDeleted", "==", false));
-        onSnapshot(qBriefs, (snap) => {
-            let activeCount = 0;
-            let totalSpend = 0;
-            let totalImpressions = 0;
-            
-            snap.forEach(doc => {
-                const data = doc.data();
-                if (data.status === 'in_progress' || data.status === 'pending_match') activeCount++;
-                totalSpend += (data.budget || 0);
-                totalImpressions += (data.impressions || 0);
-            });
-
-            document.getElementById('m-stat-active').textContent = activeCount;
-            document.getElementById('m-stat-spend').textContent = `NT$ ${totalSpend.toLocaleString()}`;
-            document.getElementById('m-stat-reach').textContent = totalImpressions.toLocaleString();
-        });
-
-        // 監聽 Collaborations (找出待審核的)
-        // 注意：這裡需要複合索引，如果報錯請按 Console 連結建立
-        const qCollabs = query(collection(db, "collaborations"), where("merchantId", "==", uid));
-        onSnapshot(qCollabs, (snap) => {
-            const listEl = document.getElementById('m-action-list');
-            listEl.innerHTML = '';
-            let pendingReviewCount = 0;
-
-            snap.forEach(docSnap => {
-                const col = docSnap.data();
-                // 待審核狀態
-                if (col.status === 'reviewing' || col.status === 'submitting') {
-                    pendingReviewCount++;
-                    const item = document.createElement('div');
-                    item.className = 'flex items-center justify-between p-3 bg-yellow-50 border border-yellow-100 rounded-lg hover:bg-yellow-100 transition cursor-pointer';
-                    item.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                            <div>
-                                <p class="text-sm font-bold text-slate-700">網紅提交了新素材</p>
-                                <p class="text-xs text-gray-500">${col.influencerEmail}</p>
-                            </div>
-                        </div>
-                        <button class="text-xs bg-white border border-gray-300 px-3 py-1 rounded shadow-sm">前往審核</button>
-                    `;
-                    item.onclick = () => switchTab('merchant', 'campaigns'); // 簡單導向
-                    listEl.appendChild(item);
-                }
-            });
-
-            document.getElementById('m-stat-pending').textContent = pendingReviewCount;
-            
-            if (pendingReviewCount === 0) {
-                listEl.innerHTML = '<p class="text-gray-400 text-center py-4 text-sm">目前沒有待辦事項，一切順利！🎉</p>';
-            }
-        });
-    }
-
-    // === 2. 網紅總覽邏輯 (統計收益 + 個人資料) ===
-    function initInfluencerDashboard(uid) {
-        // 監聽合作案統計
-        const q = query(collection(db, "collaborations"), where("influencerId", "==", uid));
-        onSnapshot(q, (snap) => {
-            let activeCount = 0;
-            let totalCount = 0;
-            // 這裡無法直接算收益，因為 collab 沒存金額 (金額在 brief)，簡化顯示
-            // 實務上應該在接單時把 price 寫入 collaboration
-            
-            snap.forEach(doc => {
-                const s = doc.data().status;
-                totalCount++;
-                if (s === 'accepted' || s === 'changes_requested' || s === 'reviewing') activeCount++;
-            });
-
-            document.getElementById('inf-stat-active').textContent = activeCount;
-            document.getElementById('dash-collab-count').textContent = `合作 ${totalCount} 次`;
-            
-            // 順便呼叫渲染列表 (原本的函式)
-            if(typeof renderInfluencerActiveJobs === 'function') {
-                renderInfluencerActiveJobs();
-            }
-        });
-
-        // 監聽財務 (餘額) -> 顯示本月收益
-        // 這裡直接讀取我們之前做的 influencer_balance
-        const financeRef = doc(db, 'users', uid, 'finance', 'influencer_balance');
-        onSnapshot(financeRef, (snap) => {
-            if(snap.exists()) {
-                const amt = snap.data().amount || 0;
-                document.getElementById('inf-stat-income').textContent = `NT$ ${amt.toLocaleString()}`;
-            }
-        });
-    }
-
-
-
-
-    // 3. ★ 監聽並即時更新「總覽頁面」與「設定頁面」
     let unsubInfProfile = null;
     function listenInfluencerProfile(uid) {
         if(unsubInfProfile) unsubInfProfile();
@@ -4309,9 +4022,7 @@ window.sendChatMessage = async function sendChatMessage() {
         const ref = doc(db, 'users', uid, 'influencer', 'profile');
         
         unsubInfProfile = onSnapshot(ref, (docSnap) => {
-            // 取得總覽頁的卡片元素
             const overviewCard = document.getElementById('influencer-overview-card');
-            // 取得設定頁的預覽卡片元素
             const settingCard = document.getElementById('inf-card-preview');
             
             if (!docSnap.exists()) {
@@ -4325,15 +4036,13 @@ window.sendChatMessage = async function sendChatMessage() {
             const bio = data.bio || '尚無簡介';
             const avatar = data.avatarUrl || 'https://placehold.co/100?text=Me';
             
-            // --- A. 更新總覽頁面的卡片 (Dashboard) ---
             if(overviewCard) {
-                overviewCard.classList.remove('hidden'); // 顯示卡片
+                overviewCard.classList.remove('hidden'); 
                 document.getElementById('overview-inf-name').textContent = name;
                 document.getElementById('overview-inf-email').textContent = email;
                 document.getElementById('overview-inf-bio').textContent = bio;
                 document.getElementById('overview-inf-avatar').src = avatar;
                 
-                // 產生徽章
                 let badges = '';
                 const s = data.socials || {};
                 if(s.instagram) badges += `<span class="bg-pink-100 text-pink-800 px-2 py-1 rounded text-xs mr-1">IG</span>`;
@@ -4342,7 +4051,6 @@ window.sendChatMessage = async function sendChatMessage() {
                 document.getElementById('overview-badges').innerHTML = badges;
             }
 
-            // --- B. 更新設定頁面的預覽卡片 (Settings Preview) ---
             if(settingCard) {
                 document.getElementById('inf-card-name').textContent = name;
                 document.getElementById('inf-card-email').textContent = email;
@@ -4355,9 +4063,7 @@ window.sendChatMessage = async function sendChatMessage() {
                 document.getElementById('badge-tt').classList.toggle('hidden', !s.tiktok);
             }
 
-            // --- C. 自動回填表單 (讓使用者編輯時不用重打) ---
             const nameInput = document.getElementById('inf-name');
-            // 只有當欄位是空的時候才回填，避免干擾輸入
             if(nameInput && !nameInput.value) {
                 nameInput.value = name === '網紅' ? '' : name;
                 document.getElementById('inf-contact-email').value = email;
@@ -4374,447 +4080,196 @@ window.sendChatMessage = async function sendChatMessage() {
         });
     }
 
+    window.enterDashboard = function(role) {
+        const user = auth.currentUser;
+        if (!user) {
+            alert('發生錯誤，請重新登入！');
+            navigateTo('login-view');
+            return;
+        }
 
+        if (role === 'merchant') {
+            navigateTo('merchant-dashboard-view');
+            document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
+            document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
+            switchTab('merchant', 'dashboard');
+        } else if (role === 'influencer') {
+            navigateTo('influencer-dashboard-view');
+            document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
+            document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
+            switchTab('influencer', 'dashboard');
+        }
+    };
 
-
-        window.enterDashboard = function(role) {
-            const user = auth.currentUser;
-            if (!user) {
-                alert('發生錯誤，請重新登入！');
-                navigateTo('login-view');
-                return;
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            console.log('使用者已登入，開始監聽活動...');
+            listenForCampaigns();
+            listenForAccountBalance(user.uid); 
+            listenForInfluencerBalance(user.uid);
+            listenInfluencerProfile(user.uid);
+            initMerchantDashboard(user.uid);   
+            initInfluencerDashboard(user.uid); 
+            navigateTo('role-selection-view');
+        } else {
+            console.log('使用者已登出，停止監聽。');
+            if (unsubscribeCampaigns) {
+                unsubscribeCampaigns();
+                unsubscribeCampaigns = null;
             }
-
-            if (role === 'merchant') {
-                navigateTo('merchant-dashboard-view');
-                document.getElementById('user-email-display').textContent = `你好, ${user.email}`;
-                document.querySelector('#merchant-dashboard-view header button').classList.remove('hidden');
-                switchTab('merchant', 'dashboard');
-            } else if (role === 'influencer') {
-                navigateTo('influencer-dashboard-view');
-                document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
-                document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
-                switchTab('influencer', 'dashboard');
+            if (unsubscribeBalance) { 
+                unsubscribeBalance();
+                unsubscribeBalance = null;
             }
+            if (unsubInfBalance) {
+                unsubInfBalance();
+                unsubInfBalance = null;
+            }
+            const balanceEl = document.getElementById('finance-account-balance');
+            if (balanceEl) balanceEl.textContent = 'NT$ 0';
+
+            const infEl = document.getElementById('inf-balance-display');
+            if (infEl) infEl.textContent = 'NT$ 0';
+
+            navigateTo('login-view');
+        }
+    });
+    
+    const companyDocRef = (uid) => doc(db, 'users', uid, 'company', 'profile');
+
+    function renderCompanyCard(data) {
+        const card = document.getElementById('company-card');
+        if (!card) return;
+        if (!data) { card.classList.add('hidden'); return; }
+        const S = (id) => document.getElementById(id);
+        const { name, regNo, phone, address, website, logoUrl } = data;
+        if (S('company-card-logo')) S('company-card-logo').src = logoUrl || '';
+        if (S('company-card-name')) S('company-card-name').textContent = name || '(未命名公司)';
+        if (S('company-card-regno')) S('company-card-regno').textContent = regNo ? `統編：${regNo}` : '';
+        if (S('company-card-phone')) S('company-card-phone').textContent = phone || '';
+        if (S('company-card-address')) S('company-card-address').textContent = address || '';
+        if (S('company-card-website')) { S('company-card-website').textContent = website || ''; S('company-card-website').href = website || '#'; }
+        card.classList.remove('hidden');
+    }
+
+    function renderCompanyPreview(data) {
+        const S = (id) => document.getElementById(id);
+        if (!data) {
+            if (S('company-preview-logo')) S('company-preview-logo').src = '';
+            if (S('company-preview-name')) S('company-preview-name').textContent = '（尚未設定）';
+            if (S('preview-line-phone')) S('preview-line-phone').textContent = '';
+            if (S('preview-line-address')) S('preview-line-address').textContent = '';
+            if (S('preview-line-website')) { S('preview-line-website').textContent = ''; S('preview-line-website').href = '#'; }
+            if (S('company-preview-desc')) S('company-preview-desc').textContent = '';
+            return;
+        }
+        const { name, phone, address, website, logoUrl, description } = data;
+        if (S('company-preview-logo')) S('company-preview-logo').src = logoUrl || '';
+        if (S('company-preview-name')) S('company-preview-name').textContent = name || '（尚未設定）';
+        if (S('preview-line-phone')) S('preview-line-phone').textContent = phone ? `電話：${phone}` : '';
+        if (S('preview-line-address')) S('preview-line-address').textContent = address ? `地址：${address}` : '';
+        if (S('preview-line-website')) { S('preview-line-website').textContent = website || ''; S('preview-line-website').href = website || '#'; }
+        if (S('company-preview-desc')) S('company-preview-desc').textContent = description || '';
+    }
+
+    function fillCompanyForm(data) {
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+        set('company-name', data?.name);
+        set('company-regno', data?.regNo);
+        set('company-phone', data?.phone);
+        set('company-address', data?.address);
+        set('company-website', data?.website);
+        set('company-logo', data?.logoUrl);
+        set('company-desc', data?.description);
+    }
+
+    window.uploadCompanyLogo = function uploadCompanyLogo() {
+        try { if (!auth || !auth.currentUser) { alert('請先登入'); return; } } catch (e) { alert('請先登入'); return; }
+        const fileEl = document.getElementById('company-logo-file');
+        if (!fileEl?.files?.[0]) { alert('請先選擇圖片檔'); return; }
+        const file = fileEl.files[0];
+        const uid = auth.currentUser.uid;
+        const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+        const path = `logos/${uid}/company_logo_${Date.now()}.${ext}`;
+        const refObj = storageRef(storage, path);
+
+        const progressEl = document.getElementById('logo-upload-progress');
+        const statusEl = document.getElementById('logo-upload-status');
+
+        const task = uploadBytesResumable(refObj, file, { cacheControl: 'public,max-age=31536000' });
+        task.on('state_changed',
+            snap => {
+                const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                if (progressEl) progressEl.value = pct;
+                if (statusEl) statusEl.textContent = `上傳中… ${pct}%`;
+            },
+            err => {
+                console.error('上傳失敗：', err);
+                if (statusEl) statusEl.textContent = '上傳失敗';
+                alert('上傳失敗，請重試');
+            },
+            async () => {
+                try {
+                    const url = await getDownloadURL(task.snapshot.ref);
+                    const urlInput = document.getElementById('company-logo');
+                    if (urlInput) urlInput.value = url;
+                    const prevImg = document.getElementById('company-preview-logo');
+                    if (prevImg) prevImg.src = url;
+                    if (statusEl) statusEl.textContent = '上傳完成';
+                    alert('上傳完成！已自動填入 Logo URL，請按「儲存」。');
+                } catch (e) {
+                    console.error('取得下載連結失敗：', e);
+                    alert('取得下載連結失敗');
+                }
+            }
+        );
+    };
+
+    window.handleSaveCompany = async function handleSaveCompany() {
+        const user = auth?.currentUser;
+        if (!user) { alert('請先登入！'); return; }
+        const data = {
+            name: document.getElementById('company-name')?.value.trim() || '',
+            regNo: document.getElementById('company-regno')?.value.trim() || '',
+            phone: document.getElementById('company-phone')?.value.trim() || '',
+            address: document.getElementById('company-address')?.value.trim() || '',
+            website: document.getElementById('company-website')?.value.trim() || '',
+            logoUrl: document.getElementById('company-logo')?.value.trim() || '',
+            description: document.getElementById('company-desc')?.value.trim() || '',
+            updatedAt: serverTimestamp(),
         };
+        if (!data.name) { alert('請至少填寫「公司名稱」'); return; }
+        try {
+            const ref = companyDocRef(user.uid);
+            const snap = await getDoc(ref);
+            await setDoc(ref, { ...(snap.exists() ? {} : { createdAt: serverTimestamp() }), ...data }, { merge: true });
+            const hint = document.getElementById('company-save-hint');
+            if (hint) { hint.classList.remove('hidden'); setTimeout(() => hint.classList.add('hidden'), 1500); }
+        } catch (e) {
+            console.error('儲存公司資料失敗：', e);
+            alert('儲存失敗，請稍後再試');
+        }
+    };
 
-
-
-
-
-    // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
+    try {
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                console.log('使用者已登入，開始監聽活動...');
-                // 當用戶登入後，立刻開始監聽他/她的活動資料
-                listenForCampaigns();
-                listenForAccountBalance(user.uid); // v2 (本次修改): 啟動餘額監聽
-                // ⭐ 3. 網紅端財務管理：可提領金額
-                listenForInfluencerBalance(user.uid);
-                listenInfluencerProfile(user.uid);
-                initMerchantDashboard(user.uid);   // 新增
-                initInfluencerDashboard(user.uid); // 新增
-                navigateTo('role-selection-view');
+                if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
+                window.__unsubCompany = onSnapshot(companyDocRef(user.uid), (snap) => {
+                    const data = snap.exists() ? snap.data() : null;
+                    renderCompanyCard(data);
+                    renderCompanyPreview(data);
+                    fillCompanyForm(data || {});
+                }, (err) => console.error('公司資料監聽失敗：', err));
             } else {
-                console.log('使用者已登出，停止監聽。');
-                // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
-                if (unsubscribeCampaigns) {
-                    unsubscribeCampaigns();
-                    unsubscribeCampaigns = null;
-                }
-                if (unsubscribeBalance) { // v2 (本次修改): 取消餘額監聽
-                    unsubscribeBalance();
-                    unsubscribeBalance = null;
-                }
-                // ⭐ 停止監聽網紅可提領金額
-                if (unsubInfBalance) {
-                    unsubInfBalance();
-                    unsubInfBalance = null;
-                }
-                // v2 (本次修改): 重設餘額顯示
-                const balanceEl = document.getElementById('finance-account-balance');
-                if (balanceEl) balanceEl.textContent = 'NT$ 0';
-
-
-                const infEl = document.getElementById('inf-balance-display');
-                if (infEl) infEl.textContent = 'NT$ 0';
-
-                navigateTo('login-view');
+                if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
+                renderCompanyCard(null);
+                renderCompanyPreview(null);
+                fillCompanyForm({});
             }
         });
-    // === 修改部分 END ===
-    
+    } catch (e) { console.warn('onAuthStateChanged 尚未可用'); }
 
-// === 公司設定：Firestore 文件位置 ===
-const companyDocRef = (uid) => doc(db, 'users', uid, 'company', 'profile');
-
-// === Firebase Storage 初始化 (v2: 移到主 script module 頂部) ===
-// const storage = getStorage(app); 
-
-// === 公司卡片渲染 ===
-function renderCompanyCard(data) {
-  const card = document.getElementById('company-card');
-  if (!card) return;
-  if (!data) { card.classList.add('hidden'); return; }
-  const S = (id) => document.getElementById(id);
-  const { name, regNo, phone, address, website, logoUrl } = data;
-  if (S('company-card-logo')) S('company-card-logo').src = logoUrl || '';
-  if (S('company-card-name')) S('company-card-name').textContent = name || '(未命名公司)';
-  if (S('company-card-regno')) S('company-card-regno').textContent = regNo ? `統編：${regNo}` : '';
-  if (S('company-card-phone')) S('company-card-phone').textContent = phone || '';
-  if (S('company-card-address')) S('company-card-address').textContent = address || '';
-  if (S('company-card-website')) { S('company-card-website').textContent = website || ''; S('company-card-website').href = website || '#'; }
-  card.classList.remove('hidden');
-}
-
-// === 設定頁預覽渲染 ===
-function renderCompanyPreview(data) {
-  const S = (id) => document.getElementById(id);
-  if (!data) {
-    if (S('company-preview-logo')) S('company-preview-logo').src = '';
-    if (S('company-preview-name')) S('company-preview-name').textContent = '（尚未設定）';
-    if (S('preview-line-phone')) S('preview-line-phone').textContent = '';
-    if (S('preview-line-address')) S('preview-line-address').textContent = '';
-    if (S('preview-line-website')) { S('preview-line-website').textContent = ''; S('preview-line-website').href = '#'; }
-    if (S('company-preview-desc')) S('company-preview-desc').textContent = '';
-    return;
-  }
-  const { name, phone, address, website, logoUrl, description } = data;
-  if (S('company-preview-logo')) S('company-preview-logo').src = logoUrl || '';
-  if (S('company-preview-name')) S('company-preview-name').textContent = name || '（尚未設定）';
-  if (S('preview-line-phone')) S('preview-line-phone').textContent = phone ? `電話：${phone}` : '';
-  if (S('preview-line-address')) S('preview-line-address').textContent = address ? `地址：${address}` : '';
-  if (S('preview-line-website')) { S('preview-line-website').textContent = website || ''; S('preview-line-website').href = website || '#'; }
-  if (S('company-preview-desc')) S('company-preview-desc').textContent = description || '';
-}
-
-// === 帶入表單 ===
-function fillCompanyForm(data) {
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
-  set('company-name', data?.name);
-  set('company-regno', data?.regNo);
-  set('company-phone', data?.phone);
-  set('company-address', data?.address);
-  set('company-website', data?.website);
-  set('company-logo', data?.logoUrl);
-  set('company-desc', data?.description);
-}
-
-// === 上傳 Logo 到 Storage ===
-window.uploadCompanyLogo = function uploadCompanyLogo() {
-  try { if (!auth || !auth.currentUser) { alert('請先登入'); return; } } catch (e) { alert('請先登入'); return; }
-  const fileEl = document.getElementById('company-logo-file');
-  if (!fileEl?.files?.[0]) { alert('請先選擇圖片檔'); return; }
-  const file = fileEl.files[0];
-  const uid = auth.currentUser.uid;
-  const ext = (file.name.split('.').pop() || 'png').toLowerCase();
-  const path = `logos/${uid}/company_logo_${Date.now()}.${ext}`;
-  const refObj = storageRef(storage, path);
-
-  const progressEl = document.getElementById('logo-upload-progress');
-  const statusEl = document.getElementById('logo-upload-status');
-
-  const task = uploadBytesResumable(refObj, file, { cacheControl: 'public,max-age=31536000' });
-  task.on('state_changed',
-    snap => {
-      const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-      if (progressEl) progressEl.value = pct;
-      if (statusEl) statusEl.textContent = `上傳中… ${pct}%`;
-    },
-    err => {
-      console.error('上傳失敗：', err);
-      if (statusEl) statusEl.textContent = '上傳失敗';
-      alert('上傳失敗，請重試');
-    },
-    async () => {
-      try {
-        const url = await getDownloadURL(task.snapshot.ref);
-        const urlInput = document.getElementById('company-logo');
-        if (urlInput) urlInput.value = url;
-        const prevImg = document.getElementById('company-preview-logo');
-        if (prevImg) prevImg.src = url;
-        if (statusEl) statusEl.textContent = '上傳完成';
-        alert('上傳完成！已自動填入 Logo URL，請按「儲存」。');
-      } catch (e) {
-        console.error('取得下載連結失敗：', e);
-        alert('取得下載連結失敗');
-      }
-    }
-  );
-};
-
-// === 儲存公司資料到 Firestore ===
-window.handleSaveCompany = async function handleSaveCompany() {
-  const user = auth?.currentUser;
-  if (!user) { alert('請先登入！'); return; }
-  const data = {
-    name: document.getElementById('company-name')?.value.trim() || '',
-    regNo: document.getElementById('company-regno')?.value.trim() || '',
-    phone: document.getElementById('company-phone')?.value.trim() || '',
-    address: document.getElementById('company-address')?.value.trim() || '',
-    website: document.getElementById('company-website')?.value.trim() || '',
-    logoUrl: document.getElementById('company-logo')?.value.trim() || '',
-    description: document.getElementById('company-desc')?.value.trim() || '',
-    updatedAt: serverTimestamp(),
-  };
-  if (!data.name) { alert('請至少填寫「公司名稱」'); return; }
-  try {
-    const ref = companyDocRef(user.uid);
-    const snap = await getDoc(ref);
-    await setDoc(ref, { ...(snap.exists() ? {} : { createdAt: serverTimestamp() }), ...data }, { merge: true });
-    const hint = document.getElementById('company-save-hint');
-    if (hint) { hint.classList.remove('hidden'); setTimeout(() => hint.classList.add('hidden'), 1500); }
-  } catch (e) {
-    console.error('儲存公司資料失敗：', e);
-    alert('儲存失敗，請稍後再試');
-  }
-};
-
-// === 登入後監聽公司文件 ===
-try {
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
-      window.__unsubCompany = onSnapshot(companyDocRef(user.uid), (snap) => {
-        const data = snap.exists() ? snap.data() : null;
-        renderCompanyCard(data);
-        renderCompanyPreview(data);
-        fillCompanyForm(data || {});
-      }, (err) => console.error('公司資料監聽失敗：', err));
-    } else {
-      if (window.__unsubCompany) { window.__unsubCompany(); window.__unsubCompany = null; }
-      renderCompanyCard(null);
-      renderCompanyPreview(null);
-      fillCompanyForm({});
-    }
-  });
-} catch (e) { console.warn('onAuthStateChanged 尚未可用'); }
-
-</script>
-
-
-<button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()">深/淺色切換</button>
-
-
-<script>
-(function() {
-  function applyTheme(theme) {
-    const root = document.documentElement;
-    if (theme === 'dark') { root.classList.add('dark'); }
-    else { root.classList.remove('dark'); }
-    try { localStorage.setItem('theme', theme); } catch (e) {}
-  }
-
-  window.toggleTheme = function toggleTheme() {
-    const current = (function(){ try { return localStorage.getItem('theme'); } catch(e) { return null; } })() || 'light';
-    applyTheme(current === 'dark' ? 'light' : 'dark');
-  };
-
-  function initTheme() {
-    let saved = null;
-    try { saved = localStorage.getItem('theme'); } catch (e) { saved = null; }
-    if (saved) {
-      applyTheme(saved);
-    } else {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      applyTheme(prefersDark ? 'dark' : 'light');
-    }
-  }
-
-  // 初始載入
-  initTheme();
-
-  // 偵聽系統主題變化（若使用者未手動切換時才跟隨）
-  try {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    media.addEventListener && media.addEventListener('change', (e) => {
-      const saved = localStorage.getItem('theme');
-      if (!saved) applyTheme(e.matches ? 'dark' : 'light');
-    });
-  } catch(e) {}
-})();
-</script>
-
-
-<script>
-(function() {
-  function accentAI(node) {
-    if (!node) return;
-    var text = (node.textContent || '').trim();
-    if (!text) return;
-    if (/span/i.test(node.innerHTML)) return; // assume already styled by author
-    if (/InfluenceAI/.test(text)) {
-      var base = text.slice(0, -2);
-      var last = text.slice(-2);
-      node.innerHTML = base + '<span class="logo-accent">' + last + '</span>';
-    }
-  }
-  accentAI(document.querySelector('#login-view h1')) ||
-  accentAI(document.querySelector('#login-view .text-5xl')) ||
-  accentAI(document.querySelector('#login-view .text-6xl'));
-  // Also try headers in dashboards:
-  accentAI(document.querySelector('header h1'));
-  document.querySelectorAll('.sidebar .text-3xl, .sidebar .text-2xl').forEach(accentAI);
-})();
-</script>
-
-
-
-
-
-<script>
-/* v20: bi-directional reveal (enter = show, leave = hide), keep observing */
-(function(){
-  var opts = { threshold: [0, 0.12, 0.4, 1], rootMargin: "0px 0px -10% 0px" };
-  var observer = new IntersectionObserver(function(entries){
-    entries.forEach(function(entry){
-      var el = entry.target;
-      var d = el.getAttribute('data-delay') || '0ms';
-      el.style.setProperty('--delay', d);
-      if(entry.intersectionRatio >= 0.12){
-        el.classList.add('is-visible');
-      } else {
-        el.classList.remove('is-visible');
-      }
-    });
-  }, opts);
-
-  function boot(){
-    document.querySelectorAll('.reveal').forEach(function(el){ observer.observe(el); });
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
-})();
-</script>
-
-
-<script>
-(function(){
-  const hint = document.querySelector('.scroll-hint');
-  const hero = document.querySelector('#login-view .hero-viewport') 
-            || document.querySelector('#login-view .min-h-screen');
-  if(!hint || !hero) return;
-  function update(v){ v ? hint.classList.add('is-visible') : hint.classList.remove('is-visible'); }
-  if('IntersectionObserver' in window){
-    const io = new IntersectionObserver((ents)=>{
-      ents.forEach(e => update(e.isIntersecting));
-    }, {threshold: 0.1});
-    io.observe(hero);
-    const r = hero.getBoundingClientRect();
-    update(r.top < innerHeight && r.bottom > 0);
-  }else{
-    update(true);
-    addEventListener('scroll', ()=>{
-      const r = hero.getBoundingClientRect();
-      update(r.top < innerHeight && r.bottom > 0);
-    }, {passive:true});
-  }
-})();
-</script>
-<script>
-(function(){
-  function toggleBodyGlow(on){
-    try{
-      document.body.classList.toggle('glow-on', !!on);
-      var bg = document.getElementById('bg-anim');
-      if(bg) bg.style.display = on ? 'block' : 'none';
-    }catch(e){}
-  }
-  // inject into ensureGlow flow by wrapping or redefining ensureGlow
-  var _ensureGlow = window.ensureGlow;
-  window.ensureGlow = function(){
-    function visible(el){ if(!el) return false; var s = getComputedStyle(el); return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed'); }
-    var onLogin = visible(document.getElementById('login-view'));
-    var onRole  = visible(document.getElementById('role-selection-view'));
-    if(onLogin || onRole){
-      toggleBodyGlow(true);
-      if(typeof addGlowLayer==='function') addGlowLayer();
-    }else{
-      toggleBodyGlow(false);
-      if(typeof removeGlow==='function') removeGlow();
-    }
-    if(typeof _ensureGlow==='function'){ try{ _ensureGlow(); }catch(e){} }
-  };
-  // run once
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(window.ensureGlow,0); });
-})();
-</script>
-<script>
-// v5 patch: force-turn-off glow when entering any dashboard
-(function(){
-  function hardOffGlow(){
-    document.body.classList.remove('glow-on');
-    var bg = document.getElementById('bg-anim'); if(bg) bg.style.display = 'none';
-    var g  = document.querySelector('.global-glow'); if(g) g.remove();
-    document.documentElement.classList.remove('has-global-glow');
-  }
-  var _enterDashboard = window.enterDashboard;
-  window.enterDashboard = function(role){
-    hardOffGlow();
-    if(typeof _enterDashboard === 'function'){
-      return _enterDashboard(role);
-    }
-  };
-})();
-</script>
-
-<script>
-/* v6 hard fix: unified glow controller */
-(function(){
-  function hardOffGlow(){
-    document.body.classList.remove('glow-on');
-    var bg = document.getElementById('bg-anim'); if(bg){ bg.style.display='none'; bg.removeAttribute('style'); }
-    var g = document.querySelectorAll('.global-glow'); g.forEach(function(x){ x.remove(); });
-    document.documentElement.classList.remove('has-global-glow');
-  }
-  function hardOnGlow(){
-    document.body.classList.add('glow-on');
-    if(!document.querySelector('.global-glow')){
-      var d=document.createElement('div'); d.className='global-glow'; document.body.prepend(d);
-    }
-  }
-  function isVisible(el){
-    if(!el) return false;
-    var s = getComputedStyle(el);
-    return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed');
-  }
-  function ensureGlow(){
-    var onLogin = isVisible(document.getElementById('login-view'));
-    var onRole  = isVisible(document.getElementById('role-selection-view'));
-    if(onLogin || onRole){ hardOnGlow(); }
-    else{ hardOffGlow(); }
-  }
-  window.ensureGlow = ensureGlow;
-  var _navigateTo = window.navigateTo;
-  window.navigateTo = function(viewId){
-    if(_navigateTo) _navigateTo(viewId);
-    var idStr = String(viewId||'').toLowerCase();
-    if(idStr.includes('dashboard')){ hardOffGlow(); } else { ensureGlow(); }
-  };
-  var _enterDashboard = window.enterDashboard;
-  window.enterDashboard = function(role){
-    hardOffGlow();
-    if(_enterDashboard) return _enterDashboard(role);
-  };
-  function checkHash(){
-    var h = (location.hash||'').toLowerCase();
-    if(h.includes('dashboard')) hardOffGlow(); else ensureGlow();
-  }
-  document.addEventListener('DOMContentLoaded', function(){
-    ensureGlow();
-    setTimeout(ensureGlow, 200);
-  });
-  window.addEventListener('hashchange', checkHash);
-  window.addEventListener('popstate', checkHash);
-  new MutationObserver(function(){ ensureGlow(); }).observe(document.body, {childList:true, subtree:true});
-})();
-
-// === 網紅價值：模擬社群連結與數據視覺化 ===
-    
-    // 模擬資料庫 (Mock Data)
     const mockPlatformData = {
         ig: { followers: 12500, er: 3.2, growth: [12000, 12100, 12250, 12380, 12500] },
         yt: { followers: 5600, er: 4.5, growth: [5400, 5450, 5500, 5550, 5600] },
@@ -4822,37 +4277,32 @@ try {
         fb: { followers: 8000, er: 1.8, growth: [7950, 7960, 7980, 7990, 8000] }
     };
 
-    let connectedPlatforms = new Set(); // 暫存已連線的平台
+    let connectedPlatforms = new Set(); 
 
     window.simulateConnect = function(platform) {
         const btn = document.getElementById(`btn-connect-${platform}`);
         const status = document.getElementById(`status-${platform}`);
         
-        // 1. 模擬 OAuth 彈窗效果
         const width = 500;
         const height = 600;
         const left = (screen.width / 2) - (width / 2);
         const top = (screen.height / 2) - (height / 2);
         
-        // 開一個假的空白視窗，製造「正在去 IG 登入」的假象
         const popup = window.open("", "Connect", `width=${width},height=${height},top=${top},left=${left}`);
         popup.document.write(`<h2 style="text-align:center;font-family:sans-serif;margin-top:50px;">正在連接至 ${platform.toUpperCase()}...</h2><p style="text-align:center;">請稍候，正在安全驗證中...</p>`);
         
         btn.textContent = '連線中...';
         btn.disabled = true;
 
-        // 2. 模擬延遲後成功
         setTimeout(() => {
             popup.close();
             
-            // 更新 UI
             status.textContent = '✅ 已連結';
             status.className = 'text-xs text-green-600 font-bold';
             btn.textContent = '斷開';
             btn.className = 'text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100';
-            btn.onclick = () => alert('模擬斷開連結'); // 簡化處理
+            btn.onclick = () => alert('模擬斷開連結'); 
 
-            // 記錄並更新報表
             connectedPlatforms.add(platform);
             updateAnalyticsUI();
             
@@ -4860,182 +4310,32 @@ try {
         }, 1500);
     };
 
-    // === Instagram OAuth（第二種方式：直接 IG 登入） ===
-
-// 與 functions/index.js 裡設定保持一致（CLIENT ID 可以公開，SECRET 一定只能放後端）
-const INSTAGRAM_CLIENT_ID = "1206014388258225"; // 替換成你自己的，但要跟後端 IG_CLIENT_ID 一樣
-const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/"; // 要跟 IG 後台 + functions/index.js 完全一致
-
-// 使用者按下「連結 IG」時呼叫
-//window.connectInstagram = function () {
-//  if (!auth.currentUser) {
- //   alert("請先登入帳號，再連結 Instagram。");
- //   return;
- // }
-
-  // 產生一個 state，放在 localStorage，用來防止被亂用／方便比對
- // const state =
- //   window.crypto && crypto.randomUUID
- //     ? crypto.randomUUID()
- //     : Math.random().toString(36).slice(2);
-
- // localStorage.setItem("ig_oauth_state", state);
-
- // const authUrl =
- //   "https://api.instagram.com/oauth/authorize" +
- //   `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
- //   `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
- //   `&scope=${encodeURIComponent("user_profile,user_media")}` +
- //   `&response_type=code` +
- //   `&state=${encodeURIComponent(state)}`;
-
-  // 導向 IG 授權畫面
- // window.location.href = authUrl;
-//};
-
-// === Instagram OAuth（直接 IG 登入，Basic Display） ===
-
-// 與 functions/index.js 保持一致
-const INSTAGRAM_CLIENT_ID = "1206014388258225";
-// 這裡只放「你的網站」，不要放整串 Instagram URL
-const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/";  // ★★ 重點 ★★
-
-window.connectInstagram = function () {
-  if (!auth.currentUser) {
-    alert("請先登入帳號，再連結 Instagram。");
-    return;
-  }
-
-  const state =
-    window.crypto && crypto.randomUUID
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2);
-
-  localStorage.setItem("ig_oauth_state", state);
-
-  const authUrl =
-    "https://api.instagram.com/oauth/authorize" +
-    `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
-    `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
-    `&scope=${encodeURIComponent("user_profile,user_media")}` +
-    `&response_type=code` +
-    `&state=${encodeURIComponent(state)}`;
-
-  window.location.href = authUrl;
-
-
-// IG 回呼處理：如果網址上有 ?code=...，就把它交給後端換 Token
-async function handleInstagramOAuthRedirect() {
-  const url = new URL(window.location.href);
-  const params = url.searchParams;
-
-  const code = params.get("code");
-  const state = params.get("state");
-  const error = params.get("error");
-
-  // 如果沒有 code、也沒有錯誤，就不是 IG 回呼，直接結束
-  if (!code && !error) return;
-
-  // 有錯誤（例如使用者按取消）
-  if (error) {
-    console.warn("Instagram 授權失敗：", error, params.get("error_description"));
-    alert("Instagram 授權失敗或被取消，請再試一次。");
-    // 把網址上的參數清掉，避免重新整理一直觸發
-    url.searchParams.delete("code");
-    url.searchParams.delete("state");
-    url.searchParams.delete("error");
-    url.searchParams.delete("error_description");
-    window.history.replaceState({}, document.title, url.pathname + url.hash);
-    return;
-  }
-
-  // 確認 state 跟我們存在 localStorage 裡的是同一個
-  const savedState = localStorage.getItem("ig_oauth_state");
-  if (savedState && state !== savedState) {
-    console.warn("IG OAuth state 不符，可能不是我們發的請求，忽略。");
-    return;
-  }
-  localStorage.removeItem("ig_oauth_state");
-
-  if (!auth.currentUser) {
-    alert("目前尚未登入，請先登入帳號再連結 IG。");
-    return;
-  }
-
-  try {
-    // 呼叫 Cloud Functions：exchangeIgToken
-    const result = await exchangeIgTokenFn({ code });
-    console.log("exchangeIgToken 回傳：", result.data);
-
-    alert("Instagram 連結成功！系統正在匯入你的 IG 數據。");
-
-    // 更新 IG 卡片的 UI
-    const status = document.getElementById("status-ig");
-    const btn = document.getElementById("btn-connect-ig");
-    if (status && btn) {
-      status.textContent = "✅ 已連結 (真實數據)";
-      status.className = "text-xs text-green-600 font-bold";
-      btn.textContent = "已連結";
-      btn.disabled = true;
-      btn.className =
-        "text-xs bg-gray-200 text-gray-500 border border-gray-300 px-3 py-1.5 rounded-lg font-bold cursor-default";
-    }
-
-    // 告訴你的「網紅價值分析」模組，IG 已經連結
-    if (typeof connectedPlatforms !== "undefined") {
-      connectedPlatforms.add("ig");
-      updateAnalyticsUI();
-    }
-  } catch (err) {
-    console.error("交換 IG token 失敗：", err);
-    alert("連結 Instagram 失敗，請稍後再試一次。");
-  } finally {
-    // 無論成功或失敗，都把網址上的參數清掉
-    url.searchParams.delete("code");
-    url.searchParams.delete("state");
-    url.searchParams.delete("error");
-    url.searchParams.delete("error_description");
-    window.history.replaceState({}, document.title, url.pathname + url.hash);
-  }
-}
-
-// 頁面載入完成時檢查一次（你的檔案本來就有別的 DOMContentLoaded，不會衝突）
-document.addEventListener("DOMContentLoaded", () => {
-  handleInstagramOAuthRedirect();
-});
-
-
-
     function updateAnalyticsUI() {
         const dashboard = document.getElementById('analytics-dashboard');
         if (connectedPlatforms.size > 0) {
             dashboard.classList.remove('hidden');
         }
 
-        // 匯總數據
         let totalFans = 0;
         let totalEr = 0;
         let count = 0;
-        let growthData = [0, 0, 0, 0, 0]; // 5 個時間點
+        let growthData = [0, 0, 0, 0, 0]; 
 
         connectedPlatforms.forEach(p => {
             const data = mockPlatformData[p];
             totalFans += data.followers;
             totalEr += data.er;
             count++;
-            // 累加成長數據
             data.growth.forEach((val, idx) => growthData[idx] += val);
         });
 
         const avgEr = count > 0 ? (totalEr / count).toFixed(1) : 0;
-        const score = Math.min(100, Math.round(30 + (totalFans / 1000) + (avgEr * 5))); // 隨便算的公式
+        const score = Math.min(100, Math.round(30 + (totalFans / 1000) + (avgEr * 5))); 
 
-        // 填入數字
         document.getElementById('score-val').textContent = score;
         document.getElementById('total-fans').textContent = totalFans.toLocaleString();
         document.getElementById('avg-er').textContent = `${avgEr}%`;
 
-        // 繪製圖表 (Chart.js)
         renderCharts(growthData);
     }
 
@@ -5046,11 +4346,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const ctxF = document.getElementById('chart-followers').getContext('2d');
         const ctxD = document.getElementById('chart-demo').getContext('2d');
 
-        // 銷毀舊圖表以防重疊
         if (chartInstanceFollowers) chartInstanceFollowers.destroy();
         if (chartInstanceDemo) chartInstanceDemo.destroy();
 
-        // 1. 粉絲成長折線圖
         chartInstanceFollowers = new Chart(ctxF, {
             type: 'line',
             data: {
@@ -5058,7 +4356,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 datasets: [{
                     label: '總粉絲數',
                     data: growthData,
-                    borderColor: '#0d9488', // Teal
+                    borderColor: '#0d9488', 
                     backgroundColor: 'rgba(13, 148, 136, 0.1)',
                     fill: true,
                     tension: 0.4
@@ -5067,7 +4365,6 @@ document.addEventListener("DOMContentLoaded", () => {
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // 2. 受眾分佈長條圖 (靜態模擬數據)
         chartInstanceDemo = new Chart(ctxD, {
             type: 'bar',
             data: {
@@ -5075,11 +4372,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 datasets: [{
                     label: '男性',
                     data: [5, 15, 20, 10, 5],
-                    backgroundColor: '#93c5fd' // Blue
+                    backgroundColor: '#93c5fd' 
                 }, {
                     label: '女性',
                     data: [8, 25, 35, 15, 8],
-                    backgroundColor: '#fca5a5' // Pink
+                    backgroundColor: '#fca5a5' 
                 }]
             },
             options: { 
@@ -5089,8 +4386,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-
 </script>
 
 </body>
