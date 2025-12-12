@@ -135,20 +135,23 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
         let igData = {};
 
         if (providerId === 'instagram') {
-            // === 情況 A: 純 IG 登入 (Method B) ===
-            const meRes = await axios.get(`https://graph.instagram.com/me`, {
+            // === 情況 A: 純 IG 登入 (Instagram API with Instagram Login) ===
+            // 修正：增加 followers_count, profile_picture_url, biography 欄位
+            const meRes = await axios.get(`https://graph.instagram.com/v19.0/me`, { 
                 params: {
-                    fields: 'id,username,account_type,media_count',
+                    fields: 'id,username,account_type,media_count,followers_count,profile_picture_url,biography',
                     access_token: accessToken
                 }
             });
             
+            // 這裡不需要再手動設為 0 了，API 會給我們數據
             igData = {
                 id: meRes.data.id,
                 username: meRes.data.username,
-                followers_count: 0, // Basic API 無法取得粉絲數，暫設為 0
-                media_count: meRes.data.media_count,
-                profile_picture_url: "" 
+                followers_count: meRes.data.followers_count || 0, 
+                media_count: meRes.data.media_count || 0,
+                profile_picture_url: meRes.data.profile_picture_url || "",
+                biography: meRes.data.biography || ""
             };
         } else {
             // === 情況 B: 透過 FB 連結 (原本的邏輯) ===

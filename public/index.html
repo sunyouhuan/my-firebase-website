@@ -4298,6 +4298,42 @@ window.sendChatMessage = async function sendChatMessage() {
         });
     }
 
+    // === 新增：即時監聽用戶的社交數據 ===
+function listenForSocialStats(uid) {
+    onSnapshot(doc(db, "users", uid), (docSnap) => {
+        if (docSnap.exists()) {
+            const userData = docSnap.data();
+            const stats = userData.social_stats?.current?.ig; // 對應後端存的路徑
+
+            if (stats && stats.connected) {
+                // 更新 UI 顯示真資料
+                document.getElementById('total-fans').textContent = stats.followers.toLocaleString();
+                document.getElementById('dash-inf-name').textContent = stats.username;
+                
+                // 如果有大頭貼
+                if (stats.avatar) {
+                    document.getElementById('dash-inf-avatar').src = stats.avatar;
+                    document.getElementById('inf-card-avatar').src = stats.avatar; // 設定頁預覽
+                }
+                
+                // 更新連結狀態按鈕
+                const btn = document.getElementById('btn-connect-ig');
+                const status = document.getElementById('status-ig');
+                if(btn && status) {
+                    btn.textContent = "已連結";
+                    btn.disabled = true;
+                    status.textContent = "✅ 已連結 (粉絲數: " + stats.followers + ")";
+                    status.classList.remove('text-gray-400');
+                    status.classList.add('text-green-600', 'font-bold');
+                }
+            }
+        }
+    });
+}
+
+// 別忘了在 onAuthStateChanged 的 user 存在時呼叫它：
+// listenForSocialStats(user.uid);
+
 
 
 
@@ -4414,6 +4450,7 @@ window.sendChatMessage = async function sendChatMessage() {
                 listenInfluencerProfile(user.uid);
                 initMerchantDashboard(user.uid);
                 initInfluencerDashboard(user.uid);
+                listenForSocialStats(user.uid);
         
         // 2. 判斷是否為 OAuth 回調 (檢查網址有沒有 code)
                 const urlParams = new URLSearchParams(window.location.search);
