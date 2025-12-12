@@ -4706,7 +4706,7 @@ async function handleInstagramOAuthRedirect(code) {
         // 觸發數據更新 (模擬或重新抓取)
         if(typeof listenForSocialStats === 'function') {
             connectedPlatforms.add('ig'); // 暫時標記
-            listenForSocialStats();
+            listenForSocialStats(user.uid);
         }
 
     } catch (err) {
