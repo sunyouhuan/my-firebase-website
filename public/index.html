@@ -4615,6 +4615,200 @@ try {
   });
 } catch (e) { console.warn('onAuthStateChanged 尚未可用'); }
 
+
+
+  // === Instagram OAuth（第二種方式：直接 IG 登入） ===
+
+// 與 functions/index.js 裡設定保持一致（CLIENT ID 可以公開，SECRET 一定只能放後端）
+const INSTAGRAM_CLIENT_ID = "1206014388258225"; // 替換成你自己的，但要跟後端 IG_CLIENT_ID 一樣
+const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/"; // 要跟 IG 後台 + functions/index.js 完全一致
+
+// 使用者按下「連結 IG」時呼叫
+//window.connectInstagram = function () {
+//  if (!auth.currentUser) {
+ //   alert("請先登入帳號，再連結 Instagram。");
+ //   return;
+ // }
+
+  // 產生一個 state，放在 localStorage，用來防止被亂用／方便比對
+ // const state =
+ //   window.crypto && crypto.randomUUID
+ //     ? crypto.randomUUID()
+ //     : Math.random().toString(36).slice(2);
+
+ // localStorage.setItem("ig_oauth_state", state);
+
+ // const authUrl =
+ //   "https://api.instagram.com/oauth/authorize" +
+ //   `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
+ //   `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
+ //   `&scope=${encodeURIComponent("user_profile,user_media")}` +
+ //   `&response_type=code` +
+ //   `&state=${encodeURIComponent(state)}`;
+
+  // 導向 IG 授權畫面
+ // window.location.href = authUrl;
+//};
+
+window.connectInstagram = function () {
+  if (!auth.currentUser) {
+    alert("請先登入帳號，再連結 Instagram。");
+    return;
+  }
+
+  // 產生 state (這段保留，這是為了安全性)
+  const state =
+    window.crypto && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+
+  localStorage.setItem("ig_oauth_state", state);
+
+  // ✅ 這裡修正了：網域改成 www，並且填入正確的商業權限 (Scope)
+  // 注意：redirect_uri 變數必須確保是 "https://influenceai.tw/"
+  const authUrl =
+    `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1206014388258225&redirect_uri=https://influenceai.tw/&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights`;
+
+  // 導向 IG 授權畫面
+  window.location.href = authUrl;
+};
+
+
+
+// 定義在 module 內，供 onAuthStateChanged 呼叫
+async function handleInstagramOAuthRedirect(code) {
+    // 這裡不需要再 parse URL 了，因為參數傳進來了
+    // const url = new URL(window.location.href); ... (省略)
+    
+    try {
+        console.log("正在呼叫後端 exchangeIgToken...");
+        
+        // 呼叫 Cloud Function
+        const result = await exchangeIgTokenFn({ code: code });
+        
+        console.log("Token 交換成功！", result.data);
+        alert("Instagram 連結成功！數據正在同步中...");
+
+        // 更新 UI 狀態
+        const btn = document.getElementById('btn-connect-ig');
+        const status = document.getElementById('status-ig');
+        if(btn && status) {
+            btn.textContent = "已連結";
+            btn.disabled = true;
+            status.textContent = "✅ 已連結";
+            status.className = "text-xs text-green-600 font-bold";
+        }
+
+        // 重要：清除網址列的 code，避免重新整理後又跑一次
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+
+        // 觸發數據更新 (模擬或重新抓取)
+        if(typeof updateAnalyticsUI === 'function') {
+            connectedPlatforms.add('ig'); // 暫時標記
+            updateAnalyticsUI();
+        }
+
+    } catch (err) {
+        console.error("連結失敗詳細錯誤：", err);
+        alert("連結失敗：" + (err.message || "未知錯誤，請查看 Console"));
+        
+        // 失敗也要把按鈕復原
+        const btn = document.getElementById('btn-connect-ig');
+        if(btn) {
+            btn.textContent = "連結";
+            btn.disabled = false;
+        }
+    }
+}
+
+
+
+
+    function updateAnalyticsUI() {
+        const dashboard = document.getElementById('analytics-dashboard');
+        if (connectedPlatforms.size > 0) {
+            dashboard.classList.remove('hidden');
+        }
+
+        // 匯總數據
+        let totalFans = 0;
+        let totalEr = 0;
+        let count = 0;
+        let growthData = [0, 0, 0, 0, 0]; // 5 個時間點
+
+        connectedPlatforms.forEach(p => {
+            const data = mockPlatformData[p];
+            totalFans += data.followers;
+            totalEr += data.er;
+            count++;
+            // 累加成長數據
+            data.growth.forEach((val, idx) => growthData[idx] += val);
+        });
+
+        const avgEr = count > 0 ? (totalEr / count).toFixed(1) : 0;
+        const score = Math.min(100, Math.round(30 + (totalFans / 1000) + (avgEr * 5))); // 隨便算的公式
+
+        // 填入數字
+        document.getElementById('score-val').textContent = score;
+        document.getElementById('total-fans').textContent = totalFans.toLocaleString();
+        document.getElementById('avg-er').textContent = `${avgEr}%`;
+
+        // 繪製圖表 (Chart.js)
+        renderCharts(growthData);
+    }
+
+    let chartInstanceFollowers = null;
+    let chartInstanceDemo = null;
+
+    function renderCharts(growthData) {
+        const ctxF = document.getElementById('chart-followers').getContext('2d');
+        const ctxD = document.getElementById('chart-demo').getContext('2d');
+
+        // 銷毀舊圖表以防重疊
+        if (chartInstanceFollowers) chartInstanceFollowers.destroy();
+        if (chartInstanceDemo) chartInstanceDemo.destroy();
+
+        // 1. 粉絲成長折線圖
+        chartInstanceFollowers = new Chart(ctxF, {
+            type: 'line',
+            data: {
+                labels: ['4週前', '3週前', '2週前', '上週', '本週'],
+                datasets: [{
+                    label: '總粉絲數',
+                    data: growthData,
+                    borderColor: '#0d9488', // Teal
+                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 2. 受眾分佈長條圖 (靜態模擬數據)
+        chartInstanceDemo = new Chart(ctxD, {
+            type: 'bar',
+            data: {
+                labels: ['13-17', '18-24', '25-34', '35-44', '45+'],
+                datasets: [{
+                    label: '男性',
+                    data: [5, 15, 20, 10, 5],
+                    backgroundColor: '#93c5fd' // Blue
+                }, {
+                    label: '女性',
+                    data: [8, 25, 35, 15, 8],
+                    backgroundColor: '#fca5a5' // Pink
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { x: { stacked: true }, y: { stacked: true } }
+            }
+        });
+    }
+
 </script>
 
 
@@ -4885,197 +5079,7 @@ try {
         }, 1500);
     };
 
-    // === Instagram OAuth（第二種方式：直接 IG 登入） ===
-
-// 與 functions/index.js 裡設定保持一致（CLIENT ID 可以公開，SECRET 一定只能放後端）
-const INSTAGRAM_CLIENT_ID = "1206014388258225"; // 替換成你自己的，但要跟後端 IG_CLIENT_ID 一樣
-const INSTAGRAM_REDIRECT_URI = "https://influenceai.tw/"; // 要跟 IG 後台 + functions/index.js 完全一致
-
-// 使用者按下「連結 IG」時呼叫
-//window.connectInstagram = function () {
-//  if (!auth.currentUser) {
- //   alert("請先登入帳號，再連結 Instagram。");
- //   return;
- // }
-
-  // 產生一個 state，放在 localStorage，用來防止被亂用／方便比對
- // const state =
- //   window.crypto && crypto.randomUUID
- //     ? crypto.randomUUID()
- //     : Math.random().toString(36).slice(2);
-
- // localStorage.setItem("ig_oauth_state", state);
-
- // const authUrl =
- //   "https://api.instagram.com/oauth/authorize" +
- //   `?client_id=${encodeURIComponent(INSTAGRAM_CLIENT_ID)}` +
- //   `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
- //   `&scope=${encodeURIComponent("user_profile,user_media")}` +
- //   `&response_type=code` +
- //   `&state=${encodeURIComponent(state)}`;
-
-  // 導向 IG 授權畫面
- // window.location.href = authUrl;
-//};
-
-window.connectInstagram = function () {
-  if (!auth.currentUser) {
-    alert("請先登入帳號，再連結 Instagram。");
-    return;
-  }
-
-  // 產生 state (這段保留，這是為了安全性)
-  const state =
-    window.crypto && crypto.randomUUID
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2);
-
-  localStorage.setItem("ig_oauth_state", state);
-
-  // ✅ 這裡修正了：網域改成 www，並且填入正確的商業權限 (Scope)
-  // 注意：redirect_uri 變數必須確保是 "https://influenceai.tw/"
-  const authUrl =
-    `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1206014388258225&redirect_uri=https://influenceai.tw/&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights`;
-
-  // 導向 IG 授權畫面
-  window.location.href = authUrl;
-};
-
-
-
-// 定義在 module 內，供 onAuthStateChanged 呼叫
-async function handleInstagramOAuthRedirect(code) {
-    // 這裡不需要再 parse URL 了，因為參數傳進來了
-    // const url = new URL(window.location.href); ... (省略)
-    
-    try {
-        console.log("正在呼叫後端 exchangeIgToken...");
-        
-        // 呼叫 Cloud Function
-        const result = await exchangeIgTokenFn({ code: code });
-        
-        console.log("Token 交換成功！", result.data);
-        alert("Instagram 連結成功！數據正在同步中...");
-
-        // 更新 UI 狀態
-        const btn = document.getElementById('btn-connect-ig');
-        const status = document.getElementById('status-ig');
-        if(btn && status) {
-            btn.textContent = "已連結";
-            btn.disabled = true;
-            status.textContent = "✅ 已連結";
-            status.className = "text-xs text-green-600 font-bold";
-        }
-
-        // 重要：清除網址列的 code，避免重新整理後又跑一次
-        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.replaceState({ path: newUrl }, '', newUrl);
-
-        // 觸發數據更新 (模擬或重新抓取)
-        if(typeof updateAnalyticsUI === 'function') {
-            connectedPlatforms.add('ig'); // 暫時標記
-            updateAnalyticsUI();
-        }
-
-    } catch (err) {
-        console.error("連結失敗詳細錯誤：", err);
-        alert("連結失敗：" + (err.message || "未知錯誤，請查看 Console"));
-        
-        // 失敗也要把按鈕復原
-        const btn = document.getElementById('btn-connect-ig');
-        if(btn) {
-            btn.textContent = "連結";
-            btn.disabled = false;
-        }
-    }
-}
-
-
-
-
-    function updateAnalyticsUI() {
-        const dashboard = document.getElementById('analytics-dashboard');
-        if (connectedPlatforms.size > 0) {
-            dashboard.classList.remove('hidden');
-        }
-
-        // 匯總數據
-        let totalFans = 0;
-        let totalEr = 0;
-        let count = 0;
-        let growthData = [0, 0, 0, 0, 0]; // 5 個時間點
-
-        connectedPlatforms.forEach(p => {
-            const data = mockPlatformData[p];
-            totalFans += data.followers;
-            totalEr += data.er;
-            count++;
-            // 累加成長數據
-            data.growth.forEach((val, idx) => growthData[idx] += val);
-        });
-
-        const avgEr = count > 0 ? (totalEr / count).toFixed(1) : 0;
-        const score = Math.min(100, Math.round(30 + (totalFans / 1000) + (avgEr * 5))); // 隨便算的公式
-
-        // 填入數字
-        document.getElementById('score-val').textContent = score;
-        document.getElementById('total-fans').textContent = totalFans.toLocaleString();
-        document.getElementById('avg-er').textContent = `${avgEr}%`;
-
-        // 繪製圖表 (Chart.js)
-        renderCharts(growthData);
-    }
-
-    let chartInstanceFollowers = null;
-    let chartInstanceDemo = null;
-
-    function renderCharts(growthData) {
-        const ctxF = document.getElementById('chart-followers').getContext('2d');
-        const ctxD = document.getElementById('chart-demo').getContext('2d');
-
-        // 銷毀舊圖表以防重疊
-        if (chartInstanceFollowers) chartInstanceFollowers.destroy();
-        if (chartInstanceDemo) chartInstanceDemo.destroy();
-
-        // 1. 粉絲成長折線圖
-        chartInstanceFollowers = new Chart(ctxF, {
-            type: 'line',
-            data: {
-                labels: ['4週前', '3週前', '2週前', '上週', '本週'],
-                datasets: [{
-                    label: '總粉絲數',
-                    data: growthData,
-                    borderColor: '#0d9488', // Teal
-                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-
-        // 2. 受眾分佈長條圖 (靜態模擬數據)
-        chartInstanceDemo = new Chart(ctxD, {
-            type: 'bar',
-            data: {
-                labels: ['13-17', '18-24', '25-34', '35-44', '45+'],
-                datasets: [{
-                    label: '男性',
-                    data: [5, 15, 20, 10, 5],
-                    backgroundColor: '#93c5fd' // Blue
-                }, {
-                    label: '女性',
-                    data: [8, 25, 35, 15, 8],
-                    backgroundColor: '#fca5a5' // Pink
-                }]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                scales: { x: { stacked: true }, y: { stacked: true } }
-            }
-        });
-    }
+  
 
 
 </script>
