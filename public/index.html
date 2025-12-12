@@ -3650,37 +3650,6 @@ window.sendChatMessage = async function sendChatMessage() {
         }, 10);
     };
 
-    async function handleInstagramOAuthRedirect() {
-    const url = new URL(window.location.href);
-    const params = url.searchParams;
-    const code = params.get("code");
-    const state = params.get("state");
-    
-    if (!code) return; // 沒有 code 就離開
-
-    // =========== 👇 修改這裡：把這段檢查暫時關閉 👇 ===========
-    const savedState = localStorage.getItem("ig_oauth_state");
-    // if (savedState && state !== savedState) {
-    //     console.warn("IG OAuth state 不符，可能不是我們發的請求，忽略。");
-    //     return;  <-- 關鍵是這個 return 讓我們停住了，把它註解掉！
-    // }
-    // ========================================================
-
-    // ... (後面的程式碼不用動)
-    
-    try {
-        console.log("正在呼叫後端交換 Token..."); // 加個 log 讓自己安心
-        const result = await exchangeIgTokenFn({ code });
-        alert("Instagram 連結成功！"); // 這裡就是你要的成功訊息
-        // ...
-    } catch (err) {
-        console.error("連結失敗：", err);
-        alert("錯誤：" + err.message);
-    }
-}
-
-
-
     // 1. 新增：商家選擇檔案後的預覽功能
     window.previewReviewFiles = function() {
         const input = document.getElementById('review-file');
@@ -4434,18 +4403,43 @@ window.sendChatMessage = async function sendChatMessage() {
 
 
     // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                console.log('使用者已登入，開始監聽活動...');
-                // 當用戶登入後，立刻開始監聽他/她的活動資料
+                console.log('使用者已登入:', user.uid);
+        
+        // 1. 基本初始化 (原本的邏輯)
                 listenForCampaigns();
-                listenForAccountBalance(user.uid); // v2 (本次修改): 啟動餘額監聽
-                // ⭐ 3. 網紅端財務管理：可提領金額
+                listenForAccountBalance(user.uid);
                 listenForInfluencerBalance(user.uid);
                 listenInfluencerProfile(user.uid);
-                initMerchantDashboard(user.uid);   // 新增
-                initInfluencerDashboard(user.uid); // 新增
-                navigateTo('role-selection-view');
+                initMerchantDashboard(user.uid);
+                initInfluencerDashboard(user.uid);
+        
+        // 2. 判斷是否為 OAuth 回調 (檢查網址有沒有 code)
+                const urlParams = new URLSearchParams(window.location.search);
+                const authCode = urlParams.get("code");
+
+                if (authCode) {
+                    console.log("偵測到 IG OAuth 回傳代碼，準備交換 Token...");
+            
+            // A. 先切換 UI 到網紅儀表板，讓使用者知道正在處理
+                    navigateTo('influencer-dashboard-view');
+                    switchTab('influencer', 'value'); // 切換到「我的價值」分頁
+            
+            // B. 顯示一個 Loading 提示 (選用，或是直接用 alert)
+            // 你可以在 UI 上加一個 loading spinner，這裡先用簡單的方式
+                    const btn = document.getElementById('btn-connect-ig');
+                    if(btn) {
+                        btn.textContent = "驗證中...";
+                        btn.disabled = true;
+                    }
+
+            // C. 執行交換 Token
+                    await handleInstagramOAuthRedirect(authCode);
+                } else {
+            // 一般登入，導向角色選擇
+                    navigateTo('role-selection-view');
+                }
             } else {
                 console.log('使用者已登出，停止監聽。');
                 // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
@@ -4949,12 +4943,53 @@ window.connectInstagram = function () {
 
 
 
+// 定義在 module 內，供 onAuthStateChanged 呼叫
+async function handleInstagramOAuthRedirect(code) {
+    // 這裡不需要再 parse URL 了，因為參數傳進來了
+    // const url = new URL(window.location.href); ... (省略)
+    
+    try {
+        console.log("正在呼叫後端 exchangeIgToken...");
+        
+        // 呼叫 Cloud Function
+        const result = await exchangeIgTokenFn({ code: code });
+        
+        console.log("Token 交換成功！", result.data);
+        alert("Instagram 連結成功！數據正在同步中...");
 
+        // 更新 UI 狀態
+        const btn = document.getElementById('btn-connect-ig');
+        const status = document.getElementById('status-ig');
+        if(btn && status) {
+            btn.textContent = "已連結";
+            btn.disabled = true;
+            status.textContent = "✅ 已連結";
+            status.className = "text-xs text-green-600 font-bold";
+        }
 
-// 頁面載入完成時檢查一次（你的檔案本來就有別的 DOMContentLoaded，不會衝突）
-document.addEventListener("DOMContentLoaded", () => {
-  handleInstagramOAuthRedirect();
-});
+        // 重要：清除網址列的 code，避免重新整理後又跑一次
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+
+        // 觸發數據更新 (模擬或重新抓取)
+        if(typeof updateAnalyticsUI === 'function') {
+            connectedPlatforms.add('ig'); // 暫時標記
+            updateAnalyticsUI();
+        }
+
+    } catch (err) {
+        console.error("連結失敗詳細錯誤：", err);
+        alert("連結失敗：" + (err.message || "未知錯誤，請查看 Console"));
+        
+        // 失敗也要把按鈕復原
+        const btn = document.getElementById('btn-connect-ig');
+        if(btn) {
+            btn.textContent = "連結";
+            btn.disabled = false;
+        }
+    }
+}
+
 
 
 
