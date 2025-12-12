@@ -4948,57 +4948,6 @@ function renderRealCharts(currentFollowers) {
     });
 }
 
-    let chartInstanceFollowers = null;
-    let chartInstanceDemo = null;
-
-    function renderCharts(growthData) {
-        const ctxF = document.getElementById('chart-followers').getContext('2d');
-        const ctxD = document.getElementById('chart-demo').getContext('2d');
-
-        // 銷毀舊圖表以防重疊
-        if (chartInstanceFollowers) chartInstanceFollowers.destroy();
-        if (chartInstanceDemo) chartInstanceDemo.destroy();
-
-        // 1. 粉絲成長折線圖
-        chartInstanceFollowers = new Chart(ctxF, {
-            type: 'line',
-            data: {
-                labels: ['4週前', '3週前', '2週前', '上週', '本週'],
-                datasets: [{
-                    label: '總粉絲數',
-                    data: growthData,
-                    borderColor: '#0d9488', // Teal
-                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-
-        // 2. 受眾分佈長條圖 (靜態模擬數據)
-        chartInstanceDemo = new Chart(ctxD, {
-            type: 'bar',
-            data: {
-                labels: ['13-17', '18-24', '25-34', '35-44', '45+'],
-                datasets: [{
-                    label: '男性',
-                    data: [5, 15, 20, 10, 5],
-                    backgroundColor: '#93c5fd' // Blue
-                }, {
-                    label: '女性',
-                    data: [8, 25, 35, 15, 8],
-                    backgroundColor: '#fca5a5' // Pink
-                }]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                scales: { x: { stacked: true }, y: { stacked: true } }
-            }
-        });
-    }
-
 </script>
 
 
