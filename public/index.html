@@ -4590,178 +4590,7 @@ try {
   });
 } catch (e) { console.warn('onAuthStateChanged 尚未可用'); }
 
-</script>
 
-
-<button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()">深/淺色切換</button>
-
-
-<script>
-(function() {
-  function applyTheme(theme) {
-    const root = document.documentElement;
-    if (theme === 'dark') { root.classList.add('dark'); }
-    else { root.classList.remove('dark'); }
-    try { localStorage.setItem('theme', theme); } catch (e) {}
-  }
-
-  window.toggleTheme = function toggleTheme() {
-    const current = (function(){ try { return localStorage.getItem('theme'); } catch(e) { return null; } })() || 'light';
-    applyTheme(current === 'dark' ? 'light' : 'dark');
-  };
-
-  function initTheme() {
-    let saved = null;
-    try { saved = localStorage.getItem('theme'); } catch (e) { saved = null; }
-    if (saved) {
-      applyTheme(saved);
-    } else {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      applyTheme(prefersDark ? 'dark' : 'light');
-    }
-  }
-
-  // 初始載入
-  initTheme();
-
-  // 偵聽系統主題變化（若使用者未手動切換時才跟隨）
-  try {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    media.addEventListener && media.addEventListener('change', (e) => {
-      const saved = localStorage.getItem('theme');
-      if (!saved) applyTheme(e.matches ? 'dark' : 'light');
-    });
-  } catch(e) {}
-})();
-</script>
-
-
-<script>
-(function() {
-  function accentAI(node) {
-    if (!node) return;
-    var text = (node.textContent || '').trim();
-    if (!text) return;
-    if (/span/i.test(node.innerHTML)) return; // assume already styled by author
-    if (/InfluenceAI/.test(text)) {
-      var base = text.slice(0, -2);
-      var last = text.slice(-2);
-      node.innerHTML = base + '<span class="logo-accent">' + last + '</span>';
-    }
-  }
-  accentAI(document.querySelector('#login-view h1')) ||
-  accentAI(document.querySelector('#login-view .text-5xl')) ||
-  accentAI(document.querySelector('#login-view .text-6xl'));
-  // Also try headers in dashboards:
-  accentAI(document.querySelector('header h1'));
-  document.querySelectorAll('.sidebar .text-3xl, .sidebar .text-2xl').forEach(accentAI);
-})();
-</script>
-
-
-
-
-
-<script>
-/* v20: bi-directional reveal (enter = show, leave = hide), keep observing */
-(function(){
-  var opts = { threshold: [0, 0.12, 0.4, 1], rootMargin: "0px 0px -10% 0px" };
-  var observer = new IntersectionObserver(function(entries){
-    entries.forEach(function(entry){
-      var el = entry.target;
-      var d = el.getAttribute('data-delay') || '0ms';
-      el.style.setProperty('--delay', d);
-      if(entry.intersectionRatio >= 0.12){
-        el.classList.add('is-visible');
-      } else {
-        el.classList.remove('is-visible');
-      }
-    });
-  }, opts);
-
-  function boot(){
-    document.querySelectorAll('.reveal').forEach(function(el){ observer.observe(el); });
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
-})();
-</script>
-
-
-<script>
-(function(){
-  const hint = document.querySelector('.scroll-hint');
-  const hero = document.querySelector('#login-view .hero-viewport') 
-            || document.querySelector('#login-view .min-h-screen');
-  if(!hint || !hero) return;
-  function update(v){ v ? hint.classList.add('is-visible') : hint.classList.remove('is-visible'); }
-  if('IntersectionObserver' in window){
-    const io = new IntersectionObserver((ents)=>{
-      ents.forEach(e => update(e.isIntersecting));
-    }, {threshold: 0.1});
-    io.observe(hero);
-    const r = hero.getBoundingClientRect();
-    update(r.top < innerHeight && r.bottom > 0);
-  }else{
-    update(true);
-    addEventListener('scroll', ()=>{
-      const r = hero.getBoundingClientRect();
-      update(r.top < innerHeight && r.bottom > 0);
-    }, {passive:true});
-  }
-})();
-</script>
-<script>
-(function(){
-  function toggleBodyGlow(on){
-    try{
-      document.body.classList.toggle('glow-on', !!on);
-      var bg = document.getElementById('bg-anim');
-      if(bg) bg.style.display = on ? 'block' : 'none';
-    }catch(e){}
-  }
-  // inject into ensureGlow flow by wrapping or redefining ensureGlow
-  var _ensureGlow = window.ensureGlow;
-  window.ensureGlow = function(){
-    function visible(el){ if(!el) return false; var s = getComputedStyle(el); return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed'); }
-    var onLogin = visible(document.getElementById('login-view'));
-    var onRole  = visible(document.getElementById('role-selection-view'));
-    if(onLogin || onRole){
-      toggleBodyGlow(true);
-      if(typeof addGlowLayer==='function') addGlowLayer();
-    }else{
-      toggleBodyGlow(false);
-      if(typeof removeGlow==='function') removeGlow();
-    }
-    if(typeof _ensureGlow==='function'){ try{ _ensureGlow(); }catch(e){} }
-  };
-  // run once
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(window.ensureGlow,0); });
-})();
-</script>
-<script>
-// v5 patch: force-turn-off glow when entering any dashboard
-(function(){
-  function hardOffGlow(){
-    document.body.classList.remove('glow-on');
-    var bg = document.getElementById('bg-anim'); if(bg) bg.style.display = 'none';
-    var g  = document.querySelector('.global-glow'); if(g) g.remove();
-    document.documentElement.classList.remove('has-global-glow');
-  }
-  var _enterDashboard = window.enterDashboard;
-  window.enterDashboard = function(role){
-    hardOffGlow();
-    if(typeof _enterDashboard === 'function'){
-      return _enterDashboard(role);
-    }
-  };
-})();
-</script>
-
-<script>
 /* v6 hard fix: unified glow controller */
 (function(){
   function hardOffGlow(){
@@ -5041,6 +4870,176 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+
+</script>
+
+
+<button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()">深/淺色切換</button>
+
+
+<script>
+(function() {
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'dark') { root.classList.add('dark'); }
+    else { root.classList.remove('dark'); }
+    try { localStorage.setItem('theme', theme); } catch (e) {}
+  }
+
+  window.toggleTheme = function toggleTheme() {
+    const current = (function(){ try { return localStorage.getItem('theme'); } catch(e) { return null; } })() || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  };
+
+  function initTheme() {
+    let saved = null;
+    try { saved = localStorage.getItem('theme'); } catch (e) { saved = null; }
+    if (saved) {
+      applyTheme(saved);
+    } else {
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(prefersDark ? 'dark' : 'light');
+    }
+  }
+
+  // 初始載入
+  initTheme();
+
+  // 偵聽系統主題變化（若使用者未手動切換時才跟隨）
+  try {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    media.addEventListener && media.addEventListener('change', (e) => {
+      const saved = localStorage.getItem('theme');
+      if (!saved) applyTheme(e.matches ? 'dark' : 'light');
+    });
+  } catch(e) {}
+})();
+</script>
+
+
+<script>
+(function() {
+  function accentAI(node) {
+    if (!node) return;
+    var text = (node.textContent || '').trim();
+    if (!text) return;
+    if (/span/i.test(node.innerHTML)) return; // assume already styled by author
+    if (/InfluenceAI/.test(text)) {
+      var base = text.slice(0, -2);
+      var last = text.slice(-2);
+      node.innerHTML = base + '<span class="logo-accent">' + last + '</span>';
+    }
+  }
+  accentAI(document.querySelector('#login-view h1')) ||
+  accentAI(document.querySelector('#login-view .text-5xl')) ||
+  accentAI(document.querySelector('#login-view .text-6xl'));
+  // Also try headers in dashboards:
+  accentAI(document.querySelector('header h1'));
+  document.querySelectorAll('.sidebar .text-3xl, .sidebar .text-2xl').forEach(accentAI);
+})();
+</script>
+
+
+
+
+
+<script>
+/* v20: bi-directional reveal (enter = show, leave = hide), keep observing */
+(function(){
+  var opts = { threshold: [0, 0.12, 0.4, 1], rootMargin: "0px 0px -10% 0px" };
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      var el = entry.target;
+      var d = el.getAttribute('data-delay') || '0ms';
+      el.style.setProperty('--delay', d);
+      if(entry.intersectionRatio >= 0.12){
+        el.classList.add('is-visible');
+      } else {
+        el.classList.remove('is-visible');
+      }
+    });
+  }, opts);
+
+  function boot(){
+    document.querySelectorAll('.reveal').forEach(function(el){ observer.observe(el); });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+
+
+<script>
+(function(){
+  const hint = document.querySelector('.scroll-hint');
+  const hero = document.querySelector('#login-view .hero-viewport') 
+            || document.querySelector('#login-view .min-h-screen');
+  if(!hint || !hero) return;
+  function update(v){ v ? hint.classList.add('is-visible') : hint.classList.remove('is-visible'); }
+  if('IntersectionObserver' in window){
+    const io = new IntersectionObserver((ents)=>{
+      ents.forEach(e => update(e.isIntersecting));
+    }, {threshold: 0.1});
+    io.observe(hero);
+    const r = hero.getBoundingClientRect();
+    update(r.top < innerHeight && r.bottom > 0);
+  }else{
+    update(true);
+    addEventListener('scroll', ()=>{
+      const r = hero.getBoundingClientRect();
+      update(r.top < innerHeight && r.bottom > 0);
+    }, {passive:true});
+  }
+})();
+</script>
+<script>
+(function(){
+  function toggleBodyGlow(on){
+    try{
+      document.body.classList.toggle('glow-on', !!on);
+      var bg = document.getElementById('bg-anim');
+      if(bg) bg.style.display = on ? 'block' : 'none';
+    }catch(e){}
+  }
+  // inject into ensureGlow flow by wrapping or redefining ensureGlow
+  var _ensureGlow = window.ensureGlow;
+  window.ensureGlow = function(){
+    function visible(el){ if(!el) return false; var s = getComputedStyle(el); return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed'); }
+    var onLogin = visible(document.getElementById('login-view'));
+    var onRole  = visible(document.getElementById('role-selection-view'));
+    if(onLogin || onRole){
+      toggleBodyGlow(true);
+      if(typeof addGlowLayer==='function') addGlowLayer();
+    }else{
+      toggleBodyGlow(false);
+      if(typeof removeGlow==='function') removeGlow();
+    }
+    if(typeof _ensureGlow==='function'){ try{ _ensureGlow(); }catch(e){} }
+  };
+  // run once
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(window.ensureGlow,0); });
+})();
+</script>
+<script>
+// v5 patch: force-turn-off glow when entering any dashboard
+(function(){
+  function hardOffGlow(){
+    document.body.classList.remove('glow-on');
+    var bg = document.getElementById('bg-anim'); if(bg) bg.style.display = 'none';
+    var g  = document.querySelector('.global-glow'); if(g) g.remove();
+    document.documentElement.classList.remove('has-global-glow');
+  }
+  var _enterDashboard = window.enterDashboard;
+  window.enterDashboard = function(role){
+    hardOffGlow();
+    if(typeof _enterDashboard === 'function'){
+      return _enterDashboard(role);
+    }
+  };
+})();
 </script>
 
 </body>
