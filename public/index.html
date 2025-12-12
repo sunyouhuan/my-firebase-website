@@ -4754,63 +4754,145 @@ function listenForSocialStats(uid) {
 }
 
 // 2. 更新畫面 UI (大頭貼、數字、簡介)
+// === 更新版：前端 UI 渲染 (顯示真實貼文與圖表) ===
 function updateDashboardWithRealData(igData) {
-    // A. 更新基本個人資料
-    const avatarEls = [
-        document.getElementById('dash-inf-avatar'), // 儀表板大頭貼
-        document.getElementById('inf-card-avatar'), // 設定頁預覽
-        document.getElementById('overview-inf-avatar') // 總覽頁
-    ];
-    
-    // 如果後端有抓到頭貼，就更新
+    // 1. 基礎個資 (大頭貼、名字、簡介)
     if (igData.avatar) {
-        avatarEls.forEach(el => { if(el) el.src = igData.avatar; });
+        const els = [document.getElementById('dash-inf-avatar'), document.getElementById('inf-card-avatar'), document.getElementById('overview-inf-avatar')];
+        els.forEach(el => { if(el) el.src = igData.avatar; });
     }
-
-    // 更新名字與簡介
     if (igData.username) {
-        const nameEls = [document.getElementById('dash-inf-name'), document.getElementById('inf-card-name')];
-        nameEls.forEach(el => { if(el) el.textContent = `@${igData.username}`; });
+        [document.getElementById('dash-inf-name'), document.getElementById('inf-card-name')].forEach(el => { if(el) el.textContent = `@${igData.username}`; });
     }
-    
     if (igData.bio) {
-        const bioEls = [document.getElementById('dash-inf-bio'), document.getElementById('inf-card-bio')];
-        bioEls.forEach(el => { if(el) el.textContent = igData.bio; });
+        [document.getElementById('dash-inf-bio'), document.getElementById('inf-card-bio')].forEach(el => { if(el) el.textContent = igData.bio; });
     }
 
-    // B. 更新核心數據 (粉絲數)
+    // 2. 核心數據 (粉絲數、互動率、總觸及)
     const fans = igData.followers || 0;
-    const media = igData.mediaCount || 0;
-
-    // 更新文字顯示
+    const er = igData.insights?.reach || 0; // 這裡改用真實觸及人數 (Reach)
+    
     const totalFansEl = document.getElementById('total-fans');
     if(totalFansEl) totalFansEl.textContent = fans.toLocaleString();
 
-    // 計算一個模擬的互動率 (因為 API Basic 沒給互動數，我們先用 3.5% ~ 5.5% 的隨機浮動或是固定值，讓畫面好看)
-    // 註：若要精準互動率，後端需遍歷 media 貼文，目前先用演算法估算
-    const estimatedER = (Math.random() * (5.5 - 3.5) + 3.5).toFixed(2);
+    // 顯示真實互動率 (如果後端有算出來)
     const avgErEl = document.getElementById('avg-er');
-    if(avgErEl) avgErEl.textContent = `${estimatedER}%`;
-
-    // 更新連結按鈕狀態
-    const btnConnect = document.getElementById('btn-connect-ig');
-    const statusText = document.getElementById('status-ig');
-    if (btnConnect) {
-        btnConnect.textContent = "已連結";
-        btnConnect.disabled = true;
-        btnConnect.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold";
-    }
-    if (statusText) {
-        statusText.innerHTML = `✅ 已同步 <span class="text-gray-400 text-[10px] ml-1">剛剛</span>`;
-        statusText.className = "text-xs text-green-600 font-bold";
+    // 從 users 資料結構外層讀取 avgEr，或者直接在這裡算
+    // 假設我們在後端存到 social_stats.current.avgEr
+    // 這裡為了簡單，我們先用 IG 裡的洞察數據來顯示「30天觸及」
+    if(avgErEl) {
+        // 我們把原本的 "平均互動率" 欄位，借用來顯示 "30天觸及人數" (因為這數據更有價值)
+        avgErEl.parentElement.querySelector('p.text-gray-500').textContent = "30天總觸及 (Reach)";
+        avgErEl.textContent = er.toLocaleString();
     }
 
-    // 顯示分析區塊
-    const analyticsDash = document.getElementById('analytics-dashboard');
-    if (analyticsDash) analyticsDash.classList.remove('hidden');
+    // 3. 連結按鈕狀態更新
+    const btn = document.getElementById('btn-connect-ig');
+    const status = document.getElementById('status-ig');
+    if (btn && status) {
+        btn.textContent = "已連結";
+        btn.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold";
+        btn.disabled = true;
+        status.innerHTML = `✅ 數據已同步`;
+        status.className = "text-xs text-green-600 font-bold";
+    }
 
-    // C. 繪製圖表 (傳入真實粉絲數)
-    renderRealCharts(fans);
+    // 4. 🔥 重頭戲：繪製「真實貼文成效圖表」
+    if (igData.chartData && igData.chartData.length > 0) {
+        renderRealEngagementChart(igData.chartData);
+    } else {
+        // 如果沒有貼文數據，還是畫一個模擬的粉絲圖
+        renderRealCharts(fans); 
+    }
+
+    // 5. 🔥 加碼：顯示「最近貼文牆」
+    // 你需要在 HTML 裡找個地方放這個，或者我用 JS 動態插入到 "分析儀表板" 下方
+    renderRecentPostsGallery(igData.recentPosts);
+}
+
+// --- 繪製真實貼文數據圖表 ---
+function renderRealEngagementChart(postsData) {
+    const ctxF = document.getElementById('chart-followers').getContext('2d');
+    
+    // 銷毀舊圖表
+    if (chartInstanceFollowers) chartInstanceFollowers.destroy();
+
+    // 準備數據：X軸是日期，Y軸是愛心數
+    const labels = postsData.map(p => new Date(p.date).toLocaleDateString().slice(5)); // 只取月/日
+    const likes = postsData.map(p => p.likes);
+    const comments = postsData.map(p => p.comments);
+
+    chartInstanceFollowers = new Chart(ctxF, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '貼文愛心數 (Likes)',
+                    data: likes,
+                    borderColor: '#f43f5e', // Rose-500 (IG 愛心色)
+                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: '留言數',
+                    data: comments,
+                    borderColor: '#3b82f6', // Blue
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                title: { display: true, text: '最近 25 篇貼文成效分析' }
+            }
+        }
+    });
+}
+
+// --- 動態生成貼文牆 ---
+function renderRecentPostsGallery(posts) {
+    if(!posts || posts.length === 0) return;
+
+    // 找一下有沒有現成的容器，沒有就生一個
+    let galleryContainer = document.getElementById('ig-posts-gallery');
+    if (!galleryContainer) {
+        const dashboard = document.getElementById('analytics-dashboard');
+        // 創建一個新區塊插入到圖表下方
+        const section = document.createElement('div');
+        section.className = "bg-white rounded-xl shadow p-6 mt-6";
+        section.innerHTML = `
+            <h3 class="font-bold text-slate-800 mb-4 border-b pb-2">📸 最新貼文預覽 (Live from Instagram)</h3>
+            <div id="ig-posts-gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"></div>
+        `;
+        dashboard.appendChild(section);
+        galleryContainer = document.getElementById('ig-posts-gallery');
+    }
+
+    // 生成 HTML
+    let html = '';
+    posts.forEach(post => {
+        // 如果是影片，取縮圖；如果是圖片，直接用 media_url
+        const imgUrl = post.thumbnail_url || post.media_url; 
+        const typeIcon = post.media_type === 'VIDEO' ? '🎥' : '📷';
+        
+        html += `
+            <a href="${post.permalink}" target="_blank" class="group relative block aspect-square bg-gray-100 rounded-lg overflow-hidden hover:opacity-90 transition">
+                <img src="${imgUrl}" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition flex items-center justify-center text-white opacity-0 group-hover:opacity-100 font-bold text-sm">
+                    ❤️ ${post.like_count}
+                </div>
+                <div class="absolute top-1 right-1 text-xs shadow text-white">${typeIcon}</div>
+            </a>
+        `;
+    });
+    galleryContainer.innerHTML = html;
 }
 
 // 3. 繪製漂亮的圖表 (Chart.js)
