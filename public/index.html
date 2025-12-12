@@ -4676,10 +4676,8 @@ window.connectInstagram = function () {
 
 
 // 定義在 module 內，供 onAuthStateChanged 呼叫
+// 定義在 module 內，供 onAuthStateChanged 呼叫
 async function handleInstagramOAuthRedirect(code) {
-    // 這裡不需要再 parse URL 了，因為參數傳進來了
-    // const url = new URL(window.location.href); ... (省略)
-    
     try {
         console.log("正在呼叫後端 exchangeIgToken...");
         
@@ -4699,21 +4697,25 @@ async function handleInstagramOAuthRedirect(code) {
             status.className = "text-xs text-green-600 font-bold";
         }
 
-        // 重要：清除網址列的 code，避免重新整理後又跑一次
+        // 清除網址列的 code
         const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({ path: newUrl }, '', newUrl);
 
-        // 觸發數據更新 (模擬或重新抓取)
-        if(typeof listenForSocialStats === 'function') {
-            connectedPlatforms.add('ig'); // 暫時標記
-            listenForSocialStats(user.uid);
+        // 🔥🔥🔥【關鍵修正】在這裡！🔥🔥🔥
+        // 我們要先從 auth 拿出目前的使用者，把它存到 'currentUser' 變數
+        const currentUser = auth.currentUser; 
+
+        // 確保有抓到人，才去呼叫監聽
+        if(currentUser && typeof listenForSocialStats === 'function') {
+            connectedPlatforms.add('ig');
+            // 👇 這裡要傳入 currentUser.uid (不要只寫 user)
+            listenForSocialStats(currentUser.uid); 
         }
 
     } catch (err) {
         console.error("連結失敗詳細錯誤：", err);
         alert("連結失敗：" + (err.message || "未知錯誤，請查看 Console"));
         
-        // 失敗也要把按鈕復原
         const btn = document.getElementById('btn-connect-ig');
         if(btn) {
             btn.textContent = "連結";
