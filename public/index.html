@@ -4403,18 +4403,43 @@ window.sendChatMessage = async function sendChatMessage() {
 
 
     // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                console.log('使用者已登入，開始監聽活動...');
-                // 當用戶登入後，立刻開始監聽他/她的活動資料
+                console.log('使用者已登入:', user.uid);
+        
+        // 1. 基本初始化 (原本的邏輯)
                 listenForCampaigns();
-                listenForAccountBalance(user.uid); // v2 (本次修改): 啟動餘額監聽
-                // ⭐ 3. 網紅端財務管理：可提領金額
+                listenForAccountBalance(user.uid);
                 listenForInfluencerBalance(user.uid);
                 listenInfluencerProfile(user.uid);
-                initMerchantDashboard(user.uid);   // 新增
-                initInfluencerDashboard(user.uid); // 新增
-                navigateTo('role-selection-view');
+                initMerchantDashboard(user.uid);
+                initInfluencerDashboard(user.uid);
+        
+        // 2. 判斷是否為 OAuth 回調 (檢查網址有沒有 code)
+                const urlParams = new URLSearchParams(window.location.search);
+                const authCode = urlParams.get("code");
+
+                if (authCode) {
+                    console.log("偵測到 IG OAuth 回傳代碼，準備交換 Token...");
+            
+            // A. 先切換 UI 到網紅儀表板，讓使用者知道正在處理
+                    navigateTo('influencer-dashboard-view');
+                    switchTab('influencer', 'value'); // 切換到「我的價值」分頁
+            
+            // B. 顯示一個 Loading 提示 (選用，或是直接用 alert)
+            // 你可以在 UI 上加一個 loading spinner，這裡先用簡單的方式
+                    const btn = document.getElementById('btn-connect-ig');
+                    if(btn) {
+                        btn.textContent = "驗證中...";
+                        btn.disabled = true;
+                    }
+
+            // C. 執行交換 Token
+                    await handleInstagramOAuthRedirect(authCode);
+                } else {
+            // 一般登入，導向角色選擇
+                    navigateTo('role-selection-view');
+                }
             } else {
                 console.log('使用者已登出，停止監聽。');
                 // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
@@ -4591,105 +4616,8 @@ try {
 } catch (e) { console.warn('onAuthStateChanged 尚未可用'); }
 
 
-/* v6 hard fix: unified glow controller */
-(function(){
-  function hardOffGlow(){
-    document.body.classList.remove('glow-on');
-    var bg = document.getElementById('bg-anim'); if(bg){ bg.style.display='none'; bg.removeAttribute('style'); }
-    var g = document.querySelectorAll('.global-glow'); g.forEach(function(x){ x.remove(); });
-    document.documentElement.classList.remove('has-global-glow');
-  }
-  function hardOnGlow(){
-    document.body.classList.add('glow-on');
-    if(!document.querySelector('.global-glow')){
-      var d=document.createElement('div'); d.className='global-glow'; document.body.prepend(d);
-    }
-  }
-  function isVisible(el){
-    if(!el) return false;
-    var s = getComputedStyle(el);
-    return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed');
-  }
-  function ensureGlow(){
-    var onLogin = isVisible(document.getElementById('login-view'));
-    var onRole  = isVisible(document.getElementById('role-selection-view'));
-    if(onLogin || onRole){ hardOnGlow(); }
-    else{ hardOffGlow(); }
-  }
-  window.ensureGlow = ensureGlow;
-  var _navigateTo = window.navigateTo;
-  window.navigateTo = function(viewId){
-    if(_navigateTo) _navigateTo(viewId);
-    var idStr = String(viewId||'').toLowerCase();
-    if(idStr.includes('dashboard')){ hardOffGlow(); } else { ensureGlow(); }
-  };
-  var _enterDashboard = window.enterDashboard;
-  window.enterDashboard = function(role){
-    hardOffGlow();
-    if(_enterDashboard) return _enterDashboard(role);
-  };
-  function checkHash(){
-    var h = (location.hash||'').toLowerCase();
-    if(h.includes('dashboard')) hardOffGlow(); else ensureGlow();
-  }
-  document.addEventListener('DOMContentLoaded', function(){
-    ensureGlow();
-    setTimeout(ensureGlow, 200);
-  });
-  window.addEventListener('hashchange', checkHash);
-  window.addEventListener('popstate', checkHash);
-  new MutationObserver(function(){ ensureGlow(); }).observe(document.body, {childList:true, subtree:true});
-})();
 
-// === 網紅價值：模擬社群連結與數據視覺化 ===
-    
-    // 模擬資料庫 (Mock Data)
-    const mockPlatformData = {
-        ig: { followers: 12500, er: 3.2, growth: [12000, 12100, 12250, 12380, 12500] },
-        yt: { followers: 5600, er: 4.5, growth: [5400, 5450, 5500, 5550, 5600] },
-        tt: { followers: 28000, er: 5.1, growth: [26000, 26500, 27200, 27800, 28000] },
-        fb: { followers: 8000, er: 1.8, growth: [7950, 7960, 7980, 7990, 8000] }
-    };
-
-    let connectedPlatforms = new Set(); // 暫存已連線的平台
-
-    window.simulateConnect = function(platform) {
-        const btn = document.getElementById(`btn-connect-${platform}`);
-        const status = document.getElementById(`status-${platform}`);
-        
-        // 1. 模擬 OAuth 彈窗效果
-        const width = 500;
-        const height = 600;
-        const left = (screen.width / 2) - (width / 2);
-        const top = (screen.height / 2) - (height / 2);
-        
-        // 開一個假的空白視窗，製造「正在去 IG 登入」的假象
-        const popup = window.open("", "Connect", `width=${width},height=${height},top=${top},left=${left}`);
-        popup.document.write(`<h2 style="text-align:center;font-family:sans-serif;margin-top:50px;">正在連接至 ${platform.toUpperCase()}...</h2><p style="text-align:center;">請稍候，正在安全驗證中...</p>`);
-        
-        btn.textContent = '連線中...';
-        btn.disabled = true;
-
-        // 2. 模擬延遲後成功
-        setTimeout(() => {
-            popup.close();
-            
-            // 更新 UI
-            status.textContent = '✅ 已連結';
-            status.className = 'text-xs text-green-600 font-bold';
-            btn.textContent = '斷開';
-            btn.className = 'text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100';
-            btn.onclick = () => alert('模擬斷開連結'); // 簡化處理
-
-            // 記錄並更新報表
-            connectedPlatforms.add(platform);
-            updateAnalyticsUI();
-            
-            alert(`${platform.toUpperCase()} 帳戶連結成功！數據已匯入。`);
-        }, 1500);
-    };
-
-    // === Instagram OAuth（第二種方式：直接 IG 登入） ===
+  // === Instagram OAuth（第二種方式：直接 IG 登入） ===
 
 // 與 functions/index.js 裡設定保持一致（CLIENT ID 可以公開，SECRET 一定只能放後端）
 const INSTAGRAM_CLIENT_ID = "1206014388258225"; // 替換成你自己的，但要跟後端 IG_CLIENT_ID 一樣
@@ -4747,41 +4675,53 @@ window.connectInstagram = function () {
 
 
 
-async function handleInstagramOAuthRedirect() {
-    const url = new URL(window.location.href);
-    const params = url.searchParams;
-    const code = params.get("code");
-    const state = params.get("state");
-    
-    if (!code) return; // 沒有 code 就離開
-
-    // =========== 👇 修改這裡：把這段檢查暫時關閉 👇 ===========
-    const savedState = localStorage.getItem("ig_oauth_state");
-    // if (savedState && state !== savedState) {
-    //     console.warn("IG OAuth state 不符，可能不是我們發的請求，忽略。");
-    //     return;  <-- 關鍵是這個 return 讓我們停住了，把它註解掉！
-    // }
-    // ========================================================
-
-    // ... (後面的程式碼不用動)
+// 定義在 module 內，供 onAuthStateChanged 呼叫
+async function handleInstagramOAuthRedirect(code) {
+    // 這裡不需要再 parse URL 了，因為參數傳進來了
+    // const url = new URL(window.location.href); ... (省略)
     
     try {
-        console.log("正在呼叫後端交換 Token..."); // 加個 log 讓自己安心
-        const result = await exchangeIgTokenFn({ code });
-        alert("Instagram 連結成功！"); // 這裡就是你要的成功訊息
-        // ...
+        console.log("正在呼叫後端 exchangeIgToken...");
+        
+        // 呼叫 Cloud Function
+        const result = await exchangeIgTokenFn({ code: code });
+        
+        console.log("Token 交換成功！", result.data);
+        alert("Instagram 連結成功！數據正在同步中...");
+
+        // 更新 UI 狀態
+        const btn = document.getElementById('btn-connect-ig');
+        const status = document.getElementById('status-ig');
+        if(btn && status) {
+            btn.textContent = "已連結";
+            btn.disabled = true;
+            status.textContent = "✅ 已連結";
+            status.className = "text-xs text-green-600 font-bold";
+        }
+
+        // 重要：清除網址列的 code，避免重新整理後又跑一次
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+
+        // 觸發數據更新 (模擬或重新抓取)
+        if(typeof updateAnalyticsUI === 'function') {
+            connectedPlatforms.add('ig'); // 暫時標記
+            updateAnalyticsUI();
+        }
+
     } catch (err) {
-        console.error("連結失敗：", err);
-        alert("錯誤：" + err.message);
+        console.error("連結失敗詳細錯誤：", err);
+        alert("連結失敗：" + (err.message || "未知錯誤，請查看 Console"));
+        
+        // 失敗也要把按鈕復原
+        const btn = document.getElementById('btn-connect-ig');
+        if(btn) {
+            btn.textContent = "連結";
+            btn.disabled = false;
+        }
     }
 }
 
-
-
-// 頁面載入完成時檢查一次（你的檔案本來就有別的 DOMContentLoaded，不會衝突）
-document.addEventListener("DOMContentLoaded", () => {
-  handleInstagramOAuthRedirect();
-});
 
 
 
@@ -4868,8 +4808,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-
 
 </script>
 
@@ -5040,6 +4978,110 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 })();
+</script>
+
+<script>
+/* v6 hard fix: unified glow controller */
+(function(){
+  function hardOffGlow(){
+    document.body.classList.remove('glow-on');
+    var bg = document.getElementById('bg-anim'); if(bg){ bg.style.display='none'; bg.removeAttribute('style'); }
+    var g = document.querySelectorAll('.global-glow'); g.forEach(function(x){ x.remove(); });
+    document.documentElement.classList.remove('has-global-glow');
+  }
+  function hardOnGlow(){
+    document.body.classList.add('glow-on');
+    if(!document.querySelector('.global-glow')){
+      var d=document.createElement('div'); d.className='global-glow'; document.body.prepend(d);
+    }
+  }
+  function isVisible(el){
+    if(!el) return false;
+    var s = getComputedStyle(el);
+    return s.display!=='none' && s.visibility!=='hidden' && (el.offsetParent!==null || s.position==='fixed');
+  }
+  function ensureGlow(){
+    var onLogin = isVisible(document.getElementById('login-view'));
+    var onRole  = isVisible(document.getElementById('role-selection-view'));
+    if(onLogin || onRole){ hardOnGlow(); }
+    else{ hardOffGlow(); }
+  }
+  window.ensureGlow = ensureGlow;
+  var _navigateTo = window.navigateTo;
+  window.navigateTo = function(viewId){
+    if(_navigateTo) _navigateTo(viewId);
+    var idStr = String(viewId||'').toLowerCase();
+    if(idStr.includes('dashboard')){ hardOffGlow(); } else { ensureGlow(); }
+  };
+  var _enterDashboard = window.enterDashboard;
+  window.enterDashboard = function(role){
+    hardOffGlow();
+    if(_enterDashboard) return _enterDashboard(role);
+  };
+  function checkHash(){
+    var h = (location.hash||'').toLowerCase();
+    if(h.includes('dashboard')) hardOffGlow(); else ensureGlow();
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    ensureGlow();
+    setTimeout(ensureGlow, 200);
+  });
+  window.addEventListener('hashchange', checkHash);
+  window.addEventListener('popstate', checkHash);
+  new MutationObserver(function(){ ensureGlow(); }).observe(document.body, {childList:true, subtree:true});
+})();
+
+// === 網紅價值：模擬社群連結與數據視覺化 ===
+    
+    // 模擬資料庫 (Mock Data)
+    const mockPlatformData = {
+        ig: { followers: 12500, er: 3.2, growth: [12000, 12100, 12250, 12380, 12500] },
+        yt: { followers: 5600, er: 4.5, growth: [5400, 5450, 5500, 5550, 5600] },
+        tt: { followers: 28000, er: 5.1, growth: [26000, 26500, 27200, 27800, 28000] },
+        fb: { followers: 8000, er: 1.8, growth: [7950, 7960, 7980, 7990, 8000] }
+    };
+
+    let connectedPlatforms = new Set(); // 暫存已連線的平台
+
+    window.simulateConnect = function(platform) {
+        const btn = document.getElementById(`btn-connect-${platform}`);
+        const status = document.getElementById(`status-${platform}`);
+        
+        // 1. 模擬 OAuth 彈窗效果
+        const width = 500;
+        const height = 600;
+        const left = (screen.width / 2) - (width / 2);
+        const top = (screen.height / 2) - (height / 2);
+        
+        // 開一個假的空白視窗，製造「正在去 IG 登入」的假象
+        const popup = window.open("", "Connect", `width=${width},height=${height},top=${top},left=${left}`);
+        popup.document.write(`<h2 style="text-align:center;font-family:sans-serif;margin-top:50px;">正在連接至 ${platform.toUpperCase()}...</h2><p style="text-align:center;">請稍候，正在安全驗證中...</p>`);
+        
+        btn.textContent = '連線中...';
+        btn.disabled = true;
+
+        // 2. 模擬延遲後成功
+        setTimeout(() => {
+            popup.close();
+            
+            // 更新 UI
+            status.textContent = '✅ 已連結';
+            status.className = 'text-xs text-green-600 font-bold';
+            btn.textContent = '斷開';
+            btn.className = 'text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100';
+            btn.onclick = () => alert('模擬斷開連結'); // 簡化處理
+
+            // 記錄並更新報表
+            connectedPlatforms.add(platform);
+            updateAnalyticsUI();
+            
+            alert(`${platform.toUpperCase()} 帳戶連結成功！數據已匯入。`);
+        }, 1500);
+    };
+
+  
+
+
 </script>
 
 </body>
