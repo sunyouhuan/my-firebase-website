@@ -1,192 +1,232 @@
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const logger = require("firebase-functions/logger");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const admin = require("firebase-admin");
+const axios = require("axios");
+const FormData = require('form-data'); 
+
+admin.initializeApp();
+
+// === 設定區 (請確認這些與你的 Meta App 後台一致) ===
+const IG_CLIENT_ID = "1206014388258225";
+const IG_CLIENT_SECRET = "8db91dc1159557946f5ffbb07f371a25"; // ⚠️ 注意：正式上線建議將此設為環境變數
+const IG_REDIRECT_URI = "https://influenceai.tw/"; 
+
+// 設定 Gemini API
+const API_KEY = process.env.GOOGLE_APIKEY; 
+const genAI = new GoogleGenerativeAI(API_KEY);
+
 // ==========================================
-    // 🔥 前端 UI 渲染邏輯 (請貼在 script 標籤底部) 🔥
-    // ==========================================
+// 功能 1：AI 行銷顧問 (askGemini) - 維持不變
+// ==========================================
+exports.askGemini = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "請先登入後再使用。");
+  }
 
-    // 1. 監聽 Firestore 數據
-    let unsubSocial = null;
-    window.listenForSocialStats = function(uid) {
-        if (unsubSocial) unsubSocial();
-        console.log("正在監聽用戶數據:", uid);
-        unsubSocial = onSnapshot(doc(db, "users", uid), (docSnap) => {
-            if (docSnap.exists()) {
-                const igData = docSnap.data().social_stats?.current?.ig;
-                if (igData && igData.connected) {
-                    updateDashboardWithRealData(igData);
-                }
+  const userMessage = request.data.prompt;
+  if (!userMessage || typeof userMessage !== "string") {
+    throw new HttpsError("invalid-argument", "請輸入有效的訊息。");
+  }
+
+  logger.info(`收到用戶 ${request.auth.uid} 的 AI 請求: ${userMessage}`);
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const fullPrompt = `你是一個專業的網紅行銷顧問，名叫 'MatchAI 顧問'。你的任務是協助品牌主（商家）發想、規劃、並優化他們的網紅行銷活動。請用繁體中文、友善且專業的語氣回答以下用戶的問題：\n\n用戶問題：${userMessage}`;
+
+    const result = await model.generateContent(fullPrompt);
+    const response = result.response;
+    const text = response.text();
+
+    return { response: text };
+  } catch (error) {
+    logger.error("Gemini API 錯誤:", error);
+    throw new HttpsError("internal", "呼叫 Gemini API 失敗。", error);
+  }
+});
+
+// ==========================================
+// 功能 2：交換 Instagram Token (OAuth 流程)
+// ==========================================
+exports.exchangeIgToken = onCall(async (request) => {
+    // 1. 檢查用戶是否登入
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "請先登入");
+    }
+    
+    // 2. 接收前端傳來的 "code"
+    const code = request.data.code;
+    if (!code) {
+        throw new HttpsError("invalid-argument", "缺少授權碼 (code)");
+    }
+
+    try {
+        console.log(`[Token交換] 用戶 ${request.auth.uid} 開始交換 Token...`);
+
+        // 3. 向 Instagram 交換 "短效 Token" (Short-lived Token)
+        const formData = new FormData();
+        formData.append('client_id', IG_CLIENT_ID);
+        formData.append('client_secret', IG_CLIENT_SECRET);
+        formData.append('grant_type', 'authorization_code');
+        formData.append('redirect_uri', IG_REDIRECT_URI);
+        formData.append('code', code);
+
+        const tokenRes = await axios.post('https://api.instagram.com/oauth/access_token', formData, {
+            headers: formData.getHeaders()
+        });
+        
+        const shortToken = tokenRes.data.access_token;
+        const igUserId = tokenRes.data.user_id; // 這是 IG 的用戶 ID
+
+        // 4. 將 "短效 Token" 換成 "長效 Token" (Long-lived Token, 效期 60 天)
+        const longTokenRes = await axios.get('https://graph.instagram.com/access_token', {
+            params: {
+                grant_type: 'ig_exchange_token',
+                client_secret: IG_CLIENT_SECRET,
+                access_token: shortToken
             }
         });
-    }
-
-    // 2. 主渲染函式
-    window.updateDashboardWithRealData = function(igData) {
-        if (!igData) return;
-
-        // 更新大頭貼與文字
-        if (igData.avatar) {
-            const els = [document.getElementById('dash-inf-avatar'), document.getElementById('inf-card-avatar'), document.getElementById('overview-inf-avatar')];
-            els.forEach(el => { if(el) el.src = igData.avatar; });
-        }
-        if (igData.username) {
-            [document.getElementById('dash-inf-name'), document.getElementById('inf-card-name')].forEach(el => { if(el) el.textContent = `@${igData.username}`; });
-        }
         
-        // 更新數字
-        document.getElementById('total-fans').textContent = (igData.followers || 0).toLocaleString();
-        
-        const avgErEl = document.getElementById('avg-er');
-        if(avgErEl) {
-            avgErEl.innerHTML = `${((igData.avgEr || 0) * 100).toFixed(2)}%`;
-            avgErEl.parentElement.querySelector('p').textContent = "平均互動率 (ER)";
-        }
+        const longToken = longTokenRes.data.access_token;
 
-        // 更新連結按鈕狀態
-        const btn = document.getElementById('btn-connect-ig');
-        const status = document.getElementById('status-ig');
-        if (btn) { btn.textContent = "已連結"; btn.disabled = true; btn.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold"; }
-        if (status) { status.textContent = "✅ 數據已同步"; status.className = "text-green-600 text-xs font-bold"; }
-
-        // 顯示分析區塊
-        document.getElementById('analytics-dashboard').classList.remove('hidden');
-
-        // 🔥 繪製「堆疊長條圖」 (人口統計)
-        if (igData.demographics && Object.keys(igData.demographics.gender_age || {}).length > 0) {
-            renderDemographicCharts(igData.demographics.gender_age);
-        } else {
-            console.log("無人口統計數據 (粉絲不足100)");
-        }
-
-        // 🔥 繪製 30天觸及趨勢圖
-        if (igData.dailyTrend) renderTrendChart(igData.dailyTrend);
-
-        // 🔥 顯示限動牆
-        if (igData.activeStories && igData.activeStories.length > 0) {
-            renderStoriesGallery(igData.activeStories);
-        }
-
-        // 🔥 顯示貼文牆
-        if (igData.recentPosts) renderRecentPostsGallery(igData.recentPosts);
-    }
-
-    // --- 圖表 1: 男女年齡堆疊圖 (Stacked Bar) ---
-    let chartDemoInstance = null;
-    window.renderDemographicCharts = function(genderAgeData) {
-        const ctx = document.getElementById('chart-demo')?.getContext('2d');
-        if (!ctx) return;
-        if (chartDemoInstance) chartDemoInstance.destroy();
-
-        // 資料處理
-        const ageSet = new Set();
-        Object.keys(genderAgeData).forEach(key => ageSet.add(key.split('.')[1]));
-        const labels = Array.from(ageSet).sort(); // 年齡層 X軸
-
-        const femaleData = [];
-        const maleData = [];
-
-        labels.forEach(age => {
-            femaleData.push(genderAgeData[`F.${age}`] || 0);
-            maleData.push(genderAgeData[`M.${age}`] || 0);
+        // 5. 存入 Firestore (路徑：users/{uid}/tokens/instagram)
+        // 這一步會觸發下方的 fetchInstagramStats 函式
+        await admin.firestore().collection("users").doc(request.auth.uid).collection("tokens").doc("instagram").set({
+            accessToken: longToken,
+            igUserId: igUserId,
+            provider: 'instagram_direct', // 標記這是新的直連方式
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        // 修改標題
-        const titleEl = document.getElementById('chart-demo').parentElement.querySelector('h3');
-        if(titleEl) titleEl.textContent = "各年齡層性別比例 (Gender by Age)";
+        console.log(`[Token交換] 成功！已儲存 Token。`);
+        return { success: true };
 
-        chartDemoInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: '女性 (Female)',
-                        data: femaleData,
-                        backgroundColor: '#f472b6',
-                        stack: 'Stack 0', // 關鍵：設為同一組
-                    },
-                    {
-                        label: '男性 (Male)',
-                        data: maleData,
-                        backgroundColor: '#60a5fa',
-                        stack: 'Stack 0', // 關鍵：設為同一組
+    } catch (error) {
+        logger.error("IG Token 交換失敗:", error.response ? error.response.data : error.message);
+        throw new HttpsError("internal", "無法連結 Instagram，請稍後再試。");
+    }
+});
+
+// ==========================================
+// 功能 3：自動抓取 Instagram 數據 (🔥 重點修正版)
+// ==========================================
+// ==========================================
+// 功能 3：自動抓取 Instagram 數據 (🔥 全火力升級版)
+// ==========================================
+exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{providerId}", async (event) => {
+    const snapshot = event.data && event.data.after;
+    if (!snapshot) return null;
+
+    const data = snapshot.data();
+    const userId = event.params.userId;
+    const providerId = event.params.providerId;
+
+    if (providerId !== 'instagram') return null;
+    const accessToken = data.accessToken;
+    if (!accessToken) return null;
+
+    console.log(`[IG全火力] 開始為用戶 ${userId} 抓取完整數據...`);
+
+    try {
+        // 1. 基礎資料 (Profile)
+        const meRes = await axios.get(`https://graph.instagram.com/v21.0/me`, {
+            params: {
+                fields: 'id,username,name,biography,profile_picture_url,followers_count,media_count',
+                access_token: accessToken
+            }
+        });
+        const profile = meRes.data;
+
+        // 2. 媒體資料 (Recent Media) - 抓最近 25 篇貼文
+        // 這裡我們會拿到：圖片網址、愛心數、留言數、發文時間、類型(影片/圖片)
+        const mediaRes = await axios.get(`https://graph.instagram.com/v21.0/me/media`, {
+            params: {
+                fields: 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,like_count,comments_count',
+                limit: 25, 
+                access_token: accessToken
+            }
+        });
+        const posts = mediaRes.data.data || [];
+
+        // 3. 帳號洞察 (Account Insights) - 抓過去 30 天的數據
+        // 注意：這需要 instagram_business_manage_insights 權限
+        let insightsData = { reach: 0, impressions: 0, profile_views: 0 };
+        try {
+            const insightsRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
+                params: {
+                    metric: 'reach,impressions,profile_views',
+                    period: 'day', // 以天為單位
+                    since: Math.floor(Date.now() / 1000) - 2592000, // 30天前
+                    until: Math.floor(Date.now() / 1000),
+                    access_token: accessToken
+                }
+            });
+            
+            // 簡單加總 30 天的數據
+            const iData = insightsRes.data.data;
+            iData.forEach(metric => {
+                const total = metric.values.reduce((acc, curr) => acc + (curr.value || 0), 0);
+                if(metric.name === 'reach') insightsData.reach = total;
+                if(metric.name === 'impressions') insightsData.impressions = total;
+                if(metric.name === 'profile_views') insightsData.profile_views = total;
+            });
+        } catch (err) {
+            console.warn("[IG洞察] 無法取得 Insight (可能是新帳號數據不足):", err.message);
+            // 失敗不影響主流程，保持 0 即可
+        }
+
+        // 4. 計算真實互動率 (Average Engagement Rate)
+        let totalEngagement = 0;
+        posts.forEach(p => {
+            totalEngagement += (p.like_count || 0) + (p.comments_count || 0);
+        });
+        // 互動率 = (總互動 / 貼文數) / 粉絲數
+        const avgEngagement = posts.length > 0 ? (totalEngagement / posts.length) : 0;
+        const engagementRate = profile.followers_count > 0 ? (avgEngagement / profile.followers_count) : 0;
+
+
+        // 5. 寫入 Firestore (結構化儲存)
+        await admin.firestore().collection("users").doc(userId).set({
+            social_stats: {
+                current: {
+                    totalFans: profile.followers_count || 0,
+                    avgEr: engagementRate, // 這是真實算出來的！
+                    ig: {
+                        connected: true,
+                        id: profile.id,
+                        username: profile.username,
+                        name: profile.name,
+                        bio: profile.biography || "",
+                        avatar: profile.profile_picture_url || "",
+                        followers: profile.followers_count || 0,
+                        mediaCount: profile.media_count || 0,
+                        
+                        // 新增：洞察數據
+                        insights: insightsData,
+                        
+                        // 新增：最近貼文 (只存前 6 篇給前端預覽用，避免文件過大)
+                        recentPosts: posts.slice(0, 6),
+                        
+                        // 新增：圖表用的數據 (最近 25 篇的愛心趨勢)
+                        chartData: posts.map(p => ({
+                            date: p.timestamp,
+                            likes: p.like_count,
+                            comments: p.comments_count
+                        })).reverse(), // 反轉順序，讓舊的在左邊，新的在右邊
+
+                        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { stacked: true }, // X軸堆疊
-                    y: { stacked: true }  // Y軸堆疊
                 }
             }
-        });
+        }, { merge: true });
+
+        console.log(`[IG全火力] 成功！粉絲: ${profile.followers_count}, 貼文數: ${posts.length}, 互動率: ${(engagementRate*100).toFixed(2)}%`);
+        return { success: true };
+
+    } catch (error) {
+        console.error("[IG全火力] 失敗:", error.response ? error.response.data : error.message);
+        return null;
     }
-
-    // --- 圖表 2: 趨勢圖 ---
-    let chartTrendInstance = null;
-    window.renderTrendChart = function(trendData) {
-        const ctx = document.getElementById('chart-followers')?.getContext('2d');
-        if (!ctx || trendData.length === 0) return;
-        if (chartTrendInstance) chartTrendInstance.destroy();
-
-        const titleEl = document.getElementById('chart-followers').parentElement.querySelector('h3');
-        if(titleEl) titleEl.textContent = "30天觸及人數趨勢";
-
-        chartTrendInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: trendData.map(d => new Date(d.date).toLocaleDateString().slice(5)),
-                datasets: [{
-                    label: '每日觸及',
-                    data: trendData.map(d => d.value),
-                    borderColor: '#0d9488',
-                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-    }
-
-    // --- 區塊: 限時動態牆 ---
-    window.renderStoriesGallery = function(stories) {
-        let container = document.getElementById('ig-stories-gallery');
-        if (!container) {
-            const dashboard = document.getElementById('analytics-dashboard');
-            const section = document.createElement('div');
-            section.className = "bg-white rounded-xl shadow p-6 mt-6 border-l-4 border-pink-500";
-            section.innerHTML = `<h3 class="font-bold text-slate-800 mb-4">🟣 限時動態 (Live Stories)</h3><div id="ig-stories-gallery" class="flex gap-4 overflow-x-auto pb-2"></div>`;
-            dashboard.prepend(section);
-            container = document.getElementById('ig-stories-gallery');
-        }
-        container.innerHTML = stories.map(s => `
-            <div class="flex-shrink-0 w-20 flex flex-col items-center">
-                <div class="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-purple-600">
-                    <img src="${s.thumbnail_url || s.media_url}" class="w-full h-full rounded-full object-cover border-2 border-white">
-                </div>
-                <div class="text-xs font-bold mt-1">👀 ${s.insights?.reach || 0}</div>
-            </div>
-        `).join('');
-    }
-
-    // --- 區塊: 貼文牆 ---
-    window.renderRecentPostsGallery = function(posts) {
-        let container = document.getElementById('ig-posts-gallery');
-        if (!container) {
-            const dashboard = document.getElementById('analytics-dashboard');
-            const section = document.createElement('div');
-            section.className = "bg-white rounded-xl shadow p-6 mt-6";
-            section.innerHTML = `<h3 class="font-bold text-slate-800 mb-4 border-b pb-2">📸 最新貼文成效</h3><div id="ig-posts-gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"></div>`;
-            dashboard.appendChild(section);
-            container = document.getElementById('ig-posts-gallery');
-        }
-        container.innerHTML = posts.map(p => `
-            <a href="${p.permalink}" target="_blank" class="block aspect-square bg-gray-100 rounded-lg overflow-hidden relative group">
-                <img src="${p.thumbnail_url || p.media_url}" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition">
-                    <span class="font-bold">👀 ${p.insights?.reach || 0}</span>
-                    <span class="text-xs">❤️ ${p.like_count}</span>
-                </div>
-            </a>
-        `).join('');
-    }
+});
