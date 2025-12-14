@@ -4414,6 +4414,8 @@ window.sendChatMessage = async function sendChatMessage() {
                 listenInfluencerProfile(user.uid);
                 initMerchantDashboard(user.uid);
                 initInfluencerDashboard(user.uid);
+                listenForSocialStats(user.uid);
+
         
         // 2. 判斷是否為 OAuth 回調 (檢查網址有沒有 code)
                 const urlParams = new URLSearchParams(window.location.search);
@@ -4707,9 +4709,8 @@ async function handleInstagramOAuthRedirect(code) {
 
         // 確保有抓到人，才去呼叫監聽
         if(currentUser && typeof listenForSocialStats === 'function') {
-            connectedPlatforms.add('ig');
-            // 👇 這裡要傳入 currentUser.uid (不要只寫 user)
-            listenForSocialStats(currentUser.uid); 
+            listenForSocialStats(currentUser.uid);
+
         }
 
     } catch (err) {
