@@ -2166,6 +2166,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             updateDoc,       // 新增：用於更新文件 (例如：軟刪除)
             onSnapshot,      // 新增：用於即時監聽資料變化
             orderBy,       // 新增：用於排序查詢結果
+            deleteDoc,
             serverTimestamp,   // ⬅️ 新增
             limit
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
@@ -2876,6 +2877,101 @@ window.sendChatMessage = async function sendChatMessage() {
             alert('讀取失敗');
         }
     };
+
+    // === 功能 A：手動更新數據 ===
+window.handleRefreshIG = async function(igUserId) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const msgEl = document.getElementById('update-msg');
+    if(msgEl) {
+        msgEl.textContent = "正在請求後端更新...";
+        msgEl.classList.remove('hidden');
+    }
+
+    try {
+        // 技巧：我們只要更新 token 文件的一個欄位，後端的 onDocumentWritten 就會偵測到變化，
+        // 然後自動重新執行 fetchInstagramStats 抓取最新數據！
+        const tokenRef = doc(db, "users", user.uid, "tokens", "instagram");
+        
+        await updateDoc(tokenRef, {
+            forceUpdate: serverTimestamp() // 寫入當下時間，強迫觸發後端
+        });
+
+        // 提示使用者
+        if(msgEl) msgEl.textContent = "請求已送出，數據稍後將自動更新。";
+        setTimeout(() => { if(msgEl) msgEl.classList.add('hidden'); }, 3000);
+
+    } catch (error) {
+        console.error("更新失敗:", error);
+        alert("更新請求失敗，請稍後再試。");
+    }
+};
+
+// === 功能 B：斷開連結 (登出 IG) ===
+window.handleDisconnectIG = async function() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    if(!confirm("確定要斷開 Instagram 連結嗎？\n斷開後，您將無法看到分析數據。")) return;
+
+    try {
+        // 1. 刪除 Firestore 裡的 Token 文件
+        // 後端偵測到文件被刪除，會停止抓取，不會報錯（因為你的後端有寫 if (!snapshot) return null）
+        await deleteDoc(doc(db, "users", user.uid, "tokens", "instagram"));
+
+        // 2. 刪除使用者資料裡的 social_stats.current.ig (選擇性，但建議做)
+        // 這裡我們簡單一點，直接更新 connected 狀態為 false
+        await updateDoc(doc(db, "users", user.uid), {
+            "social_stats.current.ig.connected": false,
+            "social_stats.current.ig.avatar": "", // 清空頭像
+            "social_stats.current.ig.username": "" // 清空名稱
+        });
+
+        // 3. 重置 UI 狀態
+        resetIGConnectUI();
+        
+        alert("已成功斷開連結。");
+
+    } catch (error) {
+        console.error("斷開失敗:", error);
+        alert("斷開失敗：" + error.message);
+    }
+};
+
+// === 輔助函式：重置 UI ===
+function resetIGConnectUI() {
+    const btn = document.getElementById('btn-connect-ig');
+    const status = document.getElementById('status-ig');
+    const dashboard = document.getElementById('analytics-dashboard');
+    
+    // 恢復按鈕
+    if(btn) {
+        btn.textContent = "連結";
+        btn.className = "text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100";
+        btn.disabled = false;
+        btn.onclick = window.connectInstagram; // 重新綁定連結函式
+    }
+
+    // 恢復狀態文字
+    if(status) {
+        status.textContent = "尚未連結";
+        status.className = "text-xs text-gray-400";
+    }
+
+    // 隱藏數據儀表板
+    if(dashboard) {
+        dashboard.classList.add('hidden');
+    }
+
+    // 清空數據顯示
+    const els = ['total-fans', 'avg-er', 'dash-inf-avatar', 'inf-card-avatar'];
+    els.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.textContent = (id.includes('avatar')) ? '' : '0';
+        if(el && id.includes('avatar')) el.src = 'https://placehold.co/100'; // 恢復預設圖
+    });
+}
 
 
 
@@ -5017,6 +5113,40 @@ function renderRealCharts(currentFollowers) {
         }
     });
 }
+
+
+// ... (前面第 1, 2, 3 點保持不變) ...
+
+    // 4. 【修改版】連結按鈕狀態更新 (加入斷開與更新功能)
+    const btn = document.getElementById('btn-connect-ig');
+    const status = document.getElementById('status-ig');
+    
+    if (btn && status) {
+        // 改變按鈕外觀
+        btn.innerHTML = `<span class="mr-1">●</span>已連結`;
+        btn.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold cursor-default";
+        btn.disabled = true; // 讓它不能再被點擊觸發 OAuth
+        btn.onclick = null; 
+
+        // 狀態文字區塊：顯示狀態 + 操作按鈕
+        status.className = ""; // 清空樣式
+        status.innerHTML = `
+            <div class="flex flex-col items-start gap-1">
+                <span class="text-xs text-green-600 font-bold">✅ 數據已同步</span>
+                <div class="flex gap-2 text-[10px] text-gray-400">
+                    <button onclick="handleRefreshIG('${igData.id}')" class="hover:text-blue-500 underline decoration-dotted">
+                        🔄 更新數據
+                    </button>
+                    <button onclick="handleDisconnectIG()" class="hover:text-red-500 underline decoration-dotted">
+                        ❌ 斷開連結
+                    </button>
+                </div>
+                <span id="update-msg" class="text-[10px] text-orange-500 hidden"></span>
+            </div>
+        `;
+    }
+
+    // ... (後面第 5, 6 點保持不變) ...
 
 </script>
 
