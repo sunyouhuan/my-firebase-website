@@ -4414,7 +4414,7 @@ window.sendChatMessage = async function sendChatMessage() {
                 listenInfluencerProfile(user.uid);
                 initMerchantDashboard(user.uid);
                 initInfluencerDashboard(user.uid);
-
+                listenForSocialStats(user.uid);
         
         // 2. 判斷是否為 OAuth 回調 (檢查網址有沒有 code)
                 const urlParams = new URLSearchParams(window.location.search);
@@ -4708,8 +4708,9 @@ async function handleInstagramOAuthRedirect(code) {
 
         // 確保有抓到人，才去呼叫監聽
         if(currentUser && typeof listenForSocialStats === 'function') {
-            listenForSocialStats(currentUser.uid);
-
+            connectedPlatforms.add('ig');
+            // 👇 這裡要傳入 currentUser.uid (不要只寫 user)
+            listenForSocialStats(currentUser.uid); 
         }
 
     } catch (err) {
@@ -4753,10 +4754,17 @@ function listenForSocialStats(uid) {
     });
 }
 
-// 2. 更新畫面 UI (大頭貼、數字、簡介)
 // === 更新版：前端 UI 渲染 (顯示真實貼文與圖表) ===
 function updateDashboardWithRealData(igData) {
-    // 1. 基礎個資 (大頭貼、名字、簡介)
+    console.log("收到 IG 真實數據:", igData); // 加入這行方便除錯
+
+    // 1. 【關鍵修正】顯示分析儀表板！(原本缺了這一步，所以看不見)
+    const dashboard = document.getElementById('analytics-dashboard');
+    if (dashboard) {
+        dashboard.classList.remove('hidden');
+    }
+
+    // 2. 基礎個資 (大頭貼、名字、簡介)
     if (igData.avatar) {
         const els = [document.getElementById('dash-inf-avatar'), document.getElementById('inf-card-avatar'), document.getElementById('overview-inf-avatar')];
         els.forEach(el => { if(el) el.src = igData.avatar; });
@@ -4768,60 +4776,75 @@ function updateDashboardWithRealData(igData) {
         [document.getElementById('dash-inf-bio'), document.getElementById('inf-card-bio')].forEach(el => { if(el) el.textContent = igData.bio; });
     }
 
-    // 2. 核心數據 (粉絲數、互動率、總觸及)
+    // 3. 核心數據 (粉絲數、互動率、總觸及)
+    // 使用 toLocaleString() 讓數字有千分位逗號 (如 12,345)
     const fans = igData.followers || 0;
-    const er = igData.insights?.reach || 0; // 這裡改用真實觸及人數 (Reach)
+    const er = igData.insights?.reach || 0; 
     
     const totalFansEl = document.getElementById('total-fans');
     if(totalFansEl) totalFansEl.textContent = fans.toLocaleString();
 
-    // 顯示真實互動率 (如果後端有算出來)
+    // 顯示真實互動率 / 觸及
     const avgErEl = document.getElementById('avg-er');
-    // 從 users 資料結構外層讀取 avgEr，或者直接在這裡算
-    // 假設我們在後端存到 social_stats.current.avgEr
-    // 這裡為了簡單，我們先用 IG 裡的洞察數據來顯示「30天觸及」
     if(avgErEl) {
-        // 我們把原本的 "平均互動率" 欄位，借用來顯示 "30天觸及人數" (因為這數據更有價值)
+        // 根據你的後端邏輯，這裡顯示的是「30天觸及人數」
+        // 建議修改 HTML 的標題讓它更準確，或者這裡維持這樣
         avgErEl.parentElement.querySelector('p.text-gray-500').textContent = "30天總觸及 (Reach)";
         avgErEl.textContent = er.toLocaleString();
+        
+        // 隱藏原本的 "表現優異" 這種固定文字，改顯示動態文字 (可選)
+        const subText = avgErEl.parentElement.querySelector('p.text-green-500');
+        if(subText) subText.textContent = "來自 Instagram 真實數據";
     }
 
-    // 3. 連結按鈕狀態更新
+    // 4. 連結按鈕狀態更新 (變成綠色已連結)
     const btn = document.getElementById('btn-connect-ig');
     const status = document.getElementById('status-ig');
     if (btn && status) {
         btn.textContent = "已連結";
         btn.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold";
         btn.disabled = true;
+        // 移除 onclick 事件，避免重複點擊
+        btn.onclick = null; 
+        
         status.innerHTML = `✅ 數據已同步`;
         status.className = "text-xs text-green-600 font-bold";
     }
 
-    // 4. 🔥 重頭戲：繪製「真實貼文成效圖表」
+    // 5. 繪製圖表
     if (igData.chartData && igData.chartData.length > 0) {
         renderRealEngagementChart(igData.chartData);
     } else {
-        // 如果沒有貼文數據，還是畫一個模擬的粉絲圖
+        // 如果沒有貼文數據，畫一個模擬圖避免空白
         renderRealCharts(fans); 
     }
 
-    // 5. 🔥 加碼：顯示「最近貼文牆」
-    // 你需要在 HTML 裡找個地方放這個，或者我用 JS 動態插入到 "分析儀表板" 下方
+    // 6. 顯示最近貼文牆
     renderRecentPostsGallery(igData.recentPosts);
 }
 
 // --- 繪製真實貼文數據圖表 ---
+// --- 繪製真實貼文數據圖表 ---
 function renderRealEngagementChart(postsData) {
-    const ctxF = document.getElementById('chart-followers').getContext('2d');
+    const canvas = document.getElementById('chart-followers');
+    if (!canvas) return; // 如果找不到畫布就停止，避免報錯
+
+    const ctxF = canvas.getContext('2d');
     
-    // 銷毀舊圖表
-    if (chartInstanceFollowers) chartInstanceFollowers.destroy();
+    // 銷毀舊圖表 (確保全域變數 chartInstanceFollowers 存在)
+    if (typeof chartInstanceFollowers !== 'undefined' && chartInstanceFollowers) {
+        chartInstanceFollowers.destroy();
+    }
 
     // 準備數據：X軸是日期，Y軸是愛心數
-    const labels = postsData.map(p => new Date(p.date).toLocaleDateString().slice(5)); // 只取月/日
-    const likes = postsData.map(p => p.likes);
-    const comments = postsData.map(p => p.comments);
+    const labels = postsData.map(p => {
+        const d = new Date(p.date); // 確保是日期格式
+        return `${d.getMonth()+1}/${d.getDate()}`; // 轉成 12/14 這種格式
+    });
+    const likes = postsData.map(p => p.likes || 0);
+    const comments = postsData.map(p => p.comments || 0);
 
+    // 建立新圖表
     chartInstanceFollowers = new Chart(ctxF, {
         type: 'line',
         data: {
@@ -4830,7 +4853,7 @@ function renderRealEngagementChart(postsData) {
                 {
                     label: '貼文愛心數 (Likes)',
                     data: likes,
-                    borderColor: '#f43f5e', // Rose-500 (IG 愛心色)
+                    borderColor: '#f43f5e', 
                     backgroundColor: 'rgba(244, 63, 94, 0.1)',
                     fill: true,
                     tension: 0.3
@@ -4838,7 +4861,7 @@ function renderRealEngagementChart(postsData) {
                 {
                     label: '留言數',
                     data: comments,
-                    borderColor: '#3b82f6', // Blue
+                    borderColor: '#3b82f6',
                     borderDash: [5, 5],
                     fill: false,
                     tension: 0.3
