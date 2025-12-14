@@ -4893,19 +4893,38 @@ function updateDashboardWithRealData(igData) {
         if(subText) subText.textContent = "來自 Instagram 真實數據";
     }
 
-    // 4. 連結按鈕狀態更新 (變成綠色已連結)
+    // ... (前面第 1, 2, 3 點保持不變) ...
+
+    // 4. 【修改版】連結按鈕狀態更新 (加入斷開與更新功能)
     const btn = document.getElementById('btn-connect-ig');
     const status = document.getElementById('status-ig');
+    
     if (btn && status) {
-        btn.textContent = "已連結";
-        btn.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold";
-        btn.disabled = true;
-        // 移除 onclick 事件，避免重複點擊
+        // 改變按鈕外觀
+        btn.innerHTML = `<span class="mr-1">●</span>已連結`;
+        btn.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold cursor-default";
+        btn.disabled = true; // 讓它不能再被點擊觸發 OAuth
         btn.onclick = null; 
-        
-        status.innerHTML = `✅ 數據已同步`;
-        status.className = "text-xs text-green-600 font-bold";
+
+        // 狀態文字區塊：顯示狀態 + 操作按鈕
+        status.className = ""; // 清空樣式
+        status.innerHTML = `
+            <div class="flex flex-col items-start gap-1">
+                <span class="text-xs text-green-600 font-bold">✅ 數據已同步</span>
+                <div class="flex gap-2 text-[10px] text-gray-400">
+                    <button onclick="handleRefreshIG('${igData.id}')" class="hover:text-blue-500 underline decoration-dotted">
+                        🔄 更新數據
+                    </button>
+                    <button onclick="handleDisconnectIG()" class="hover:text-red-500 underline decoration-dotted">
+                        ❌ 斷開連結
+                    </button>
+                </div>
+                <span id="update-msg" class="text-[10px] text-orange-500 hidden"></span>
+            </div>
+        `;
     }
+
+    // ... (後面第 5, 6 點保持不變) ...
 
     // 5. 繪製圖表
     if (igData.chartData && igData.chartData.length > 0) {
@@ -5117,34 +5136,6 @@ function renderRealCharts(currentFollowers) {
 
 // ... (前面第 1, 2, 3 點保持不變) ...
 
-    // 4. 【修改版】連結按鈕狀態更新 (加入斷開與更新功能)
-    const btn = document.getElementById('btn-connect-ig');
-    const status = document.getElementById('status-ig');
-    
-    if (btn && status) {
-        // 改變按鈕外觀
-        btn.innerHTML = `<span class="mr-1">●</span>已連結`;
-        btn.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold cursor-default";
-        btn.disabled = true; // 讓它不能再被點擊觸發 OAuth
-        btn.onclick = null; 
-
-        // 狀態文字區塊：顯示狀態 + 操作按鈕
-        status.className = ""; // 清空樣式
-        status.innerHTML = `
-            <div class="flex flex-col items-start gap-1">
-                <span class="text-xs text-green-600 font-bold">✅ 數據已同步</span>
-                <div class="flex gap-2 text-[10px] text-gray-400">
-                    <button onclick="handleRefreshIG('${igData.id}')" class="hover:text-blue-500 underline decoration-dotted">
-                        🔄 更新數據
-                    </button>
-                    <button onclick="handleDisconnectIG()" class="hover:text-red-500 underline decoration-dotted">
-                        ❌ 斷開連結
-                    </button>
-                </div>
-                <span id="update-msg" class="text-[10px] text-orange-500 hidden"></span>
-            </div>
-        `;
-    }
 
     // ... (後面第 5, 6 點保持不變) ...
 
