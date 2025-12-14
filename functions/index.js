@@ -115,13 +115,9 @@ exports.exchangeIgToken = onCall(async (request) => {
 exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{providerId}", async (event) => {
     // 1. 取得觸發事件的資料
     const snapshot = event.data && event.data.after;
-    if (!snapshot) {
-        console.log("文件已被刪除，不執行抓取。");
-        return null;
-    }
+    if (!snapshot) return null; // 如果是刪除文件，則不處理
 
     const data = snapshot.data();
-    if (!data) return null;
     const userId = event.params.userId;
     const providerId = event.params.providerId;
 
