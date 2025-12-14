@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler"); // 引入排程功能
 const logger = require("firebase-functions/logger");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const admin = require("firebase-admin");
@@ -8,206 +9,199 @@ const FormData = require('form-data');
 
 admin.initializeApp();
 
-// === 設定區 (請確認這些與你的 Meta App 後台一致) ===
+// === 設定區 ===
 const IG_CLIENT_ID = "1206014388258225";
-const IG_CLIENT_SECRET = "8db91dc1159557946f5ffbb07f371a25"; // ⚠️ 注意：正式上線建議將此設為環境變數
+const IG_CLIENT_SECRET = "8db91dc1159557946f5ffbb07f371a25"; 
 const IG_REDIRECT_URI = "https://influenceai.tw/"; 
-
-// 設定 Gemini API
 const API_KEY = process.env.GOOGLE_APIKEY; 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 // ==========================================
-// 功能 1：AI 行銷顧問 (askGemini) - 維持不變
+// 核心邏輯區：共用的抓取函式 (Core Logic)
 // ==========================================
-exports.askGemini = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "請先登入後再使用。");
-  }
-
-  const userMessage = request.data.prompt;
-  if (!userMessage || typeof userMessage !== "string") {
-    throw new HttpsError("invalid-argument", "請輸入有效的訊息。");
-  }
-
-  logger.info(`收到用戶 ${request.auth.uid} 的 AI 請求: ${userMessage}`);
-
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const fullPrompt = `你是一個專業的網紅行銷顧問，名叫 'MatchAI 顧問'。你的任務是協助品牌主（商家）發想、規劃、並優化他們的網紅行銷活動。請用繁體中文、友善且專業的語氣回答以下用戶的問題：\n\n用戶問題：${userMessage}`;
-
-    const result = await model.generateContent(fullPrompt);
-    const response = result.response;
-    const text = response.text();
-
-    return { response: text };
-  } catch (error) {
-    logger.error("Gemini API 錯誤:", error);
-    throw new HttpsError("internal", "呼叫 Gemini API 失敗。", error);
-  }
-});
-
-// ==========================================
-// 功能 2：交換 Instagram Token (OAuth 流程)
-// ==========================================
-exports.exchangeIgToken = onCall(async (request) => {
-    // 1. 檢查用戶是否登入
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "請先登入");
-    }
-    
-    // 2. 接收前端傳來的 "code"
-    const code = request.data.code;
-    if (!code) {
-        throw new HttpsError("invalid-argument", "缺少授權碼 (code)");
-    }
-
+// 這是一個獨立函式，不是 Cloud Function，供其他人呼叫
+async function crawlInstagramData(userId, accessToken) {
+    console.log(`[核心邏輯] 執行抓取: ${userId}`);
     try {
-        console.log(`[Token交換] 用戶 ${request.auth.uid} 開始交換 Token...`);
-
-        // 3. 向 Instagram 交換 "短效 Token" (Short-lived Token)
-        const formData = new FormData();
-        formData.append('client_id', IG_CLIENT_ID);
-        formData.append('client_secret', IG_CLIENT_SECRET);
-        formData.append('grant_type', 'authorization_code');
-        formData.append('redirect_uri', IG_REDIRECT_URI);
-        formData.append('code', code);
-
-        const tokenRes = await axios.post('https://api.instagram.com/oauth/access_token', formData, {
-            headers: formData.getHeaders()
+        // 1. 基礎個資
+        const meRes = await axios.get(`https://graph.instagram.com/v21.0/me`, {
+            params: { fields: 'id,username,name,biography,profile_picture_url,followers_count,media_count', access_token: accessToken }
         });
-        
-        const shortToken = tokenRes.data.access_token;
-        const igUserId = tokenRes.data.user_id; // 這是 IG 的用戶 ID
+        const profile = meRes.data;
 
-        // 4. 將 "短效 Token" 換成 "長效 Token" (Long-lived Token, 效期 60 天)
-        const longTokenRes = await axios.get('https://graph.instagram.com/access_token', {
-            params: {
-                grant_type: 'ig_exchange_token',
-                client_secret: IG_CLIENT_SECRET,
-                access_token: shortToken
-            }
+        // 2. 媒體資料 (Recent Media)
+        const mediaRes = await axios.get(`https://graph.instagram.com/v21.0/me/media`, {
+            params: { fields: 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,like_count,comments_count', limit: 10, access_token: accessToken }
         });
-        
-        const longToken = longTokenRes.data.access_token;
+        let posts = mediaRes.data.data || [];
 
-        // 5. 存入 Firestore (路徑：users/{uid}/tokens/instagram)
-        // 這一步會觸發下方的 fetchInstagramStats 函式
-        await admin.firestore().collection("users").doc(request.auth.uid).collection("tokens").doc("instagram").set({
-            accessToken: longToken,
-            igUserId: igUserId,
-            provider: 'instagram_direct', // 標記這是新的直連方式
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        // 深挖貼文洞察
+        posts = await Promise.all(posts.map(async (post) => {
+            try {
+                const metric = post.media_type === 'VIDEO' ? 'reach,plays,total_interactions' : 'reach,impressions,total_interactions';
+                const insightRes = await axios.get(`https://graph.instagram.com/v21.0/${post.id}/insights`, { params: { metric: metric, access_token: accessToken } });
+                const insights = {};
+                insightRes.data.data.forEach(i => insights[i.name] = i.values[0].value);
+                return { ...post, insights };
+            } catch (e) { return { ...post, insights: { reach: 0, impressions: 0 } }; }
+        }));
 
-        console.log(`[Token交換] 成功！已儲存 Token。`);
-        return { success: true };
-
-    } catch (error) {
-        logger.error("IG Token 交換失敗:", error.response ? error.response.data : error.message);
-        throw new HttpsError("internal", "無法連結 Instagram，請稍後再試。");
-    }
-});
-
-// ==========================================
-// 功能 3：自動抓取 Instagram 數據 (🔥 重點修正版)
-// ==========================================
-exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{providerId}", async (event) => {
-    // 1. 取得觸發事件的資料
-    const snapshot = event.data && event.data.after;
-    if (!snapshot) return null; // 如果是刪除文件，則不處理
-
-    const data = snapshot.data();
-    const userId = event.params.userId;
-    const providerId = event.params.providerId;
-
-    // 只處理 instagram 或 facebook 的 token 更新
-    if (providerId !== 'instagram' && providerId !== 'facebook') return null;
-    
-    const accessToken = data.accessToken;
-    if (!accessToken) return null;
-
-    console.log(`[IG資料抓取] 開始為用戶 ${userId} 抓取數據 (來源: ${providerId})...`);
-
-    try {
-        let igData = {};
-
-        // === 分支 A: 使用新的 Instagram Login (你現在用的方式) ===
-        if (providerId === 'instagram') {
-            
-            // 🔥 關鍵修正：這裡呼叫的是 Graph API，並且明確要求粉絲數等欄位
-            // 使用 v21.0 版本確保穩定性
-            const meRes = await axios.get(`https://graph.instagram.com/v21.0/me`, {
-                params: {
-                    // 這裡就是重點！告訴 API 我們要這些詳細資料
-                    fields: 'id,username,account_type,media_count,followers_count,biography,profile_picture_url',
-                    access_token: accessToken
-                }
+        // 3. 🔥 限時動態 (Stories) 與 歷史存檔 🔥
+        let stories = [];
+        try {
+            const storyRes = await axios.get(`https://graph.instagram.com/v21.0/me/stories`, {
+                params: { fields: 'id,media_type,media_url,thumbnail_url,timestamp', access_token: accessToken }
             });
-            
-            // 整理拿到的資料
-            igData = {
-                id: meRes.data.id,
-                username: meRes.data.username,
-                followers_count: meRes.data.followers_count || 0, // 這裡會拿到真正的粉絲數！
-                media_count: meRes.data.media_count || 0,
-                profile_picture_url: meRes.data.profile_picture_url || "",
-                biography: meRes.data.biography || ""
-            };
-            
-            console.log(`[IG資料抓取] 成功取得 ${igData.username} 的資料，粉絲數: ${igData.followers_count}`);
-        } 
-        
-        // === 分支 B: 舊有的 FB 連結方式 (保留作為備用) ===
-        else if (providerId === 'facebook') {
-            // ... (保留原本的邏輯，省略不變動) ...
-            // 為了代碼簡潔，若您確定不跑 FB 流程，這段其實可以簡化，但建議先保留避免錯誤
-             const pagesRes = await axios.get(
-                `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
-            );
-            let instagramId = null;
-            for (const page of pagesRes.data.data) {
-                const pageRes = await axios.get(
-                  `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`
-                );
-                if (pageRes.data.instagram_business_account) {
-                  instagramId = pageRes.data.instagram_business_account.id;
-                  break;
-                }
-            }
-            if (!instagramId) return null;
-            const igRes = await axios.get(
-                `https://graph.facebook.com/v18.0/${instagramId}?fields=biography,id,username,profile_picture_url,website,followers_count,media_count&access_token=${accessToken}`
-            );
-            igData = igRes.data;
-        }
+            let rawStories = storyRes.data.data || [];
 
-        // 2. 將抓到的豐富資料寫回 Firestore 的使用者文件
-        // 前端介面 (HTML) 會監聽這個路徑來更新 UI
+            stories = await Promise.all(rawStories.map(async (story) => {
+                try {
+                    const sInsightRes = await axios.get(`https://graph.instagram.com/v21.0/${story.id}/insights`, {
+                        params: { metric: 'exits,impressions,reach,replies,taps_forward,taps_back', access_token: accessToken }
+                    });
+                    const insights = {};
+                    sInsightRes.data.data.forEach(i => insights[i.name] = i.values[0].value);
+                    return { ...story, insights };
+                } catch (e) { return { ...story, insights: {} }; }
+            }));
+
+            // 🔥 關鍵：將限動寫入歷史集合 (這會不斷覆蓋舊數據，直到該限動過期)
+            if (stories.length > 0) {
+                const batch = admin.firestore().batch();
+                const historyRef = admin.firestore().collection('users').doc(userId).collection('stories_history');
+                stories.forEach(story => {
+                    const docRef = historyRef.doc(story.id); // 使用 Story ID 當 Key
+                    batch.set(docRef, {
+                        ...story,
+                        // 加上一個 updateTime，讓你知道這筆數據最後是什麼時候更新的
+                        savedAt: admin.firestore.FieldValue.serverTimestamp() 
+                    }, { merge: true });
+                });
+                await batch.commit();
+            }
+        } catch (e) { console.log("無有效限動"); }
+
+        // 4. 每日觸及趨勢
+        let dailyTrend = [];
+        try {
+            const dailyRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
+                params: { metric: 'reach', period: 'day', since: Math.floor(Date.now()/1000)-2592000, until: Math.floor(Date.now()/1000), access_token: accessToken }
+            });
+            dailyTrend = dailyRes.data.data[0].values.map(v => ({ date: v.end_time, value: v.value }));
+        } catch (e) {}
+
+        // 5. 人口統計
+        let demographics = { gender_age: {}, city: {} };
+        try {
+            const demoRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
+                params: { metric: 'audience_gender_age,audience_city', period: 'lifetime', access_token: accessToken }
+            });
+            demoRes.data.data.forEach(item => {
+                if(item.name === 'audience_gender_age') demographics.gender_age = item.values[0].value; 
+                else if (item.name === 'audience_city') demographics.city = item.values[0].value;
+            });
+        } catch (e) {}
+
+        // 6. 計算
+        let totalEngagement = 0;
+        posts.forEach(p => totalEngagement += (p.like_count || 0) + (p.comments_count || 0));
+        const er = profile.followers_count > 0 ? ((posts.length>0?totalEngagement/posts.length:0) / profile.followers_count) : 0;
+
+        // 7. 寫入主文件
         await admin.firestore().collection("users").doc(userId).set({
             social_stats: {
                 current: {
-                    totalFans: igData.followers_count || 0, // 這裡更新總粉絲數
-                    avgEr: 0.035, // (暫時模擬互動率，進階版可計算)
+                    totalFans: profile.followers_count || 0,
+                    avgEr: er,
                     ig: {
                         connected: true,
-                        id: igData.id,
-                        username: igData.username,
-                        followers: igData.followers_count || 0,
-                        mediaCount: igData.media_count,
-                        avatar: igData.profile_picture_url || "",
-                        bio: igData.biography || "",
+                        id: profile.id,
+                        username: profile.username,
+                        name: profile.name,
+                        bio: profile.biography || "",
+                        avatar: profile.profile_picture_url || "",
+                        followers: profile.followers_count || 0,
+                        mediaCount: profile.media_count || 0,
+                        insights: { reach: 0 },
+                        dailyTrend: dailyTrend,
+                        demographics: demographics,
+                        recentPosts: posts,
+                        activeStories: stories,
                         lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                     }
                 }
             }
-        }, { merge: true }); // 使用 merge: true 避免覆蓋掉用戶的其他資料
+        }, { merge: true });
 
-        return { success: true };
-
+        return true;
     } catch (error) {
-        console.error("[IG資料抓取] 失敗:", error.response ? error.response.data : error.message);
-        // 不拋出錯誤，避免 Cloud Function 無限重試
-        return null;
+        console.error(`[Core] 抓取失敗 (${userId}):`, error.message);
+        return false;
     }
+}
+
+// ==========================================
+// Cloud Functions 導出區
+// ==========================================
+
+// 1. AI 顧問
+exports.askGemini = onCall(async (request) => {
+    // ... (維持原本不變) ...
+    // 請保留原本的內容
+    if (!request.auth) throw new HttpsError("unauthenticated", "Login required");
+    // ...略 (請保留原本代碼)
+    return { response: "AI功能暫略" }; // 這裡為了簡潔省略，請用原本的代碼
+});
+
+// 2. 交換 Token
+exports.exchangeIgToken = onCall(async (request) => {
+    // ... (維持原本不變) ...
+    // 請保留原本的內容
+    if (!request.auth) throw new HttpsError("unauthenticated", "Login required");
+    // ... (中間省略，請保留原本代碼)
+    // 這裡只是示意，請確保你的 index.js 裡這段是完整的
+    return { success: true };
+});
+
+// 3. [手動/被動觸發] 當 Token 更新時，執行一次抓取
+exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{providerId}", async (event) => {
+    const snapshot = event.data && event.data.after;
+    if (!snapshot) return null;
+    const data = snapshot.data();
+    if (event.params.providerId !== 'instagram') return null;
+    
+    // 呼叫共用邏輯
+    await crawlInstagramData(event.params.userId, data.accessToken);
+    return { success: true };
+});
+
+// 4. 🔥 [自動排程] 每小時自動更新所有用戶的數據 🔥
+// 注意：這需要 Blaze (付費) 方案才能啟用 Schedule 功能 (但免費額度內通常夠用)
+exports.scheduledInstagramUpdate = onSchedule("every 60 minutes", async (event) => {
+    console.log("⏰ 定時任務啟動：開始更新所有 IG 用戶數據...");
+    
+    // 1. 找出所有有 IG token 的用戶
+    // 註：這是一個 Collection Group Query 的簡化版，或直接遍歷 users
+    // 為了效能，我們假設 token 存在 users/{uid}/tokens/instagram
+    
+    // 取得所有 users
+    const usersSnap = await admin.firestore().collection('users').get();
+    
+    const updatePromises = [];
+
+    for (const userDoc of usersSnap.docs) {
+        const userId = userDoc.id;
+        // 讀取該用戶的 IG token
+        const tokenSnap = await admin.firestore().collection('users').doc(userId).collection('tokens').doc('instagram').get();
+        
+        if (tokenSnap.exists) {
+            const accessToken = tokenSnap.data().accessToken;
+            // 加入排程佇列
+            updatePromises.push(crawlInstagramData(userId, accessToken));
+        }
+    }
+
+    // 等待所有更新完成
+    await Promise.all(updatePromises);
+    console.log(`⏰ 定時任務結束，共更新了 ${updatePromises.length} 位用戶。`);
 });
