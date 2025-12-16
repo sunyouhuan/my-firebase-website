@@ -136,6 +136,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
         // === 分支 A: 使用新的 Instagram Login (升級版：抓取洞察報告) ===
         // === 分支 A: 使用新的 Instagram Login (全火力升級版) ===
         // === 分支 A: Instagram 登入 (商業戰情室版：含平均值運算) ===
+       // === 分支 A: Instagram 登入 (戰情室終極版：昨日 vs 平均) ===
         if (providerId === 'instagram') {
             
             // 1. 基礎資料
@@ -146,12 +147,12 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 }
             });
 
-            // 2. 抓取最近 10 篇貼文 (算互動率 & 平均按讚留言)
+            // 2. 抓取貼文 (算互動率 & 平均按讚留言)
             let recentMedia = [];
             try {
                 const mediaRes = await axios.get(`https://graph.instagram.com/v21.0/me/media`, {
                     params: {
-                        fields: 'like_count,comments_count', // 只需抓這兩個欄位計算
+                        fields: 'like_count,comments_count', 
                         limit: 10, 
                         access_token: accessToken
                     }
@@ -159,42 +160,59 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 recentMedia = mediaRes.data.data || [];
             } catch (err) { console.warn("[IG資料] 無法取得貼文:", err.message); }
 
-            // 3. [升級] 抓取月數據 (28天) 並計算日平均
-            // 我們嘗試一次抓取 reach, impressions, profile_views 的 28 天數據
+            // 3. [核心修改] 抓取成效數據 (分別抓「昨日」與「28天」)
             let insightsData = { 
-                reach: 0, reach_avg: 0,
-                impressions: 0, impressions_avg: 0,
-                profile_views: 0, profile_views_avg: 0 
+                reach_day: 0, reach_avg_30: 0,
+                impressions_day: 0, impressions_avg_30: 0,
+                profile_views_day: 0 
             };
             
             try {
-                const monthStatsRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
+                // Call A: 抓取昨日數據 (day)
+                const dayStatsRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
                     params: { 
                         metric: 'reach,impressions,profile_views', 
-                        period: 'days_28', // 🔥 關鍵：全部抓 28 天
+                        period: 'day', 
                         access_token: accessToken 
                     }
                 });
 
+                // Call B: 抓取 28 天數據 (days_28) -> 用來算平均
+                // 注意：profile_views 通常只支援 day，所以這裡只抓 reach 和 impressions
+                const monthStatsRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
+                    params: { 
+                        metric: 'reach,impressions', 
+                        period: 'days_28', 
+                        access_token: accessToken 
+                    }
+                });
+
+                // 解析昨日數據 (day)
+                if(dayStatsRes.data && dayStatsRes.data.data) {
+                    dayStatsRes.data.data.forEach(item => {
+                        // 取最後一筆 (最新的一天)
+                        const val = item.values[item.values.length - 1].value;
+                        if (item.name === 'reach') insightsData.reach_day = val;
+                        if (item.name === 'impressions') insightsData.impressions_day = val;
+                        if (item.name === 'profile_views') insightsData.profile_views_day = val;
+                    });
+                }
+
+                // 解析月數據 (days_28) 並計算平均
                 if(monthStatsRes.data && monthStatsRes.data.data) {
                     monthStatsRes.data.data.forEach(item => {
-                        // 取得 28 天總和
-                        const val = item.values[item.values.length - 1].value;
+                        const val = item.values[item.values.length - 1].value; // 28天總和
                         
                         if (item.name === 'reach') {
-                            insightsData.reach = val;
-                            insightsData.reach_avg = Math.round(val / 28); // 算日平均
+                            // 30日平均 = 28天總和 / 28
+                            insightsData.reach_avg_30 = Math.round(val / 28);
                         }
                         if (item.name === 'impressions') {
-                            insightsData.impressions = val;
-                            insightsData.impressions_avg = Math.round(val / 28);
-                        }
-                        if (item.name === 'profile_views') {
-                            insightsData.profile_views = val;
-                            insightsData.profile_views_avg = Math.round(val / 28);
+                            insightsData.impressions_avg_30 = Math.round(val / 28);
                         }
                     });
                 }
+
             } catch (err) { console.warn("[IG資料] 成效數據異常:", err.message); }
 
             // 4. 受眾輪廓 (維持不變)
@@ -212,7 +230,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 }
             } catch (err) { console.warn("[IG資料] 受眾數據異常:", err.message); }
 
-            // 5. 計算互動率 (ER) 與 假粉率
+            // 5. 計算互動率與平均值
             const followers = meRes.data.followers_count || 0;
             let totalInteractions = 0;
             let totalLikes = 0;
@@ -235,7 +253,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 }
             }
 
-            // 假粉率演算法
+            // 假粉率
             let fakeRate = 0.15; 
             const benchmarkER = 0.03; 
             if (realER > 0) {
@@ -250,11 +268,11 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 id: meRes.data.id,
                 username: meRes.data.username,
                 followers_count: followers,
-                media_count: meRes.data.media_count || 0, // 🔥 貼文數在這
+                media_count: meRes.data.media_count || 0,
                 profile_picture_url: meRes.data.profile_picture_url || "",
                 biography: meRes.data.biography || "",
                 
-                insights: insightsData, // 包含 reach, reach_avg...
+                insights: insightsData, // 裡面有 reach_day, reach_avg_30 等
                 audience: audienceData,
                 
                 advanced_stats: {
@@ -266,7 +284,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 }
             };
             
-            console.log(`[IG運算] 貼文:${igData.media_count}, ER:${realER}, 觸及:${insightsData.reach}`);
+            console.log(`[IG運算] 貼文:${igData.media_count}, 昨日觸及:${insightsData.reach_day}`);
         }
         
         // === 分支 B: 舊有的 FB 連結方式 (保留作為備用) ===
