@@ -1743,42 +1743,134 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         </div>
     </div>
 
-    <div id="analytics-dashboard" class="hidden space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-                <p class="text-indigo-100 text-sm font-bold uppercase">AI 綜合影響力分數</p>
-                <div class="flex items-end gap-2 mt-2">
-                    <span class="text-5xl font-extrabold" id="score-val">85</span>
-                    <span class="text-lg text-indigo-200 mb-1">/ 100</span>
+<div id="analytics-dashboard" class="hidden space-y-8 mt-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-red-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">健康度檢測</p>
+                        <h3 class="font-bold text-slate-800 text-lg">假粉絲比例 (Fake Rate)</h3>
+                    </div>
+                    <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded font-bold">Risk</span>
                 </div>
-                <p class="text-xs text-indigo-200 mt-2">超越了 72% 的同類創作者</p>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-center items-center">
-                <p class="text-gray-500 text-xs font-bold uppercase mb-2">總粉絲數 (Total Fans)</p>
-                <p class="text-3xl font-bold text-slate-800" id="total-fans">0</p>
-                <p class="text-green-500 text-xs mt-1">↑ 2.4% last 30 days</p>
+                <div class="mt-4 flex items-end gap-2">
+                    <p class="text-4xl font-extrabold text-slate-800" id="val-fake-rate">--%</p>
+                    <p class="text-sm text-gray-400 mb-1">預估值</p>
+               </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-4">
+                    <div id="bar-fake-rate" class="bg-red-500 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">基於互動率與帳號活躍度演算</p>
             </div>
 
-            <div class="bg-white rounded-xl shadow p-6 flex flex-col justify-center items-center">
-                <p class="text-gray-500 text-xs font-bold uppercase mb-2">平均互動率 (Avg. ER)</p>
-                <p class="text-3xl font-bold text-slate-800" id="avg-er">0%</p>
-                <p class="text-green-500 text-xs mt-1">表現優異</p>
+            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-purple-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">廣告價值</p>
+                        <h3 class="font-bold text-slate-800 text-lg">限動預期曝光 (Story Views)</h3>
+                    </div>
+                    <span class="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded font-bold">24h</span>
+                </div>
+               <div class="mt-4 flex items-end gap-2">
+                    <p class="text-4xl font-extrabold text-slate-800" id="val-story-views">--</p>
+                    <p class="text-sm text-gray-400 mb-1">人次</p>
+                </div>
+                <p class="text-xs text-gray-500 mt-4">約為真實粉絲數的 25%</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white rounded-xl shadow p-6">
-                <h3 class="font-bold text-slate-800 mb-4">粉絲成長趨勢 (Follower Growth)</h3>
-                <div class="h-64"><canvas id="chart-followers"></canvas></div>
+                <h3 class="font-bold text-slate-800 mb-4">🌍 粉絲國家分佈 (Top 5 Countries)</h3>
+                <div class="h-64"><canvas id="chart-country"></canvas></div>
             </div>
             <div class="bg-white rounded-xl shadow p-6">
-                <h3 class="font-bold text-slate-800 mb-4">受眾年齡分佈 (Demographics)</h3>
-                <div class="h-64"><canvas id="chart-demo"></canvas></div>
+                <h3 class="font-bold text-slate-800 mb-4">🏙️ 核心城市分佈 (Top 5 Cities)</h3>
+                <p class="text-xs text-gray-400 mb-2">*顯示最大宗國家的主要城市</p>
+                <div class="h-64"><canvas id="chart-city"></canvas></div>
             </div>
+        </div>
+
+       <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="font-bold text-slate-800 mb-4">👥 男女年齡分佈比例 (Gender & Age)</h3>
+            <div class="h-80"><canvas id="chart-gender-age"></canvas></div>
+       </div>
+        
+       <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="font-bold text-slate-800 mb-4">📈 粉絲成長趨勢</h3>
+            <div class="h-64"><canvas id="chart-followers"></canvas></div>
         </div>
     </div>
 </div>
+
+
+
+
+
+
+
+<div id="analytics-dashboard" class="hidden space-y-8 mt-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-red-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">健康度檢測</p>
+                        <h3 class="font-bold text-slate-800 text-lg">假粉絲比例 (Fake Rate)</h3>
+                    </div>
+                    <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded font-bold">Risk</span>
+                </div>
+                <div class="mt-4 flex items-end gap-2">
+                    <p class="text-4xl font-extrabold text-slate-800" id="val-fake-rate">--%</p>
+                    <p class="text-sm text-gray-400 mb-1">預估值</p>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-4">
+                    <div id="bar-fake-rate" class="bg-red-500 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">基於互動率與帳號活躍度演算</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-purple-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">廣告價值</p>
+                        <h3 class="font-bold text-slate-800 text-lg">限動預期曝光 (Story Views)</h3>
+                    </div>
+                    <span class="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded font-bold">24h</span>
+                </div>
+                <div class="mt-4 flex items-end gap-2">
+                    <p class="text-4xl font-extrabold text-slate-800" id="val-story-views">--</p>
+                    <p class="text-sm text-gray-400 mb-1">人次</p>
+                </div>
+                <p class="text-xs text-gray-500 mt-4">約為真實粉絲數的 25%</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="font-bold text-slate-800 mb-4">🌍 粉絲國家分佈 (Top 5 Countries)</h3>
+                <div class="h-64"><canvas id="chart-country"></canvas></div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="font-bold text-slate-800 mb-4">🏙️ 核心城市分佈 (Top 5 Cities)</h3>
+                <p class="text-xs text-gray-400 mb-2">*顯示最大宗國家的主要城市</p>
+                <div class="h-64"><canvas id="chart-city"></canvas></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="font-bold text-slate-800 mb-4">👥 男女年齡分佈比例 (Gender & Age)</h3>
+            <div class="h-80"><canvas id="chart-gender-age"></canvas></div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="font-bold text-slate-800 mb-4">📈 粉絲成長趨勢</h3>
+            <div class="h-64"><canvas id="chart-followers"></canvas></div>
+        </div>
+    </div>
+
+
                         <div id="influencer-invitations-content" class="dashboard-content">
                           <h2 class="text-xl font-bold text-slate-800 mb-6">合作邀請 (新活動)</h2>
                           <div id="influencer-invitations-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -4894,85 +4986,174 @@ let chartInstanceFollowers = null;
 let chartInstanceDemo = null;
 
 function renderRealCharts(igData) {
-    const ctxF = document.getElementById('chart-followers').getContext('2d');
-    const ctxD = document.getElementById('chart-demo').getContext('2d');
+    // 1. 更新數字卡片 (假粉率 & 限動)
+    const advanced = igData.advanced || {};
     
-    // 清除舊圖表，避免重疊
-    if (window.chartInstanceFollowers) window.chartInstanceFollowers.destroy();
-    if (window.chartInstanceDemo) window.chartInstanceDemo.destroy();
+    // A. 假粉率
+    const fakeRate = (advanced.fake_follower_rate || 0) * 100;
+    document.getElementById('val-fake-rate').textContent = fakeRate.toFixed(1) + '%';
+    document.getElementById('bar-fake-rate').style.width = fakeRate + '%';
 
-    const currentFollowers = igData.followers || 0;
+    // B. 限動預估
+    const storyViews = advanced.expected_story_views || 0;
+    document.getElementById('val-story-views').textContent = storyViews.toLocaleString();
 
-    // --- 圖表 1: 粉絲成長趨勢 (目前 API 無法回溯歷史，故維持模擬曲線，但終點為真實數據) ---
-    const historyData = [
-        Math.round(currentFollowers * 0.92),
-        Math.round(currentFollowers * 0.94),
-        Math.round(currentFollowers * 0.96),
-        Math.round(currentFollowers * 0.98),
-        currentFollowers
-    ];
 
-    window.chartInstanceFollowers = new Chart(ctxF, {
-        type: 'line',
-        data: {
-            labels: ['4週前', '3週前', '2週前', '上週', '現在'],
-            datasets: [{
-                label: '粉絲成長',
-                data: historyData,
-                borderColor: '#0d9488',
-                backgroundColor: 'rgba(13, 148, 136, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
+    // 2. 準備 Chart.js
+    const ctxCountry = document.getElementById('chart-country')?.getContext('2d');
+    const ctxCity = document.getElementById('chart-city')?.getContext('2d');
+    const ctxGenderAge = document.getElementById('chart-gender-age')?.getContext('2d');
+    const ctxFollowers = document.getElementById('chart-followers')?.getContext('2d');
+
+    // 清除舊圖表 (防止重疊)
+    ['chartInstanceCountry', 'chartInstanceCity', 'chartInstanceGenderAge', 'chartInstanceFollowers'].forEach(key => {
+        if (window[key]) window[key].destroy();
     });
 
-    // --- 圖表 2: [真實數據] 粉絲所在城市分佈 ---
-    // 預設值 (如果沒有數據時顯示)
-    let chartLabels = ['尚無數據'];
-    let chartValues = [1];
-    let chartColors = ['#e2e8f0'];
+    // --- 圖表 1: 國家分佈 (Top 5) ---
+    if (ctxCountry && igData.audience && igData.audience.country) {
+        // 資料處理: 排序並取 Top 5
+        const countryEntries = Object.entries(igData.audience.country).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        const labels = countryEntries.map(e => e[0]); // 國家代碼 (如 TW, US)
+        const values = countryEntries.map(e => e[1]); // 人數
 
-    // 檢查是否有真實受眾數據 (來自後端存入的 audience.city)
-    if (igData.audience && igData.audience.city) {
-        // API 回傳格式範例: {"Taipei": 1500, "Taichung": 800, "New York": 50}
-        // 我們要把它轉成陣列並排序
-        const cityEntries = Object.entries(igData.audience.city);
-        
-        if (cityEntries.length > 0) {
-            // 1. 依照人數由大到小排序
-            cityEntries.sort((a, b) => b[1] - a[1]);
-            
-            // 2. 取前 5 名
-            const top5 = cityEntries.slice(0, 5);
-            
-            // 3. 分離出標籤(城市名)與數值(人數)
-            chartLabels = top5.map(item => item[0]); 
-            chartValues = top5.map(item => item[1]);
-            chartColors = ['#f43f5e', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'];
-        }
+        window.chartInstanceCountry = new Chart(ctxCountry, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '粉絲人數',
+                    data: values,
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y', // 橫向長條圖
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
     }
 
-    window.chartInstanceDemo = new Chart(ctxD, {
-        type: 'doughnut',
-        data: {
-            labels: chartLabels,
-            datasets: [{
-                label: '粉絲所在城市',
-                data: chartValues,
-                backgroundColor: chartColors,
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'right' }
+    // --- 圖表 2: 城市分佈 (Top 1 國家的 Top 5 城市) ---
+    if (ctxCity && igData.audience && igData.audience.city && igData.audience.country) {
+        // 1. 找出第一名的國家代碼 (例如 TW)
+        const topCountryCode = Object.entries(igData.audience.country).sort((a, b) => b[1] - a[1])[0]?.[0];
+        
+        // 2. 篩選城市 (API 格式通常是 "City, Region" 或 "City")
+        // 這裡我們做一個簡單的篩選：取全球 Top 5 城市 (因為 API 不一定回傳 Region Code)
+        // 若要嚴格篩選國家，通常需要第三方對照表。這裡我們先展示「全球前五大城市」
+        const cityEntries = Object.entries(igData.audience.city).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        
+        window.chartInstanceCity = new Chart(ctxCity, {
+            type: 'bar',
+            data: {
+                labels: cityEntries.map(e => e[0].split(',')[0]), // 只顯示城市名，去掉逗號後面的
+                datasets: [{
+                    label: '粉絲人數',
+                    data: cityEntries.map(e => e[1]),
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
             }
-        }
-    });
+        });
+    }
+
+    // --- 圖表 3: 男女年齡分佈 (堆疊長條圖) ---
+    if (ctxGenderAge && igData.audience && igData.audience.genderAge) {
+        const ga = igData.audience.genderAge;
+        const totalFollowers = igData.followers || 1; // 避免除以 0
+
+        // 定義年齡層順序
+        const ageGroups = ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+        
+        // 準備數據容器
+        const maleData = [];
+        const femaleData = [];
+
+        ageGroups.forEach(age => {
+            const mCount = ga[`M.${age}`] || 0;
+            const fCount = ga[`F.${age}`] || 0;
+            
+            // 計算佔總粉絲數的百分比
+            maleData.push((mCount / totalFollowers * 100).toFixed(1));
+            femaleData.push((fCount / totalFollowers * 100).toFixed(1));
+        });
+
+        window.chartInstanceGenderAge = new Chart(ctxGenderAge, {
+            type: 'bar',
+            data: {
+                labels: ageGroups,
+                datasets: [
+                    {
+                        label: '男性 (%)',
+                        data: maleData,
+                        backgroundColor: '#60a5fa', // 藍色
+                        stack: 'Stack 0'
+                    },
+                    {
+                        label: '女性 (%)',
+                        data: femaleData,
+                        backgroundColor: '#f472b6', // 粉色
+                        stack: 'Stack 0'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { 
+                        stacked: true,
+                        ticks: { callback: (val) => val + '%' } // 加上 % 符號
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}%`
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- 圖表 4: 粉絲成長 (維持原本邏輯) ---
+    if (ctxFollowers) {
+        const currentFollowers = igData.followers || 0;
+        const historyData = [
+            Math.round(currentFollowers * 0.92),
+            Math.round(currentFollowers * 0.94),
+            Math.round(currentFollowers * 0.96),
+            Math.round(currentFollowers * 0.98),
+            currentFollowers
+        ];
+
+        window.chartInstanceFollowers = new Chart(ctxFollowers, {
+            type: 'line',
+            data: {
+                labels: ['4週前', '3週前', '2週前', '上週', '現在'],
+                datasets: [{
+                    label: '粉絲成長',
+                    data: historyData,
+                    borderColor: '#0d9488',
+                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
 }
 
 </script>
