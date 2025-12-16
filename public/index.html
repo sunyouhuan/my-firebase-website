@@ -4905,69 +4905,81 @@ function listenForSocialStats(uid) {
 
 // 2. 更新畫面 UI (大頭貼、數字、簡介)
 // === 更新版：前端 UI 渲染 (顯示真實貼文與圖表) ===
+// 修改目標：18_07_分支01_讀得到數據，但是前端未顯示拷貝.html
+// 位置：約第 2253 行左右
+
 function updateDashboardWithRealData(igData) {
     console.log("前端收到完整數據:", igData); 
 
-    // 1. 更新頂部導覽列的小頭像
+    // ==========================================
+    // A. 保持不變區域：更新導覽列與個人檔案卡片
+    // ==========================================
+    
+    // 1. 頂部導覽列小頭像
     const navAvatar = document.getElementById('dash-inf-avatar');
     if(navAvatar && igData.avatar) navAvatar.src = igData.avatar;
     const navName = document.getElementById('dash-inf-name');
     if(navName && igData.username) navName.textContent = `@${igData.username}`;
 
-    // ------------------------------------------------
-    // 2. 更新「個人檔案與核心數據區」
-    // ------------------------------------------------
-    
-    // A. 個人資料
+    // 2. 個人檔案卡片 (左側)
     if (document.getElementById('profile-avatar')) document.getElementById('profile-avatar').src = igData.avatar || 'https://via.placeholder.com/150';
     if (document.getElementById('profile-username')) document.getElementById('profile-username').textContent = `@${igData.username}`;
     if (document.getElementById('profile-id')) document.getElementById('profile-id').textContent = `ID: ${igData.id}`;
     if (document.getElementById('profile-bio')) document.getElementById('profile-bio').textContent = igData.bio || '(無簡介)';
 
-    // B. 核心數據 (安全存取)
+    // ==========================================
+    // B. 修改區域：更新 8 格數據矩陣
+    // ==========================================
+
+    // 安全取得資料物件
     const insights = igData.insights || {};
-    const advanced = igData.advanced || {};
+    const advanced = igData.advanced || {}; // 後端傳來的 advanced_stats
 
     // 1. 互動率 (紫色大字)
     const erEl = document.getElementById('stat-er');
     if (erEl) {
+        // 後端給的是小數 (0.052)，前端乘 100 變 5.20%
         const erVal = (advanced.engagement_rate || 0) * 100;
         erEl.textContent = erVal.toFixed(2) + '%';
-        if (erVal > 5) erEl.className = "text-2xl font-extrabold text-purple-900 mt-1";
+        
+        // 視覺特效：如果互動率 > 5%，加強顯示
+        if (erVal > 5) {
+            erEl.className = "text-2xl font-extrabold text-purple-900 mt-1";
+        } else {
+            // 恢復預設樣式
+            erEl.className = "text-2xl font-extrabold text-purple-800 mt-1";
+        }
     }
 
-    // 2. 基礎計數
+    // 2. 基礎計數 (粉絲 / 貼文)
     setText('stat-followers', (igData.followers || 0).toLocaleString());
     setText('stat-posts', (igData.mediaCount || 0).toLocaleString());
 
     // 3. 流量數據 (格式：平均 / 昨日)
-    // 觸及
+    
+    // 觸及 (Reach)
     const reachAvg = (insights.reach_avg_30 || 0);
     const reachDay = (insights.reach_day || 0);
+    // 使用 formatK 函式讓數字變短 (例如 12.5k)
     setText('stat-reach', `${formatK(reachAvg)} / ${formatK(reachDay)}`);
 
-    // 曝光
+    // 曝光 (Impressions)
     const impAvg = (insights.impressions_avg_30 || 0);
     const impDay = (insights.impressions_day || 0);
     setText('stat-impressions', `${formatK(impAvg)} / ${formatK(impDay)}`);
 
-    // 主頁瀏覽 (昨日)
+    // 主頁瀏覽 (昨日 Profile Views)
     setText('stat-profile-views-day', (insights.profile_views_day || 0).toLocaleString());
 
-    // 4. 互動數據 (分開顯示)
+    // 4. 互動數據 (分開顯示：按讚 / 留言)
     setText('stat-avg-likes', (advanced.avg_likes || 0).toLocaleString());
     setText('stat-avg-comments', (advanced.avg_comments || 0).toLocaleString());
 
-    // 填入其他數據
-    // setText('stat-followers', (igData.followers || 0).toLocaleString());
-    // setText('stat-reach', (insights.reach || 0).toLocaleString());
-    // setText('stat-impressions', (insights.impressions || 0).toLocaleString());
-    // setText('stat-clicks', (insights.website_clicks || 0).toLocaleString());
-    // setText('stat-avg-likes', (advanced.avg_likes || 0).toLocaleString());
+    // ==========================================
+    // C. 結尾區域：更新按鈕狀態與繪製圖表
+    // ==========================================
 
-    // ------------------------------------------------
-
-    // 3. 更新連結按鈕狀態
+    // 更新按鈕狀態 (變成已連結)
     const btnConnect = document.getElementById('btn-connect-ig');
     const statusText = document.getElementById('status-ig');
     if (btnConnect) {
@@ -4980,18 +4992,29 @@ function updateDashboardWithRealData(igData) {
         statusText.className = "text-xs text-green-600 font-bold";
     }
 
-    // 4. 顯示儀表板
+    // 顯示整個儀表板區塊
     const analyticsDash = document.getElementById('analytics-dashboard');
     if (analyticsDash) analyticsDash.classList.remove('hidden');
 
-    // 5. 繪製圖表 (包含國家、城市、假粉率等)
+    // 🔥 最後一步：呼叫繪圖函式 (傳入完整資料)
     renderRealCharts(igData);
 }
 
-// 小工具
-function setText(id, value) {
+// ==========================================
+// D. 新增輔助函式 (請放在 updateDashboardWithRealData 之後)
+// ==========================================
+
+// 數字縮寫工具 (例如: 12500 -> 12.5k)
+function formatK(num) {
+    if (!num) return '0';
+    if (num > 10000) return (num / 1000).toFixed(1) + 'k';
+    return num.toLocaleString();
+}
+
+// 簡化文字設定工具
+function setText(id, val) {
     const el = document.getElementById(id);
-    if (el) el.textContent = value;
+    if(el) el.textContent = val;
 }
 
 // --- 繪製真實貼文數據圖表 ---
