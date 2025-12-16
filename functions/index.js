@@ -170,6 +170,8 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                         period: 'day', 
                         access_token: accessToken
                     }
+                // ... (舊的 period='day' 設定)
+        
                 });
                 if(dailyStatsRes.data && dailyStatsRes.data.data) {
                     dailyStatsRes.data.data.forEach(item => {
@@ -209,67 +211,75 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
 
             // 5. [新增] 計算進階指標 (真實互動率、假粉率、限動預估)
             // 5. [新增] 計算進階指標 (真實互動率、平均數據、假粉率、限動預估)
+            // 5. [新增] 計算進階指標 (真實互動率、平均數據、假粉率)
             const followers = meRes.data.followers_count || 0;
             
-            // A. 真實互動率 & 平均互動數據 (Likes/Comments)
+            // A. 計算最近貼文的平均表現 (採樣最近 10 篇)
+            // recentMedia 是我們在 Step 2 抓回來的
             let totalInteractions = 0;
             let totalLikes = 0;
             let totalComments = 0;
-            let realER = 0;
             let avgLikes = 0;
             let avgComments = 0;
+            let realER = 0; // 這就是我們要的互動率
 
-            if (recentMedia.length > 0) {
+            // 確保有貼文才計算，避免除以 0
+            const postCount = recentMedia.length;
+            
+            if (postCount > 0) {
                 recentMedia.forEach(m => {
                     const likes = (m.like_count || 0);
                     const comments = (m.comments_count || 0);
+                    
                     totalLikes += likes;
                     totalComments += comments;
                     totalInteractions += (likes + comments);
                 });
                 
-                // 計算平均值
-                avgLikes = Math.round(totalLikes / recentMedia.length);
-                avgComments = Math.round(totalComments / recentMedia.length);
+                // 算出平均值 (給前端顯示用)
+                avgLikes = Math.round(totalLikes / postCount);
+                avgComments = Math.round(totalComments / postCount);
 
-                // 計算互動率
+                // 🔥 核心公式：算出互動率 (小數點格式，例如 0.035)
                 if (followers > 0) {
-                    realER = (totalInteractions / recentMedia.length) / followers; 
+                    realER = (totalInteractions / postCount) / followers; 
                 }
             }
 
-            // B. 假粉絲率 (Fake Follower Rate)
+            // B. 假粉絲率 (依據 ER 推算)
             let fakeRate = 0.15; 
             const benchmarkER = 0.03; 
             if (realER > 0) {
+                // 互動率越低，假粉率越高
                 let adjustment = (benchmarkER - realER) * 5; 
                 fakeRate = 0.15 + adjustment;
+                // 鎖定範圍 5% ~ 90%
                 if (fakeRate < 0.05) fakeRate = 0.05;
-                if (fakeRate > 0.8) fakeRate = 0.8;
+                if (fakeRate > 0.9) fakeRate = 0.9;
             }
 
             // C. 限時動態預期曝光
             const expectedStoryViews = Math.round(followers * 0.25); 
 
-            // 6. 打包所有資料
+            // 6. 打包資料
             igData = {
                 id: meRes.data.id,
                 username: meRes.data.username,
                 followers_count: followers,
-                media_count: meRes.data.media_count || 0, // 貼文數
+                media_count: meRes.data.media_count || 0,
                 profile_picture_url: meRes.data.profile_picture_url || "",
                 biography: meRes.data.biography || "",
                 
                 insights: insightsData,
                 audience: audienceData,
                 
-                // 🔥 這裡把新算的平均數據傳給前端
+                // 🔥 將算好的數據存入
                 advanced_stats: {
-                    engagement_rate: realER,
+                    engagement_rate: realER,    // 存小數點 (0.035)
                     fake_follower_rate: fakeRate,
                     expected_story_views: expectedStoryViews,
-                    avg_likes: avgLikes,        // 新增
-                    avg_comments: avgComments   // 新增
+                    avg_likes: avgLikes,
+                    avg_comments: avgComments
                 }
             };
             

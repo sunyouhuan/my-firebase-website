@@ -1756,34 +1756,34 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-6 w-full">
                     
+                    <div class="text-center p-3 bg-purple-100 rounded-lg border border-purple-200">
+                        <p class="text-xs text-purple-700 font-bold uppercase">互動率 (Engagement Rate)</p>
+                        <p id="stat-er" class="text-3xl font-extrabold text-purple-800 mt-1">--%</p>
+                    </div>
+
                     <div class="text-center p-3 bg-gray-50 rounded-lg">
                         <p class="text-xs text-gray-500 font-bold uppercase">總粉絲數</p>
                         <p id="stat-followers" class="text-2xl font-extrabold text-slate-800 mt-1">--</p>
                     </div>
 
-                    <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <p class="text-xs text-gray-500 font-bold uppercase">總貼文數</p>
-                        <p id="stat-media-count" class="text-2xl font-extrabold text-slate-800 mt-1">--</p>
-                    </div>
-
                     <div class="text-center p-3 bg-blue-50 rounded-lg">
-                        <p class="text-xs text-blue-600 font-bold uppercase">單日觸及 (Reach)</p>
+                        <p class="text-xs text-blue-600 font-bold uppercase">近30日觸及 (Reach)</p>
                         <p id="stat-reach" class="text-2xl font-extrabold text-blue-700 mt-1">--</p>
                     </div>
 
                     <div class="text-center p-3 bg-blue-50 rounded-lg">
-                        <p class="text-xs text-blue-600 font-bold uppercase">單日曝光 (Imp.)</p>
+                        <p class="text-xs text-blue-600 font-bold uppercase">近30日曝光 (Imp.)</p>
                         <p id="stat-impressions" class="text-2xl font-extrabold text-blue-700 mt-1">--</p>
+                    </div>
+
+                    <div class="text-center p-3 bg-green-50 rounded-lg border border-green-100">
+                        <p class="text-xs text-green-600 font-bold uppercase">昨日網站點擊 (Click)</p>
+                        <p id="stat-clicks" class="text-2xl font-extrabold text-green-700 mt-1">--</p>
                     </div>
 
                     <div class="text-center p-3 bg-pink-50 rounded-lg">
                         <p class="text-xs text-pink-600 font-bold uppercase">平均按讚 (Likes)</p>
                         <p id="stat-avg-likes" class="text-2xl font-extrabold text-pink-700 mt-1">--</p>
-                    </div>
-
-                    <div class="text-center p-3 bg-pink-50 rounded-lg">
-                        <p class="text-xs text-pink-600 font-bold uppercase">平均留言 (Comm.)</p>
-                        <p id="stat-avg-comments" class="text-2xl font-extrabold text-pink-700 mt-1">--</p>
                     </div>
                 </div>
             </div>
@@ -4894,14 +4894,14 @@ function listenForSocialStats(uid) {
 function updateDashboardWithRealData(igData) {
     console.log("前端收到完整數據:", igData); 
 
-    // 1. 更新頂部導覽列的小頭像 (原本的邏輯保留)
+    // 1. 更新頂部導覽列的小頭像
     const navAvatar = document.getElementById('dash-inf-avatar');
     if(navAvatar && igData.avatar) navAvatar.src = igData.avatar;
     const navName = document.getElementById('dash-inf-name');
     if(navName && igData.username) navName.textContent = `@${igData.username}`;
 
     // ------------------------------------------------
-    // 🔥 2. 更新新加入的「個人檔案與核心數據區」
+    // 2. 更新「個人檔案與核心數據區」
     // ------------------------------------------------
     
     // A. 個人資料
@@ -4910,28 +4910,31 @@ function updateDashboardWithRealData(igData) {
     if (document.getElementById('profile-id')) document.getElementById('profile-id').textContent = `ID: ${igData.id}`;
     if (document.getElementById('profile-bio')) document.getElementById('profile-bio').textContent = igData.bio || '(無簡介)';
 
-    // B. 核心數據 (安全存取，防止 undefined)
+    // B. 核心數據 (安全存取)
     const insights = igData.insights || {};
-    const advanced = igData.advanced || {};
-    const igStats = igData.ig || {}; // 兼容舊結構
+    const advanced = igData.advanced || {}; // 這是我們剛剛後端打包的那一包
 
-    // 總粉絲
+    // 🔥 填入互動率 (ER)
+    // 後端給的是小數 (例如 0.052)，我們乘 100 變 5.2，並保留一位小數
+    const erEl = document.getElementById('stat-er');
+    if (erEl) {
+        const erVal = (advanced.engagement_rate || 0) * 100;
+        erEl.textContent = erVal.toFixed(1) + '%';
+        
+        // 加點特效：如果互動率很棒 (>5%)，字變成深紫色
+        if (erVal > 5) erEl.classList.add('text-purple-900');
+    }
+
+    // 填入其他數據
     setText('stat-followers', (igData.followers || 0).toLocaleString());
-    
-    // 總貼文數
-    setText('stat-media-count', (igData.mediaCount || 0).toLocaleString());
-
-    // 曝光數據
     setText('stat-reach', (insights.reach || 0).toLocaleString());
     setText('stat-impressions', (insights.impressions || 0).toLocaleString());
-
-    // 互動數據 (平均)
+    setText('stat-clicks', (insights.website_clicks || 0).toLocaleString());
     setText('stat-avg-likes', (advanced.avg_likes || 0).toLocaleString());
-    setText('stat-avg-comments', (advanced.avg_comments || 0).toLocaleString());
 
     // ------------------------------------------------
 
-    // 3. 更新連結按鈕狀態 (保持不變)
+    // 3. 更新連結按鈕狀態
     const btnConnect = document.getElementById('btn-connect-ig');
     const statusText = document.getElementById('status-ig');
     if (btnConnect) {
@@ -4948,16 +4951,15 @@ function updateDashboardWithRealData(igData) {
     const analyticsDash = document.getElementById('analytics-dashboard');
     if (analyticsDash) analyticsDash.classList.remove('hidden');
 
-    // 5. 繪製圖表
+    // 5. 繪製圖表 (包含國家、城市、假粉率等)
     renderRealCharts(igData);
 }
 
-// 小工具：簡化文字設定
+// 小工具
 function setText(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
 }
-
 // --- 繪製真實貼文數據圖表 ---
 function renderRealEngagementChart(postsData) {
     const ctxF = document.getElementById('chart-followers').getContext('2d');
