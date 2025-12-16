@@ -93,12 +93,30 @@ exports.exchangeIgToken = onCall(async (request) => {
 
         // 5. 存入 Firestore (路徑：users/{uid}/tokens/instagram)
         // 這一步會觸發下方的 fetchInstagramStats 函式
-        await admin.firestore().collection("users").doc(request.auth.uid).collection("tokens").doc("instagram").set({
-            accessToken: longToken,
-            igUserId: igUserId,
-            provider: 'instagram_direct', // 標記這是新的直連方式
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        // ... 修改寫入 Firestore 的部分 ...
+        await admin.firestore().collection("users").doc(userId).set({
+            social_stats: {
+                current: {
+                    totalFans: igData.followers_count || 0,
+                    avgEr: 0.01234, // 之後可以寫邏輯計算真實互動率
+                    ig: {
+                        connected: true,
+                        id: igData.id,
+                        username: igData.username,
+                        followers: igData.followers_count || 0,
+                        mediaCount: igData.media_count,
+                        avatar: igData.profile_picture_url || "",
+                        bio: igData.biography || "",
+                        // === 新增以下兩行 ===
+                        insights: igData.insights || {}, 
+                        audience: igData.audience || {},
+                        // ==================
+                        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+                    }
+                }
+            }
+        }, { merge: true });
+
 
         console.log(`[Token交換] 成功！已儲存 Token。`);
         return { success: true };
@@ -108,6 +126,7 @@ exports.exchangeIgToken = onCall(async (request) => {
         throw new HttpsError("internal", "無法連結 Instagram，請稍後再試。");
     }
 });
+
 
 // ==========================================
 // 功能 3：自動抓取 Instagram 數據 (🔥 重點修正版)
@@ -133,30 +152,77 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
         let igData = {};
 
         // === 分支 A: 使用新的 Instagram Login (你現在用的方式) ===
-        if (providerId === 'instagram') {
-            
-            // 🔥 關鍵修正：這裡呼叫的是 Graph API，並且明確要求粉絲數等欄位
-            // 使用 v21.0 版本確保穩定性
-            const meRes = await axios.get(`https://graph.instagram.com/v21.0/me`, {
-                params: {
-                    // 這裡就是重點！告訴 API 我們要這些詳細資料
-                    fields: 'id,username,account_type,media_count,followers_count,biography,profile_picture_url',
-                    access_token: accessToken
-                }
-            });
-            
-            // 整理拿到的資料
-            igData = {
-                id: meRes.data.id,
-                username: meRes.data.username,
-                followers_count: meRes.data.followers_count || 0, // 這裡會拿到真正的粉絲數！
-                media_count: meRes.data.media_count || 0,
-                profile_picture_url: meRes.data.profile_picture_url || "",
-                biography: meRes.data.biography || ""
-            };
-            
-            console.log(`[IG資料抓取] 成功取得 ${igData.username} 的資料，粉絲數: ${igData.followers_count}`);
-        } 
+        // === 修改後的 fetchInstagramStats 內部邏輯 ===
+
+if (providerId === 'instagram') {
+    // 1. 基礎資料 (原本的)
+    const meRes = await axios.get(`https://graph.instagram.com/v21.0/me`, {
+        params: {
+            fields: 'id,username,account_type,media_count,followers_count,biography,profile_picture_url',
+            access_token: accessToken
+        }
+    });
+
+    // 2. [新增] 帳號成效數據 (Insights - Period: day)
+    // 這裡我們抓取過去一天的數據作為代表，或是你可以抓取累積數據
+    let insightsData = { reach: 0, impressions: 0, profile_views: 0 };
+    try {
+        const dailyStatsRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
+            params: {
+                metric: 'reach,impressions,profile_views',
+                period: 'day', // 抓取最近一天的數據
+                access_token: accessToken
+            }
+        });
+        
+        // 整理數據：API 回傳的是一個陣列，我們要把它轉成 Key-Value
+        dailyStatsRes.data.data.forEach(item => {
+            // item.values[0].value 是最新的數值
+            if (item.name === 'reach') insightsData.reach = item.values[0].value;
+            if (item.name === 'impressions') insightsData.impressions = item.values[0].value;
+            if (item.name === 'profile_views') insightsData.profile_views = item.values[0].value;
+        });
+        console.log("[IG資料抓取] 成功取得成效數據");
+    } catch (err) {
+        console.warn("[IG資料抓取] 無法取得成效數據 (可能是帳號規模太小或非商業帳號):", err.message);
+    }
+
+    // 3. [新增] 受眾輪廓數據 (Insights - Period: lifetime)
+    // 注意：粉絲數 < 100 的帳號，這裡會報錯，所以要用 try-catch 包起來
+    let audienceData = { city: {}, genderAge: {} };
+    try {
+        const demoRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
+            params: {
+                metric: 'audience_city,audience_gender_age',
+                period: 'lifetime',
+                access_token: accessToken
+            }
+        });
+
+        demoRes.data.data.forEach(item => {
+            if (item.name === 'audience_city') audienceData.city = item.values[0].value; // 例如: {"Taipei": 500, "New York": 20}
+            if (item.name === 'audience_gender_age') audienceData.genderAge = item.values[0].value; // 例如: {"F.18-24": 100, "M.25-34": 50}
+        });
+        console.log("[IG資料抓取] 成功取得受眾輪廓");
+    } catch (err) {
+        console.warn("[IG資料抓取] 無法取得受眾數據 (粉絲需 > 100):", err.message);
+    }
+
+    // 4. 打包所有資料
+    igData = {
+        id: meRes.data.id,
+        username: meRes.data.username,
+        followers_count: meRes.data.followers_count || 0,
+        media_count: meRes.data.media_count || 0,
+        profile_picture_url: meRes.data.profile_picture_url || "",
+        biography: meRes.data.biography || "",
+        // 加入新數據
+        insights: insightsData,
+        audience: audienceData
+    };
+    
+    console.log(`[IG資料抓取] 完成！粉絲數: ${igData.followers_count}, 觸及: ${igData.insights.reach}`);
+}
         
         // === 分支 B: 舊有的 FB 連結方式 (保留作為備用) ===
         else if (providerId === 'facebook') {

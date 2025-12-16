@@ -4773,7 +4773,6 @@ function updateDashboardWithRealData(igData) {
     }
     if (igData.bio) {
         [document.getElementById('dash-inf-bio'), document.getElementById('inf-card-bio')].forEach(el => { if(el) el.textContent = igData.bio; });
-    }
 
     // 2. 核心數據 (粉絲數、互動率、總觸及)
     const fans = igData.followers || 0;
@@ -4818,6 +4817,12 @@ function updateDashboardWithRealData(igData) {
     // 你需要在 HTML 裡找個地方放這個，或者我用 JS 動態插入到 "分析儀表板" 下方
     renderRecentPostsGallery(igData.recentPosts);
 }
+
+
+
+
+
+
 
 // --- 繪製真實貼文數據圖表 ---
 function renderRealEngagementChart(postsData) {
@@ -4908,97 +4913,81 @@ function renderRecentPostsGallery(posts) {
 let chartInstanceFollowers = null;
 let chartInstanceDemo = null;
 
-function renderRealCharts(currentFollowers) {
+// 修改前端：renderRealCharts 函式
+
+function renderRealCharts(igData) {
     const ctxF = document.getElementById('chart-followers').getContext('2d');
     const ctxD = document.getElementById('chart-demo').getContext('2d');
+    
+    // 清除舊圖表
+    if (window.chartInstanceFollowers) window.chartInstanceFollowers.destroy();
+    if (window.chartInstanceDemo) window.chartInstanceDemo.destroy();
 
-    if (chartInstanceFollowers) chartInstanceFollowers.destroy();
-    if (chartInstanceDemo) chartInstanceDemo.destroy();
+    const currentFollowers = igData.followers || 0;
 
-    // --- 技巧：因為我們只有「今天」的真實數據，為了讓圖表好看，我們反推過去 5 週的「模擬趨勢」 ---
-    // 這樣圖表會呈現一個漂亮的上升曲線，且終點是真實數據
+    // --- 圖表 1: 粉絲成長 (因為 API 只能給當下，我們依然用模擬趨勢，但終點是真實的) ---
     const historyData = [
-        Math.round(currentFollowers * 0.92), // 4週前
-        Math.round(currentFollowers * 0.94), // 3週前
-        Math.round(currentFollowers * 0.96), // 2週前
-        Math.round(currentFollowers * 0.98), // 上週
-        currentFollowers                     // 本週 (真實數據!)
+        Math.round(currentFollowers * 0.92),
+        Math.round(currentFollowers * 0.94),
+        Math.round(currentFollowers * 0.96),
+        Math.round(currentFollowers * 0.98),
+        currentFollowers
     ];
 
-    // 1. 粉絲成長圖 (真實終點)
-    chartInstanceFollowers = new Chart(ctxF, {
+    window.chartInstanceFollowers = new Chart(ctxF, {
         type: 'line',
         data: {
             labels: ['4週前', '3週前', '2週前', '上週', '現在'],
             datasets: [{
-                label: '粉絲成長趨勢',
+                label: '粉絲成長',
                 data: historyData,
-                borderColor: '#0d9488', // Teal-600
-                backgroundColor: (context) => {
-                    const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                    gradient.addColorStop(0, 'rgba(13, 148, 136, 0.4)');
-                    gradient.addColorStop(1, 'rgba(13, 148, 136, 0.0)');
-                    return gradient;
-                },
+                borderColor: '#0d9488',
+                backgroundColor: 'rgba(13, 148, 136, 0.1)',
                 fill: true,
-                tension: 0.4, // 平滑曲線
-                pointBackgroundColor: '#ffffff',
-                pointBorderColor: '#0d9488',
-                pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 7
+                tension: 0.4
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return ' ' + context.parsed.y.toLocaleString() + ' 人';
-                        }
-                    },
-                    backgroundColor: '#1e293b',
-                    padding: 12,
-                    cornerRadius: 8,
-                }
-            },
-            scales: {
-                y: {
-                    grid: { borderDash: [4, 4], color: '#e2e8f0' },
-                    ticks: { callback: (val) => (val >= 1000 ? (val/1000).toFixed(1) + 'k' : val) }
-                },
-                x: { grid: { display: false } }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false }
     });
 
-    // 2. 受眾圖 (這部分 Basic API 抓不到，我們維持靜態美觀圖表，或是標註「需進階權限」)
-    // 這裡我們做一個「媒體類型分佈」的假想圖，讓畫面豐富
-    chartInstanceDemo = new Chart(ctxD, {
-        type: 'doughnut',
+    // --- 圖表 2: [升級] 真實受眾城市分佈 ---
+    // 從 igData.audience.city 解析資料
+    let cityLabels = ['無數據'];
+    let cityValues = [1];
+
+    if (igData.audience && igData.audience.city) {
+        // API 回傳格式: {"Taipei": 1200, "Taichung": 800}
+        // 我們將其轉換為陣列並排序，取前 5 名
+        const cityEntries = Object.entries(igData.audience.city);
+        if (cityEntries.length > 0) {
+            // 排序 (由大到小)
+            cityEntries.sort((a, b) => b[1] - a[1]);
+            // 取前 5
+            const top5 = cityEntries.slice(0, 5);
+            
+            cityLabels = top5.map(item => item[0]); // 城市名
+            cityValues = top5.map(item => item[1]); // 人數
+        }
+    }
+
+    window.chartInstanceDemo = new Chart(ctxD, {
+        type: 'doughnut', // 或 'bar'
         data: {
-            labels: ['Reels 短影音', '貼文', '限時動態'],
+            labels: cityLabels,
             datasets: [{
-                data: [55, 30, 15], // 這裡暫時用固定比例，因為後端沒算貼文類型
+                label: '粉絲所在城市',
+                data: cityValues,
                 backgroundColor: [
-                    '#f43f5e', // Rose
-                    '#3b82f6', // Blue
-                    '#f59e0b'  // Amber
+                    '#f43f5e', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'
                 ],
-                borderWidth: 0,
-                hoverOffset: 4
+                borderWidth: 0
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '70%',
             plugins: {
-                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                legend: { position: 'right' }
             }
         }
     });
