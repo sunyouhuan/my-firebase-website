@@ -4756,73 +4756,53 @@ function listenForSocialStats(uid) {
 // 2. 更新畫面 UI (大頭貼、數字、簡介)
 // === 更新版：前端 UI 渲染 (顯示真實貼文與圖表) ===
 function updateDashboardWithRealData(igData) {
-    // === 🔥🔥🔥 關鍵修正 START：資料來了，把儀表板顯示出來！ ===
-    const dashboardContainer = document.getElementById('analytics-dashboard');
-    if (dashboardContainer) {
-        dashboardContainer.classList.remove('hidden');
-    }
-    // === 🔥🔥🔥 關鍵修正 END ==============================
+    console.log("前端收到更新數據:", igData); // 除錯用
 
-    // 1. 基礎個資 (大頭貼、名字、簡介)
+    // A. 更新基本個人資料 (頭像、名字、簡介)
+    const avatarEls = [
+        document.getElementById('dash-inf-avatar'), 
+        document.getElementById('inf-card-avatar'), 
+        document.getElementById('overview-inf-avatar')
+    ];
     if (igData.avatar) {
-        const els = [document.getElementById('dash-inf-avatar'), document.getElementById('inf-card-avatar'), document.getElementById('overview-inf-avatar')];
-        els.forEach(el => { if(el) el.src = igData.avatar; });
+        avatarEls.forEach(el => { if(el) el.src = igData.avatar; });
     }
-    if (igData.username) {
-        [document.getElementById('dash-inf-name'), document.getElementById('inf-card-name')].forEach(el => { if(el) el.textContent = `@${igData.username}`; });
-    }
-    if (igData.bio) {
-        [document.getElementById('dash-inf-bio'), document.getElementById('inf-card-bio')].forEach(el => { if(el) el.textContent = igData.bio; });
 
-    // 2. 核心數據 (粉絲數、互動率、總觸及)
-    const fans = igData.followers || 0;
-    const er = igData.insights?.reach || 0; // 這裡改用真實觸及人數 (Reach)
+    if (igData.username) {
+        const nameEls = [document.getElementById('dash-inf-name'), document.getElementById('inf-card-name')];
+        nameEls.forEach(el => { if(el) el.textContent = `@${igData.username}`; });
+    }
     
+    if (igData.bio) {
+        const bioEls = [document.getElementById('dash-inf-bio'), document.getElementById('inf-card-bio')];
+        bioEls.forEach(el => { if(el) el.textContent = igData.bio; });
+    }
+
+    // B. 更新核心數據 (粉絲數)
+    const fans = igData.followers || 0;
     const totalFansEl = document.getElementById('total-fans');
     if(totalFansEl) totalFansEl.textContent = fans.toLocaleString();
 
-    // 顯示真實互動率 (如果後端有算出來)
-    const avgErEl = document.getElementById('avg-er');
-    if(avgErEl) {
-        // 優化顯示：把觸及人數顯示出來，並加上百分比互動率
-        avgErEl.parentElement.querySelector('p.text-gray-500').textContent = "30天總觸及 (Reach)";
-        avgErEl.textContent = igData.insights?.reach ? igData.insights.reach.toLocaleString() : 0;
-        
-        // 如果你想顯示互動率百分比，可以這樣加在下面：
-        const erPercent = (igData.avgEr * 100).toFixed(2);
-        const pSub = avgErEl.parentElement.querySelector('.text-green-500');
-        if(pSub) pSub.textContent = `平均互動率：${erPercent}%`;
+    // 更新連結按鈕狀態
+    const btnConnect = document.getElementById('btn-connect-ig');
+    const statusText = document.getElementById('status-ig');
+    if (btnConnect) {
+        btnConnect.textContent = "已連結";
+        btnConnect.disabled = true;
+        btnConnect.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold";
+    }
+    if (statusText) {
+        statusText.innerHTML = `✅ 已同步 <span class="text-gray-400 text-[10px] ml-1">剛剛</span>`;
+        statusText.className = "text-xs text-green-600 font-bold";
     }
 
-    // 3. 連結按鈕狀態更新
-    const btn = document.getElementById('btn-connect-ig');
-    const status = document.getElementById('status-ig');
-    if (btn && status) {
-        btn.textContent = "已連結";
-        btn.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold";
-        btn.disabled = true;
-        status.innerHTML = `✅ 數據已同步`;
-        status.className = "text-xs text-green-600 font-bold";
-    }
+    // 顯示分析區塊
+    const analyticsDash = document.getElementById('analytics-dashboard');
+    if (analyticsDash) analyticsDash.classList.remove('hidden');
 
-    // 4. 🔥 重頭戲：繪製「真實貼文成效圖表」
-    if (igData.chartData && igData.chartData.length > 0) {
-        renderRealEngagementChart(igData.chartData);
-    } else {
-        // 如果沒有貼文數據，還是畫一個模擬的粉絲圖
-        renderRealCharts(fans); 
-    }
-
-    // 5. 🔥 加碼：顯示「最近貼文牆」
-    // 你需要在 HTML 裡找個地方放這個，或者我用 JS 動態插入到 "分析儀表板" 下方
-    renderRecentPostsGallery(igData.recentPosts);
+    // C. 繪製圖表 (🔥 關鍵修改：傳入整個 igData 物件，而不是只有粉絲數)
+    renderRealCharts(igData);
 }
-
-
-
-
-
-
 
 // --- 繪製真實貼文數據圖表 ---
 function renderRealEngagementChart(postsData) {
@@ -4913,19 +4893,17 @@ function renderRecentPostsGallery(posts) {
 let chartInstanceFollowers = null;
 let chartInstanceDemo = null;
 
-// 修改前端：renderRealCharts 函式
-
 function renderRealCharts(igData) {
     const ctxF = document.getElementById('chart-followers').getContext('2d');
     const ctxD = document.getElementById('chart-demo').getContext('2d');
     
-    // 清除舊圖表
+    // 清除舊圖表，避免重疊
     if (window.chartInstanceFollowers) window.chartInstanceFollowers.destroy();
     if (window.chartInstanceDemo) window.chartInstanceDemo.destroy();
 
     const currentFollowers = igData.followers || 0;
 
-    // --- 圖表 1: 粉絲成長 (因為 API 只能給當下，我們依然用模擬趨勢，但終點是真實的) ---
+    // --- 圖表 1: 粉絲成長趨勢 (目前 API 無法回溯歷史，故維持模擬曲線，但終點為真實數據) ---
     const historyData = [
         Math.round(currentFollowers * 0.92),
         Math.round(currentFollowers * 0.94),
@@ -4950,36 +4928,40 @@ function renderRealCharts(igData) {
         options: { responsive: true, maintainAspectRatio: false }
     });
 
-    // --- 圖表 2: [升級] 真實受眾城市分佈 ---
-    // 從 igData.audience.city 解析資料
-    let cityLabels = ['無數據'];
-    let cityValues = [1];
+    // --- 圖表 2: [真實數據] 粉絲所在城市分佈 ---
+    // 預設值 (如果沒有數據時顯示)
+    let chartLabels = ['尚無數據'];
+    let chartValues = [1];
+    let chartColors = ['#e2e8f0'];
 
+    // 檢查是否有真實受眾數據 (來自後端存入的 audience.city)
     if (igData.audience && igData.audience.city) {
-        // API 回傳格式: {"Taipei": 1200, "Taichung": 800}
-        // 我們將其轉換為陣列並排序，取前 5 名
+        // API 回傳格式範例: {"Taipei": 1500, "Taichung": 800, "New York": 50}
+        // 我們要把它轉成陣列並排序
         const cityEntries = Object.entries(igData.audience.city);
+        
         if (cityEntries.length > 0) {
-            // 排序 (由大到小)
+            // 1. 依照人數由大到小排序
             cityEntries.sort((a, b) => b[1] - a[1]);
-            // 取前 5
+            
+            // 2. 取前 5 名
             const top5 = cityEntries.slice(0, 5);
             
-            cityLabels = top5.map(item => item[0]); // 城市名
-            cityValues = top5.map(item => item[1]); // 人數
+            // 3. 分離出標籤(城市名)與數值(人數)
+            chartLabels = top5.map(item => item[0]); 
+            chartValues = top5.map(item => item[1]);
+            chartColors = ['#f43f5e', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'];
         }
     }
 
     window.chartInstanceDemo = new Chart(ctxD, {
-        type: 'doughnut', // 或 'bar'
+        type: 'doughnut',
         data: {
-            labels: cityLabels,
+            labels: chartLabels,
             datasets: [{
                 label: '粉絲所在城市',
-                data: cityValues,
-                backgroundColor: [
-                    '#f43f5e', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'
-                ],
+                data: chartValues,
+                backgroundColor: chartColors,
                 borderWidth: 0
             }]
         },
