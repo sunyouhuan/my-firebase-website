@@ -1754,45 +1754,39 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                     <p id="profile-bio" class="text-sm text-gray-600 line-clamp-3 max-w-xs">這裡會顯示個人簡介...</p>
                 </div>
 
-              
-
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-6 w-full">
                     
                     <div class="text-center p-3 bg-purple-100 rounded-lg border border-purple-200">
-                        <p class="text-[10px] text-purple-700 font-bold uppercase">互動率 (Eng. Rate)</p>
-                        <p id="stat-er" class="text-2xl font-extrabold text-purple-800 mt-1">--%</p>
+                        <p class="text-xs text-purple-700 font-bold uppercase">互動率 (Engagement Rate)</p>
+                        <p id="stat-er" class="text-3xl font-extrabold text-purple-800 mt-1">--%</p>
                     </div>
 
                     <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <p class="text-[10px] text-gray-500 font-bold uppercase">總粉絲數</p>
-                        <p id="stat-followers" class="text-xl font-bold text-slate-800 mt-1">--</p>
-                    </div>
-
-                    <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <p class="text-[10px] text-gray-500 font-bold uppercase">總貼文數</p>
-                        <p id="stat-posts" class="text-xl font-bold text-slate-800 mt-1">--</p>
+                        <p class="text-xs text-gray-500 font-bold uppercase">總粉絲數</p>
+                        <p id="stat-followers" class="text-2xl font-extrabold text-slate-800 mt-1">--</p>
                     </div>
 
                     <div class="text-center p-3 bg-blue-50 rounded-lg">
-                        <p class="text-[10px] text-blue-600 font-bold uppercase">觸及 (月總量 / 日平均)</p>
-                        <p id="stat-reach" class="text-lg font-bold text-blue-700 mt-1">--</p>
+                        <p class="text-xs text-blue-600 font-bold uppercase">近30日觸及 (Reach)</p>
+                        <p id="stat-reach" class="text-2xl font-extrabold text-blue-700 mt-1">--</p>
                     </div>
 
                     <div class="text-center p-3 bg-blue-50 rounded-lg">
-                        <p class="text-[10px] text-blue-600 font-bold uppercase">曝光 (月總量 / 日平均)</p>
-                        <p id="stat-impressions" class="text-lg font-bold text-blue-700 mt-1">--</p>
+                        <p class="text-xs text-blue-600 font-bold uppercase">近30日曝光 (Imp.)</p>
+                        <p id="stat-impressions" class="text-2xl font-extrabold text-blue-700 mt-1">--</p>
                     </div>
 
                     <div class="text-center p-3 bg-green-50 rounded-lg border border-green-100">
-                        <p class="text-[10px] text-green-600 font-bold uppercase">主頁瀏覽 (月 / 日)</p>
-                        <p id="stat-profile-views" class="text-lg font-bold text-green-700 mt-1">--</p>
+                        <p class="text-xs text-green-600 font-bold uppercase">昨日網站點擊 (Click)</p>
+                        <p id="stat-clicks" class="text-2xl font-extrabold text-green-700 mt-1">--</p>
                     </div>
 
-                    <div class="col-span-2 md:col-span-3 text-center p-3 bg-pink-50 rounded-lg">
-                        <p class="text-[10px] text-pink-600 font-bold uppercase">平均按讚 (Likes) / 平均留言 (Comm.)</p>
-                        <p id="stat-likes-comments" class="text-xl font-bold text-pink-700 mt-1 tracking-wider">-- / --</p>
+                    <div class="text-center p-3 bg-pink-50 rounded-lg">
+                        <p class="text-xs text-pink-600 font-bold uppercase">平均按讚 (Likes)</p>
+                        <p id="stat-avg-likes" class="text-2xl font-extrabold text-pink-700 mt-1">--</p>
                     </div>
                 </div>
+              
             </div>
         </div>
         
@@ -4918,50 +4912,28 @@ function updateDashboardWithRealData(igData) {
     if (document.getElementById('profile-bio')) document.getElementById('profile-bio').textContent = igData.bio || '(無簡介)';
 
     // B. 核心數據 (安全存取)
+    const insights = igData.insights || {};
+    const advanced = igData.advanced || {}; // 這是我們剛剛後端打包的那一包
 
     // 🔥 填入互動率 (ER)
     // 後端給的是小數 (例如 0.052)，我們乘 100 變 5.2，並保留一位小數
-
-    // 填入其他數據
-  
-    // ------------------------------------------------
-
-    const insights = igData.insights || {};
-    const advanced = igData.advanced || {}; // 使用 advanced_stats 傳來的資料
-
-    // 1. 互動率
     const erEl = document.getElementById('stat-er');
     if (erEl) {
         const erVal = (advanced.engagement_rate || 0) * 100;
-        erEl.textContent = erVal.toFixed(2) + '%';
-        if (erVal > 5) erEl.className = "text-2xl font-extrabold text-purple-900 mt-1";
+        erEl.textContent = erVal.toFixed(1) + '%';
+        
+        // 加點特效：如果互動率很棒 (>5%)，字變成深紫色
+        if (erVal > 5) erEl.classList.add('text-purple-900');
     }
 
-    // 2. 基礎計數
+    // 填入其他數據
     setText('stat-followers', (igData.followers || 0).toLocaleString());
-    setText('stat-posts', (igData.mediaCount || 0).toLocaleString()); // 貼文數
+    setText('stat-reach', (insights.reach || 0).toLocaleString());
+    setText('stat-impressions', (insights.impressions || 0).toLocaleString());
+    setText('stat-clicks', (insights.website_clicks || 0).toLocaleString());
+    setText('stat-avg-likes', (advanced.avg_likes || 0).toLocaleString());
 
-    // 3. 流量數據 (格式：30,000 / 1,000)
-    const reachTotal = (insights.reach || 0);
-    const reachAvg = (insights.reach_avg || 0);
-    setText('stat-reach', `${formatK(reachTotal)} / ${formatK(reachAvg)}`);
-
-    const impTotal = (insights.impressions || 0);
-    const impAvg = (insights.impressions_avg || 0);
-    setText('stat-impressions', `${formatK(impTotal)} / ${formatK(impAvg)}`);
-
-    const pvTotal = (insights.profile_views || 0);
-    const pvAvg = (insights.profile_views_avg || 0);
-    setText('stat-profile-views', `${formatK(pvTotal)} / ${formatK(pvAvg)}`);
-
-    // 4. 互動細節 (格式：500 / 20)
-    const avgLikes = (advanced.avg_likes || 0);
-    const avgComm = (advanced.avg_comments || 0);
-    setText('stat-likes-comments', `${avgLikes.toLocaleString()} / ${avgComm.toLocaleString()}`);
-
-
-
-
+    // ------------------------------------------------
 
     // 3. 更新連結按鈕狀態
     const btnConnect = document.getElementById('btn-connect-ig');
