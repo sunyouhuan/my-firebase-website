@@ -4923,6 +4923,7 @@ function updateDashboardWithRealData(igData) {
     // 後端給的是小數 (例如 0.052)，我們乘 100 變 5.2，並保留一位小數
 
     // 填入其他數據
+  
     // ------------------------------------------------
 
     const insights = igData.insights || {};
@@ -4962,8 +4963,6 @@ function updateDashboardWithRealData(igData) {
 
 
 
-
-
     // 3. 更新連結按鈕狀態
     const btnConnect = document.getElementById('btn-connect-ig');
     const statusText = document.getElementById('status-ig');
@@ -4983,17 +4982,6 @@ function updateDashboardWithRealData(igData) {
 
     // 5. 繪製圖表 (包含國家、城市、假粉率等)
     renderRealCharts(igData);
-}
-
-
-function formatK(num) {
-    if (num > 10000) return (num / 1000).toFixed(1) + 'k';
-    return num.toLocaleString();
-}
-
-function setText(id, val) {
-    const el = document.getElementById(id);
-    if(el) el.textContent = val;
 }
 
 // 小工具
