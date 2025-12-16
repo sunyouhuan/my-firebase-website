@@ -4756,6 +4756,13 @@ function listenForSocialStats(uid) {
 // 2. 更新畫面 UI (大頭貼、數字、簡介)
 // === 更新版：前端 UI 渲染 (顯示真實貼文與圖表) ===
 function updateDashboardWithRealData(igData) {
+    // === 🔥🔥🔥 關鍵修正 START：資料來了，把儀表板顯示出來！ ===
+    const dashboardContainer = document.getElementById('analytics-dashboard');
+    if (dashboardContainer) {
+        dashboardContainer.classList.remove('hidden');
+    }
+    // === 🔥🔥🔥 關鍵修正 END ==============================
+
     // 1. 基礎個資 (大頭貼、名字、簡介)
     if (igData.avatar) {
         const els = [document.getElementById('dash-inf-avatar'), document.getElementById('inf-card-avatar'), document.getElementById('overview-inf-avatar')];
@@ -4777,13 +4784,15 @@ function updateDashboardWithRealData(igData) {
 
     // 顯示真實互動率 (如果後端有算出來)
     const avgErEl = document.getElementById('avg-er');
-    // 從 users 資料結構外層讀取 avgEr，或者直接在這裡算
-    // 假設我們在後端存到 social_stats.current.avgEr
-    // 這裡為了簡單，我們先用 IG 裡的洞察數據來顯示「30天觸及」
     if(avgErEl) {
-        // 我們把原本的 "平均互動率" 欄位，借用來顯示 "30天觸及人數" (因為這數據更有價值)
+        // 優化顯示：把觸及人數顯示出來，並加上百分比互動率
         avgErEl.parentElement.querySelector('p.text-gray-500').textContent = "30天總觸及 (Reach)";
-        avgErEl.textContent = er.toLocaleString();
+        avgErEl.textContent = igData.insights?.reach ? igData.insights.reach.toLocaleString() : 0;
+        
+        // 如果你想顯示互動率百分比，可以這樣加在下面：
+        const erPercent = (igData.avgEr * 100).toFixed(2);
+        const pSub = avgErEl.parentElement.querySelector('.text-green-500');
+        if(pSub) pSub.textContent = `平均互動率：${erPercent}%`;
     }
 
     // 3. 連結按鈕狀態更新
