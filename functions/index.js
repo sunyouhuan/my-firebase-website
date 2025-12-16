@@ -134,9 +134,10 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
 
         // === 分支 A: 使用新的 Instagram Login (你現在用的方式) ===
         // === 分支 A: 使用新的 Instagram Login (升級版：抓取洞察報告) ===
+        // === 分支 A: 使用新的 Instagram Login (全火力升級版) ===
         if (providerId === 'instagram') {
             
-            // 1. 基礎資料 (原本的)
+            // 1. 基礎資料
             const meRes = await axios.get(`https://graph.instagram.com/v21.0/me`, {
                 params: {
                     fields: 'id,username,account_type,media_count,followers_count,biography,profile_picture_url',
@@ -144,7 +145,23 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 }
             });
 
-            // 2. [新增] 抓取帳號成效 (觸及、曝光、主頁瀏覽) - 週期: 1天
+            // 2. [新增] 抓取貼文數據 (為了計算假粉率)
+            // 我們抓取最近 10 篇貼文的互動數據
+            let recentMedia = [];
+            try {
+                const mediaRes = await axios.get(`https://graph.instagram.com/v21.0/me/media`, {
+                    params: {
+                        fields: 'id,caption,media_type,like_count,comments_count,timestamp,thumbnail_url,media_url',
+                        limit: 10, // 抓最近 10 篇
+                        access_token: accessToken
+                    }
+                });
+                recentMedia = mediaRes.data.data || [];
+            } catch (err) {
+                console.warn("[IG資料抓取] 無法取得貼文數據:", err.message);
+            }
+
+            // 3. [新增] 抓取帳號成效 (觸及、曝光、主頁瀏覽) - 週期: 1天
             let insightsData = { reach: 0, impressions: 0, profile_views: 0 };
             try {
                 const dailyStatsRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
@@ -154,30 +171,26 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                         access_token: accessToken
                     }
                 });
-                // API 回傳的是陣列，我們要解析出來
                 if(dailyStatsRes.data && dailyStatsRes.data.data) {
                     dailyStatsRes.data.data.forEach(item => {
-                        // values[0] 是最近一天的數據，values[1] 是前一天 (API 會給兩天份)
-                        // 我們取最新的 (index 1 通常是昨天完整數據，視 API 回傳而定，這裡取最後一筆最保險)
+                        // 取最新的數值
                         const latestVal = item.values[item.values.length - 1].value;
                         if (item.name === 'reach') insightsData.reach = latestVal;
                         if (item.name === 'impressions') insightsData.impressions = latestVal;
                         if (item.name === 'profile_views') insightsData.profile_views = latestVal;
                     });
                 }
-                console.log("[IG資料抓取] 成功取得 Insights 成效數據");
             } catch (err) {
-                // 這裡不拋出錯誤，因為有些剛創的帳號可能沒有數據，我們用 0 代替
-                console.warn("[IG資料抓取] 無法取得成效數據 (可能是非商業帳號或無數據):", err.response ? err.response.data : err.message);
+                console.warn("[IG資料抓取] 無法取得成效數據:", err.message);
             }
 
-            // 3. [新增] 抓取受眾輪廓 (城市、性別年齡) - 週期: 生涯累積
-            // 注意：粉絲數 < 100 的帳號，API 會回傳錯誤，所以一定要用 try-catch
-            let audienceData = { city: {}, genderAge: {} };
+            // 4. [升級] 抓取受眾輪廓 (新增 audience_country)
+            let audienceData = { city: {}, genderAge: {}, country: {} };
             try {
                 const demoRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
                     params: {
-                        metric: 'audience_city,audience_gender_age',
+                        // 🔥 這裡新增了 audience_country
+                        metric: 'audience_city,audience_gender_age,audience_country',
                         period: 'lifetime',
                         access_token: accessToken
                     }
@@ -187,27 +200,80 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                     demoRes.data.data.forEach(item => {
                         if (item.name === 'audience_city') audienceData.city = item.values[0].value; 
                         if (item.name === 'audience_gender_age') audienceData.genderAge = item.values[0].value; 
+                        if (item.name === 'audience_country') audienceData.country = item.values[0].value; // 國家數據
                     });
                 }
-                console.log("[IG資料抓取] 成功取得受眾輪廓");
             } catch (err) {
-                console.warn("[IG資料抓取] 無法取得受眾數據 (粉絲需 > 100):", err.response ? err.response.data : err.message);
+                console.warn("[IG資料抓取] 無法取得受眾數據:", err.message);
             }
 
-            // 4. 打包所有資料
+            // 5. [新增] 計算進階指標 (真實互動率、假粉率、限動預估)
+            // 5. [新增] 計算進階指標 (真實互動率、平均數據、假粉率、限動預估)
+            const followers = meRes.data.followers_count || 0;
+            
+            // A. 真實互動率 & 平均互動數據 (Likes/Comments)
+            let totalInteractions = 0;
+            let totalLikes = 0;
+            let totalComments = 0;
+            let realER = 0;
+            let avgLikes = 0;
+            let avgComments = 0;
+
+            if (recentMedia.length > 0) {
+                recentMedia.forEach(m => {
+                    const likes = (m.like_count || 0);
+                    const comments = (m.comments_count || 0);
+                    totalLikes += likes;
+                    totalComments += comments;
+                    totalInteractions += (likes + comments);
+                });
+                
+                // 計算平均值
+                avgLikes = Math.round(totalLikes / recentMedia.length);
+                avgComments = Math.round(totalComments / recentMedia.length);
+
+                // 計算互動率
+                if (followers > 0) {
+                    realER = (totalInteractions / recentMedia.length) / followers; 
+                }
+            }
+
+            // B. 假粉絲率 (Fake Follower Rate)
+            let fakeRate = 0.15; 
+            const benchmarkER = 0.03; 
+            if (realER > 0) {
+                let adjustment = (benchmarkER - realER) * 5; 
+                fakeRate = 0.15 + adjustment;
+                if (fakeRate < 0.05) fakeRate = 0.05;
+                if (fakeRate > 0.8) fakeRate = 0.8;
+            }
+
+            // C. 限時動態預期曝光
+            const expectedStoryViews = Math.round(followers * 0.25); 
+
+            // 6. 打包所有資料
             igData = {
                 id: meRes.data.id,
                 username: meRes.data.username,
-                followers_count: meRes.data.followers_count || 0,
-                media_count: meRes.data.media_count || 0,
+                followers_count: followers,
+                media_count: meRes.data.media_count || 0, // 貼文數
                 profile_picture_url: meRes.data.profile_picture_url || "",
                 biography: meRes.data.biography || "",
-                // 這裡把我們剛剛辛苦抓到的兩包新數據放進去
+                
                 insights: insightsData,
-                audience: audienceData
+                audience: audienceData,
+                
+                // 🔥 這裡把新算的平均數據傳給前端
+                advanced_stats: {
+                    engagement_rate: realER,
+                    fake_follower_rate: fakeRate,
+                    expected_story_views: expectedStoryViews,
+                    avg_likes: avgLikes,        // 新增
+                    avg_comments: avgComments   // 新增
+                }
             };
             
-            console.log(`[IG資料抓取] 任務完成！粉絲數: ${igData.followers_count}, 觸及: ${igData.insights.reach}`);
+            console.log(`[IG資料抓取] 任務完成！粉絲數: ${igData.followers_count}, 觸及: ${igData.insights.reach}, [IG資料抓取] 完成！假粉率: ${(fakeRate*100).toFixed(1)}%`);
         }
         
         // === 分支 B: 舊有的 FB 連結方式 (保留作為備用) ===
@@ -240,8 +306,8 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
         await admin.firestore().collection("users").doc(userId).set({
             social_stats: {
                 current: {
-                    totalFans: igData.followers_count || 0, 
-                    avgEr: 0.035, 
+                    totalFans: igData.followers_count || 0,
+                    avgEr: igData.advanced_stats?.engagement_rate || 0, // 更新為真實計算的 ER
                     ig: {
                         connected: true,
                         id: igData.id,
@@ -250,9 +316,12 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                         mediaCount: igData.media_count,
                         avatar: igData.profile_picture_url || "",
                         bio: igData.biography || "",
-                        // 🔥 這裡把新數據存進去資料庫，前端才能讀到
+                        
                         insights: igData.insights || {}, 
                         audience: igData.audience || {},
+                        // 🔥 寫入進階數據
+                        advanced: igData.advanced_stats || {},
+
                         lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                     }
                 }
