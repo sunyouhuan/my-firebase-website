@@ -2087,82 +2087,148 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
         <form id="campaign-form" class="flex-1 flex flex-col overflow-hidden" onsubmit="event.preventDefault(); handleSaveBrief();">
             
-            <div class="flex-1 p-6 overflow-y-auto space-y-6">
+            <div class="flex-1 p-6 overflow-y-auto space-y-6 bg-slate-50">
                 <div>
-                    <label for="brief-product-name" class="block text-sm font-medium text-gray-700">產品名稱</label>
-                    <input type="text" id="brief-product-name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：我的酷炫無線耳機">
+                    <label class="block text-sm font-bold text-slate-700">專案名稱（產品名稱）</label>
+                    <input type="text" id="brief-product-name" class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-teal-500" placeholder="例：2024夏季新品無線耳機推廣">
                 </div>
-                <div class="mt-4">
-                    <label for="brief-category" class="block text-sm font-medium text-gray-700">產品類別</label>
-                    <select id="brief-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="一般">一般</option>
-                        <option value="美妝保養">美妝保養</option>
-                        <option value="3C科技">3C科技</option>
-                        <option value="美食旅遊">美食旅遊</option>
-                    </select>
-                </div>
+
                 <div>
-                    <label for="brief-product-desc" class="block text-sm font-medium text-gray-700">產品描述與特色</label>
-                    <textarea id="brief-product-desc" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="描述您的產品，以及希望網紅強調的賣點"></textarea>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="brief-impressions" class="block text-sm font-medium text-gray-700">預期曝光次數</label>
-                        <input type="number" id="brief-impressions" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：100000">
-                    </div>
-                    <div>
-                        <label for="brief-budget" class="block text-sm font-medium text-gray-700">預算範圍 (NT$)</label>
-                        <input type="number" id="brief-budget" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：50000">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="brief-influencer-count" class="block text-sm font-medium text-gray-700">希望網紅數量</label>
-                        <input type="number" id="brief-influencer-count" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例如：10">
-                    </div>
-                    <div>
-                        <label for="brief-follower-range" class="block text-sm font-medium text-gray-700">網紅粉絲數區間</label>
-                        <select id="brief-follower-range" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                            <option>不限</option>
-                            <option>1萬 - 5萬</option>
-                            <option>5萬 - 10萬</option>
-                            <option>10萬以上</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">希望發布平台</label>
-                    <div id="brief-platforms" class="mt-2 flex flex-wrap gap-4">
-                        <label class="inline-flex items-center"><input type="checkbox" value="Instagram" class="rounded border-gray-300"> <span class="ml-2">Instagram</span></label>
-                        <label class="inline-flex items-center"><input type="checkbox" value="YouTube" class="rounded border-gray-300"> <span class="ml-2">YouTube</span></label>
-                        <label class="inline-flex items-center"><input type="checkbox" value="Facebook" class="rounded border-gray-300"> <span class="ml-2">Facebook</span></label>
-                        <label class="inline-flex items-center"><input type="checkbox" value="TikTok" class="rounded border-gray-300"> <span class="ml-2">TikTok</span></label>
-                        <label class="inline-flex items-center"><input type="checkbox" value="XiaoHongShu" class="rounded border-gray-300"> <span class="ml-2">小紅書</span></label>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">產品類別 (可多選)</label>
+                    <div id="category-tags" class="flex flex-wrap gap-2">
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="美妝保養" class="mr-1">美妝保養</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">補充保健品</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">營養食品</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="3C科技" class="mr-1">3C科技</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">開箱實測</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">生產力工具</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="美食旅遊" class="mr-1">美食</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">探店日常</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">打卡餐廳</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">穿搭配件</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">家居生活</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">家居用品與家具</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">盥洗用品與衛生用品</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">寵物用品</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">育兒神器</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">辦公室好物</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">文具控</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">新手媽媽</label>
+                        <label class="cursor-pointer border px-3 py-1 rounded-full text-sm hover:bg-teal-50"><input type="checkbox" value="家居生活" class="mr-1">好物分享</label>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">上傳行銷素材(圖片或影片，可多選)</label>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">發佈平台與格式</label>
+                    <div class="grid grid-cols-2 gap-3 bg-white p-3 rounded-lg border">
+                        <label class="flex items-center text-sm"><input type="checkbox" name="platform" value="IG_Post" class="mr-2"> Instagram (貼文)</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" name="platform" value="IG_Story" class="mr-2"> Instagram (限動)</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" name="platform" value="IG_Reels" class="mr-2"> Instagram (Reels)</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" name="platform" value="Threads" class="mr-2"> Threads (貼文)</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" name="platform" value="TikTok" class="mr-2"> TikTok (短片)</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700">貼文、限時動態、Reels 需求描述</label>
+                    <textarea id="brief-requirement-desc" rows="4" class="mt-1 block w-full border-gray-300 rounded-lg" placeholder="請詳細說明您對不同格式素材的具體要求..."></textarea>
+                </div>
+
+                <div class="p-4 bg-teal-50 rounded-lg border border-teal-100 space-y-4">
+                    <h4 class="text-sm font-bold text-teal-800 flex items-center gap-2">📅 專案排程</h4>
+                    <div class="text-xs text-teal-600 bg-white p-2 rounded">
+                        <strong>專案開始時間：</strong> 系統將於送出表單 10 分鐘後自動開始配對。
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">發佈時間 (開始)</label>
+                            <input type="datetime-local" id="publish-start" class="mt-1 block w-full text-sm border-gray-300 rounded">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">發佈時間 (結束)</label>
+                            <input type="datetime-local" id="publish-end" class="mt-1 block w-full text-sm border-gray-300 rounded">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">結案時間 (結束發佈後至少一週)</label>
+                        <input type="date" id="closing-date" class="mt-1 block w-full text-sm border-gray-300 rounded">
+                    </div>
+                </div>
+
+                <!--<<div class="bg-slate-800 text-white p-5 rounded-xl space-y-4">-->
+                <div class="p-4 bg-teal-50 rounded-lg border border-teal-100 space-y-4">
+
+                    <h4 class="font-bold border-b border-slate-600 pb-2 flex justify-between">
+                        <span>📊 預估規模與報價</span>
+                        <span class="text-xs font-normal text-slate-400">曝光 1k/$190 | 點擊 $8</span>
+                    </h4>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span>預期曝光次數</span><span id="val-impressions-txt" class="text-teal-400 font-bold">5,000</span></div>
+                        <input type="range" id="range-impressions" min="1000" max="200000" step="500" value="5000" class="w-full accent-teal-400" oninput="calculateCampaignPrice()">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span>預期點擊數</span><span id="val-clicks-txt" class="text-teal-400 font-bold">500</span></div>
+                        <input type="range" id="range-clicks" min="10" max="10000" step="10" value="500" class="w-full accent-teal-400" oninput="calculateCampaignPrice()">
+                    </div>
+                    <div class="pt-2 flex justify-between items-center border-t border-slate-600">
+                        <span class="text-sm font-bold">預計行銷總費用</span>
+                        <span class="text-2xl font-black text-teal-400">NT$ <span id="total-campaign-price">0</span></span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700">希望網紅數量 (媒合範圍 ±30%)</label>
+                        <input type="number" id="brief-influencer-count" class="mt-1 block w-full border-gray-300 rounded-md" value="10">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700">粉絲數區間 (參考值)</label>
+                        <select id="brief-follower-range" class="mt-1 block w-full border-gray-300 rounded-md">
+                            <option value="1k-10k">AI配對用戶 (100-2k)</option>
+                            <option value="1k-10k">奈米網紅 (2k-5k)</option>
+                            <option value="1k-10k">奈米網紅 (5k-10k)</option>
+                            <option value="10k-50k">微網紅 (10k-100k)</option>
+                            <option value="50k-200k">中型網紅 (100k-200k)</option>
+                            <option value="200k+">大型網紅 (200k+)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 bg-white p-3 rounded-lg border">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="provide-product" class="rounded text-teal-600">
+                        <span class="ml-2 text-sm font-bold text-slate-700">提供公關品</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs">份數：</span>
+                        <input type="number" id="product-quantity" class="w-20 border-gray-300 rounded text-sm" value="0">
+                    </div>
+                </div>
+
+                <div class="border-t pt-4">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">上傳行銷素材 (圖片或影片，可多選)</label>
                     <input type="file" id="campaign-images" multiple accept="image/*,video/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
-                    
+        
                     <div class="flex items-center gap-3 mt-3">
                         <button type="button" id="upload-images-btn" onclick="handleUploadCampaignImages()" class="bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-700">
-                            上傳選取的圖片
+                          上傳選取的素材
                         </button>
                         <span id="upload-status-text" class="text-sm text-gray-600"></span>
                     </div>
-                    
-                    <div id="image-preview-area" class="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+        
+                    <div id="image-preview-area" class="mt-4 grid grid-cols-4 gap-3">
                         </div>
                     <progress id="upload-progress-bar" value="0" max="100" class="w-full mt-2 hidden"></progress>
-                </div>
-                </div> <div class="p-5 border-t bg-slate-50 flex-shrink-0">
+                </div> 
+                <div class="p-5 border-t bg-slate-50 flex-shrink-0">
                 <button type="submit" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">
                     儲存需求並開始配對
                 </button>
+                </div>
+
             </div>
-            
-        </form> </div>
+        </form> 
+      </div>
 </div>
 
 
@@ -2920,41 +2986,101 @@ window.sendChatMessage = async function sendChatMessage() {
     };
 
 
+    window.calculateCampaignPrice = function() {
+        const imp = parseInt(document.getElementById('range-impressions').value);
+        const click = parseInt(document.getElementById('range-clicks').value);
+    
+    // 更新數值顯示
+        document.getElementById('val-impressions-txt').textContent = imp.toLocaleString();
+        document.getElementById('val-clicks-txt').textContent = click.toLocaleString();
 
-    // === v3 (新功能): 修改 handleSaveBrief 以儲存 imageUrls ===
+    // 計費公式：(曝光/1000 * 190) + (點擊 * 8)
+        const price = Math.round((imp / 1000 * 190) + (click * 8));
+        document.getElementById('total-campaign-price').textContent = price.toLocaleString();
+    };
+
+
+
+  //   === v3 (新功能): 修改 handleSaveBrief 以儲存 imageUrls ===
         window.handleSaveBrief = async function() {
-            const user = auth.currentUser;
-            if (!user) return alert('請先登入！');
+    const user = auth.currentUser;
+    if (!user) return alert('請先登入！');
 
-            const briefData = {
-                productName: document.getElementById('brief-product-name').value,
-                productDesc: document.getElementById('brief-product-desc').value,
-                category: document.getElementById('brief-category').value,
-                impressions: parseInt(document.getElementById('brief-impressions').value) || 0,
-                budget: parseInt(document.getElementById('brief-budget').value) || 0,
-                influencerCount: parseInt(document.getElementById('brief-influencer-count').value) || 0,
-                followerRange: document.getElementById('brief-follower-range').value,
-                platforms: Array.from(document.querySelectorAll('#brief-platforms input:checked')).map(el => el.value),
-                imageUrls: uploadedImageUrls, // v3: 儲存上傳的圖片 URL
-                status: 'pending_match',
-                isDeleted: false, // 新增：軟刪除標記
-                merchantId: user.uid,
-                merchantEmail: user.email,
-                createdAt: serverTimestamp() // v2 (本次修改): 使用 serverTimestamp()
-            };
+    // 抓取多選類別
+    const selectedCategories = Array.from(document.querySelectorAll('#category-tags input:checked')).map(el => el.value);
+    // 抓取多選平台格式
+    const selectedPlatforms = Array.from(document.querySelectorAll('input[name="platform"]:checked')).map(el => el.value);
 
-            if (!briefData.productName) return alert('請至少填寫產品名稱！');
+    const briefData = {
+        // 基本資訊
+        productName: document.getElementById('brief-product-name').value,
+        categories: selectedCategories, 
+        platforms: selectedPlatforms,
+        
+        // 描述
+        productDesc: document.getElementById('brief-product-desc')?.value || "", // 舊欄位保留或合併
+        requirementDesc: document.getElementById('brief-requirement-desc').value, // 新增需求描述
+        
+        // 時間排程
+        schedule: {
+            publishStart: document.getElementById('publish-start').value,
+            publishEnd: document.getElementById('publish-end').value,
+            closingDate: document.getElementById('closing-date').value,
+            createdAtText: "送出 10 分鐘後自動開始配對"
+        },
+        
+        // 規模與報價
+        impressions: parseInt(document.getElementById('range-impressions').value),
+        expectedClicks: parseInt(document.getElementById('range-clicks').value),
+        budget: parseInt(document.getElementById('total-campaign-price').textContent.replace(/,/g, '')),
+        
+        // 網紅條件
+        influencerCount: parseInt(document.getElementById('brief-influencer-count').value),
+        influencerCountRange: {
+            min: Math.floor(parseInt(document.getElementById('brief-influencer-count').value) * 0.7),
+            max: Math.ceil(parseInt(document.getElementById('brief-influencer-count').value) * 1.3)
+        },
+        followerRange: document.getElementById('brief-follower-range').value,
+        
+        // 公關品
+        logistics: {
+            provideProduct: document.getElementById('provide-product').checked,
+            quantity: parseInt(document.getElementById('product-quantity').value) || 0
+        },
 
-            try {
-                await addDoc(collection(db, "briefs"), briefData);
-                alert('您的需求已成功送出！');
-                closeModal('new-campaign-modal'); // closeModal 會自動清空表單和暫存
-            } catch (error) {
-                console.error("儲存需求單失敗:", error);
-                alert('儲存失敗，請查看 console 的錯誤訊息。');
-            }
-        }
+        // 系統欄位
+        imageUrls: uploadedImageUrls,
+        status: 'pending_match',
+        isDeleted: false,
+        merchantId: user.uid,
+        merchantEmail: user.email,
+        createdAt: serverTimestamp()
+    };
+
+    if (!briefData.productName) return alert('請輸入專案名稱！');
+    if (selectedPlatforms.length === 0) return alert('請至少選擇一個發佈平台與格式！');
+
+    try {
+        await addDoc(collection(db, "briefs"), briefData);
+        alert('需求已發佈！系統將於 10 分鐘後開始媒合網紅。');
+        closeModal('new-campaign-modal');
+    } catch (error) {
+        console.error("儲存失敗:", error);
+        alert('儲存失敗');
+    }
+};
     // === 修改部分 END ===
+
+
+
+
+
+
+
+
+
+
+
 
 
         // === 新增功能：打開活動詳情彈窗 ===
@@ -2973,6 +3099,47 @@ window.sendChatMessage = async function sendChatMessage() {
             document.getElementById('modal-brief-budget').textContent = `NT$ ${data.budget.toLocaleString()}`;
             document.getElementById('modal-brief-count').textContent = `${data.influencerCount} 人`;
             document.getElementById('modal-brief-platform').textContent = data.platforms ? data.platforms.join(', ') : '不限';
+
+
+
+    // 格式化平台顯示
+            const platformBadges = data.platforms.map(p => 
+                `<span class="bg-teal-100 text-teal-700 px-2 py-0.5 rounded text-xs font-bold">${p}</span>`
+            ).join(' ');
+
+    // 格式化類別標籤
+            const categoryBadges = data.categories ? data.categories.map(c => 
+                `<span class="text-gray-500 text-xs">#${c}</span>`
+            ).join(' ') : '';
+
+
+            document.getElementById('modal-brief-title').textContent = data.productName;
+            document.getElementById('modal-brief-desc').innerHTML = `
+                <div class="mb-4">${categoryBadges}</div>
+                <div class="space-y-4">
+                   <div>
+                        <h4 class="font-bold text-slate-800 text-sm">📌 合作格式</h4>
+                        <div class="flex gap-2 mt-1">${platformBadges}</div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">📝 需求描述</h4>
+                        <p class="text-gray-600 text-sm mt-1">${data.requirementDesc || '無詳細說明'}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-xs">📅 預計發佈區間</h4>
+                            <p class="text-gray-600 text-xs">${data.schedule.publishStart} ~ ${data.schedule.publishEnd}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-xs">🎁 公關品提供</h4>
+                            <p class="text-gray-600 text-xs">${data.logistics.provideProduct ? `有 (${data.logistics.quantity} 份)` : '無'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+
+
 
             // 2. 處理標籤
             const tagContainer = document.getElementById('modal-brief-tags');
@@ -5275,6 +5442,29 @@ function renderRealCharts(igData) {
             options: { responsive: true, maintainAspectRatio: false }
         });
     }
+}
+
+// 在 script type="module" 內新增或覆蓋
+
+// 實時計算價格
+window.calculateCampaignPrice = function() {
+    const imp = parseInt(document.getElementById('range-impressions').value) || 0;
+    const click = parseInt(document.getElementById('range-clicks').value) || 0;
+    
+    document.getElementById('val-impressions-txt').textContent = imp.toLocaleString();
+    document.getElementById('val-clicks-txt').textContent = click.toLocaleString();
+
+    // 公式：(曝光/1000 * 190) + (點擊 * 8)
+    const price = Math.round((imp / 1000 * 190) + (click * 8));
+    document.getElementById('total-campaign-price').textContent = price.toLocaleString();
+};
+
+// 格式化日期時間顯示 (用於預設值)
+function getFutureISO(days, hours = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    d.setHours(d.getHours() + hours);
+    return d.toISOString().slice(0, 16);
 }
 
 </script>

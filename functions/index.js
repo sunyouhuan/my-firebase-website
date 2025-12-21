@@ -47,6 +47,8 @@ exports.askGemini = onCall(async (request) => {
   }
 });
 
+
+
 // ==========================================
 // 功能 2：交換 Instagram Token (OAuth 流程)
 // ==========================================
@@ -110,65 +112,71 @@ exports.exchangeIgToken = onCall(async (request) => {
 });
 
 // ==========================================
-// 功能 3：自動抓取 Instagram 數據 (🔥 重點修正版)
+// 功能 3：自動抓取 Instagram 數據 (🔥 專家修正版)
 // ==========================================
 exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{providerId}", async (event) => {
-    // 1. 取得觸發事件的資料
     const snapshot = event.data && event.data.after;
-    if (!snapshot) return null; // 如果是刪除文件，則不處理
+    if (!snapshot) return null;
 
     const data = snapshot.data();
     const userId = event.params.userId;
     const providerId = event.params.providerId;
 
-    // 只處理 instagram 或 facebook 的 token 更新
-    if (providerId !== 'instagram' && providerId !== 'facebook') return null;
+    if (providerId !== 'instagram') return null;
     
     const accessToken = data.accessToken;
     if (!accessToken) return null;
 
-    console.log(`[IG資料抓取] 開始為用戶 ${userId} 抓取數據 (來源: ${providerId})...`);
+    console.log(`[IG資料抓取] 開始為用戶 ${userId} 抓取數據...`);
 
     try {
         let igData = {};
 
-        // === 分支 A: 使用新的 Instagram Login (你現在用的方式) ===
-        // === 分支 A: 使用新的 Instagram Login (升級版：抓取洞察報告) ===
-        // === 分支 A: 使用新的 Instagram Login (全火力升級版) ===
-        // === 分支 A: Instagram 登入 (商業戰情室版：含平均值運算) ===
-       // === 分支 A: Instagram 登入 (戰情室終極版：昨日 vs 平均) ===
-        if (providerId === 'instagram') {
-            
-            // 1. 基礎資料
-            const meRes = await axios.get(`https://graph.instagram.com/v21.0/me`, {
+        // 1. 基礎資料 (Basic Profile)
+        // 必須抓取 account_type 和 media_count
+        const meRes = await axios.get(`https://graph.instagram.com/v21.0/me`, {
+            params: {
+                fields: 'id,username,account_type,media_count,followers_count,biography,profile_picture_url',
+                access_token: accessToken
+            }
+        });
+
+        const userProfile = meRes.data;
+        const accountType = userProfile.account_type; // BUSINESS, CREATOR, or PERSONAL
+        const followers = userProfile.followers_count || 0;
+
+        console.log(`[IG識別] 帳號類型: ${accountType}, 粉絲數: ${followers}`);
+
+        // 2. 抓取貼文 (Media) - 用於計算互動率
+        let recentMedia = [];
+        try {
+            const mediaRes = await axios.get(`https://graph.instagram.com/v21.0/me/media`, {
                 params: {
-                    fields: 'id,username,account_type,media_count,followers_count,biography,profile_picture_url',
+                    fields: 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count', 
+                    limit: 10, // 抓最近 10 篇
                     access_token: accessToken
                 }
             });
+            recentMedia = mediaRes.data.data || [];
+        } catch (err) { 
+            console.warn("[IG資料] 無法取得貼文 (可能是權限不足或無貼文):", err.message); 
+        }
 
-            // 2. 抓取貼文 (算互動率 & 平均按讚留言)
-            let recentMedia = [];
-            try {
-                const mediaRes = await axios.get(`https://graph.instagram.com/v21.0/me/media`, {
-                    params: {
-                        fields: 'like_count,comments_count', 
-                        limit: 10, 
-                        access_token: accessToken
-                    }
-                });
-                recentMedia = mediaRes.data.data || [];
-            } catch (err) { console.warn("[IG資料] 無法取得貼文:", err.message); }
+        // 3. 抓取洞察報告 (Insights) - 🔥 加入邏輯判斷
+        let insightsData = { 
+            reach_day: 0, reach_avg_30: 0,
+            impressions_day: 0, impressions_avg_30: 0,
+            profile_views_day: 0 
+        };
+        
+        let audienceData = { city: {}, genderAge: {}, country: {} };
 
-            // 3. [核心修改] 抓取成效數據 (分別抓「昨日」與「28天」)
-            let insightsData = { 
-                reach_day: 0, reach_avg_30: 0,
-                impressions_day: 0, impressions_avg_30: 0,
-                profile_views_day: 0 
-            };
+        // ⚠️ 關鍵判斷：只有商業或創作者帳號才能抓 Insight
+        if (accountType === 'BUSINESS' || accountType === 'CREATOR') {
             
+            // (A) 抓取 每日/週期性 數據 (Reach, Impressions, Profile Views)
             try {
-                // Call A: 抓取昨日數據 (day)
+                // 請求昨日數據
                 const dayStatsRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
                     params: { 
                         metric: 'reach,impressions,profile_views', 
@@ -177,8 +185,8 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                     }
                 });
 
-                // Call B: 抓取 28 天數據 (days_28) -> 用來算平均
-                // 注意：profile_views 通常只支援 day，所以這裡只抓 reach 和 impressions
+                // 請求 28 天數據 (用於算平均)
+                // 注意: profile_views 不支援 days_28，所以這裡分開抓
                 const monthStatsRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
                     params: { 
                         metric: 'reach,impressions', 
@@ -187,163 +195,141 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                     }
                 });
 
-                // 解析昨日數據 (day)
+                // 解析數據
                 if(dayStatsRes.data && dayStatsRes.data.data) {
                     dayStatsRes.data.data.forEach(item => {
-                        // 取最後一筆 (最新的一天)
-                        const val = item.values[item.values.length - 1].value;
+                        // 取 values 陣列中最後一筆 (最新的一天)
+                        const values = item.values || [];
+                        const latestVal = values.length > 0 ? values[0].value : 0; // v21.0 通常回傳最新在 index 0 或 length-1，視回傳結構而定，建議檢查
+                        // 修正：API v21.0 通常 period=day 只會回傳最近兩天的 array，取最後一個通常是「昨天」
+                        const val = values[values.length - 1].value;
+
                         if (item.name === 'reach') insightsData.reach_day = val;
                         if (item.name === 'impressions') insightsData.impressions_day = val;
                         if (item.name === 'profile_views') insightsData.profile_views_day = val;
                     });
                 }
 
-                // 解析月數據 (days_28) 並計算平均
                 if(monthStatsRes.data && monthStatsRes.data.data) {
                     monthStatsRes.data.data.forEach(item => {
                         const val = item.values[item.values.length - 1].value; // 28天總和
-                        
-                        if (item.name === 'reach') {
-                            // 30日平均 = 28天總和 / 28
-                            insightsData.reach_avg_30 = Math.round(val / 28);
-                        }
-                        if (item.name === 'impressions') {
-                            insightsData.impressions_avg_30 = Math.round(val / 28);
-                        }
+                        if (item.name === 'reach') insightsData.reach_avg_30 = Math.round(val / 28);
+                        if (item.name === 'impressions') insightsData.impressions_avg_30 = Math.round(val / 28);
                     });
                 }
 
-            } catch (err) { console.warn("[IG資料] 成效數據異常:", err.message); }
+            } catch (err) {
+                console.error("[IG資料] 抓取成效數據失敗 (Insight API 錯誤):", err.response ? err.response.data : err.message);
+            }
 
-            // 4. 受眾輪廓 (維持不變)
-            let audienceData = { city: {}, genderAge: {}, country: {} };
-            try {
-                const demoRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
-                    params: { metric: 'audience_city,audience_gender_age,audience_country', period: 'lifetime', access_token: accessToken }
-                });
-                if(demoRes.data && demoRes.data.data) {
-                    demoRes.data.data.forEach(item => {
-                        if (item.name === 'audience_city') audienceData.city = item.values[0].value; 
-                        if (item.name === 'audience_gender_age') audienceData.genderAge = item.values[0].value; 
-                        if (item.name === 'audience_country') audienceData.country = item.values[0].value;
+            // (B) 抓取 受眾數據 (Audience) - 🔥 必須 > 100 粉絲
+            if (followers >= 100) {
+                try {
+                    const demoRes = await axios.get(`https://graph.instagram.com/v21.0/me/insights`, {
+                        params: { 
+                            metric: 'audience_city,audience_gender_age,audience_country', 
+                            period: 'lifetime', 
+                            access_token: accessToken 
+                        }
                     });
-                }
-            } catch (err) { console.warn("[IG資料] 受眾數據異常:", err.message); }
 
-            // 5. 計算互動率與平均值
-            const followers = meRes.data.followers_count || 0;
-            let totalInteractions = 0;
-            let totalLikes = 0;
-            let totalComments = 0;
-            let avgLikes = 0;
-            let avgComments = 0;
-            let realER = 0;
-
-            if (recentMedia.length > 0) {
-                recentMedia.forEach(m => {
-                    totalLikes += (m.like_count || 0);
-                    totalComments += (m.comments_count || 0);
-                });
-                avgLikes = Math.round(totalLikes / recentMedia.length);
-                avgComments = Math.round(totalComments / recentMedia.length);
-                totalInteractions = totalLikes + totalComments;
-                
-                if (followers > 0) {
-                    realER = (totalInteractions / recentMedia.length) / followers; 
+                    if(demoRes.data && demoRes.data.data) {
+                        demoRes.data.data.forEach(item => {
+                            if (item.name === 'audience_city') audienceData.city = item.values[0].value; 
+                            if (item.name === 'audience_gender_age') audienceData.genderAge = item.values[0].value; 
+                            if (item.name === 'audience_country') audienceData.country = item.values[0].value;
+                        });
+                    }
+                } catch (err) {
+                    console.warn("[IG資料] 受眾數據無法抓取 (可能剛好滿100人但數據尚未生成):", err.message);
                 }
+            } else {
+                console.log("[IG資料] 粉絲不足 100 人，跳過受眾分析以避免 API 錯誤。");
             }
 
-            // 假粉率
-            let fakeRate = 0.15; 
-            const benchmarkER = 0.03; 
-            if (realER > 0) {
-                let adjustment = (benchmarkER - realER) * 5; 
-                fakeRate = 0.15 + adjustment;
-                if (fakeRate < 0.05) fakeRate = 0.05;
-                if (fakeRate > 0.9) fakeRate = 0.9;
-            }
+        } else {
+            console.warn("[IG資料] 此帳號為 PERSONAL (個人號)，無法抓取 Insights。請切換為專業帳號。");
+        }
 
-            // 6. 打包回傳
-            igData = {
-                id: meRes.data.id,
-                username: meRes.data.username,
-                followers_count: followers,
-                media_count: meRes.data.media_count || 0,
-                profile_picture_url: meRes.data.profile_picture_url || "",
-                biography: meRes.data.biography || "",
-                
-                insights: insightsData, // 裡面有 reach_day, reach_avg_30 等
-                audience: audienceData,
-                
-                advanced_stats: {
-                    engagement_rate: realER,
-                    fake_follower_rate: fakeRate,
-                    avg_likes: avgLikes,
-                    avg_comments: avgComments,
-                    expected_story_views: Math.round(followers * 0.25)
-                }
-            };
+        // 4. 計算互動率 (Engagement Rate)
+        let totalInteractions = 0;
+        let totalLikes = 0;
+        let totalComments = 0;
+        let avgLikes = 0;
+        let avgComments = 0;
+        let realER = 0;
+
+        if (recentMedia.length > 0) {
+            recentMedia.forEach(m => {
+                totalLikes += (m.like_count || 0);
+                totalComments += (m.comments_count || 0);
+            });
+            avgLikes = Math.round(totalLikes / recentMedia.length);
+            avgComments = Math.round(totalComments / recentMedia.length);
+            totalInteractions = totalLikes + totalComments;
             
-            console.log(`[IG運算] 貼文:${igData.media_count}, 昨日觸及:${insightsData.reach_day}`);
-        }
-        
-        // === 分支 B: 舊有的 FB 連結方式 (保留作為備用) ===
-        else if (providerId === 'facebook') {
-            // ... (保留原本的邏輯，省略不變動) ...
-            // 為了代碼簡潔，若您確定不跑 FB 流程，這段其實可以簡化，但建議先保留避免錯誤
-             const pagesRes = await axios.get(
-                `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
-            );
-            let instagramId = null;
-            for (const page of pagesRes.data.data) {
-                const pageRes = await axios.get(
-                  `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`
-                );
-                if (pageRes.data.instagram_business_account) {
-                  instagramId = pageRes.data.instagram_business_account.id;
-                  break;
-                }
+            if (followers > 0) {
+                // ER = (平均互動數 / 粉絲數)
+                realER = (totalInteractions / recentMedia.length) / followers; 
             }
-            if (!instagramId) return null;
-            const igRes = await axios.get(
-                `https://graph.facebook.com/v18.0/${instagramId}?fields=biography,id,username,profile_picture_url,website,followers_count,media_count&access_token=${accessToken}`
-            );
-            igData = igRes.data;
         }
 
-        // 2. 將抓到的豐富資料寫回 Firestore 的使用者文件
-        // 前端介面 (HTML) 會監聽這個路徑來更新 UI
-        // 2. 將抓到的豐富資料寫回 Firestore 的使用者文件
+        // 假粉率估算 (簡單演算法)
+        let fakeRate = 0.15; 
+        const benchmarkER = 0.03; // 假設基準互動率 3%
+        if (realER > 0) {
+            let adjustment = (benchmarkER - realER) * 5; 
+            fakeRate = 0.15 + adjustment;
+            if (fakeRate < 0.05) fakeRate = 0.05;
+            if (fakeRate > 0.9) fakeRate = 0.9;
+        }
+
+        // 5. 打包資料
+        igData = {
+            id: userProfile.id,
+            username: userProfile.username,
+            followers_count: followers,
+            media_count: userProfile.media_count || 0,
+            profile_picture_url: userProfile.profile_picture_url || "",
+            biography: userProfile.biography || "",
+            account_type: accountType, // 存下來顯示給 UI 看
+            
+            insights: insightsData, 
+            audience: audienceData,
+            recent_media: recentMedia, // 存貼文讓前端可以畫圖
+            
+            advanced_stats: {
+                engagement_rate: realER,
+                fake_follower_rate: fakeRate,
+                avg_likes: avgLikes,
+                avg_comments: avgComments,
+                expected_story_views: Math.round(followers * 0.25)
+            }
+        };
+
+        // 6. 寫回 Firestore
         await admin.firestore().collection("users").doc(userId).set({
             social_stats: {
                 current: {
                     totalFans: igData.followers_count || 0,
-                    avgEr: igData.advanced_stats?.engagement_rate || 0, // 更新為真實計算的 ER
+                    avgEr: igData.advanced_stats?.engagement_rate || 0,
                     ig: {
                         connected: true,
-                        id: igData.id,
-                        username: igData.username,
-                        followers: igData.followers_count || 0,
-                        mediaCount: igData.media_count,
-                        avatar: igData.profile_picture_url || "",
-                        bio: igData.biography || "",
-                        
-                        insights: igData.insights || {}, 
-                        audience: igData.audience || {},
-                        // 🔥 寫入進階數據
-                        advanced: igData.advanced_stats || {},
-
+                        ...igData, // 展開所有資料
                         lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                     }
                 }
             }
-        }, { merge: true }); // 使用 merge: true 避免覆蓋掉用戶的其他資料
+        }, { merge: true });
 
+        console.log(`[IG資料抓取] 成功！用戶:${userProfile.username}, ER:${(realER*100).toFixed(2)}%`);
         return { success: true };
 
     } catch (error) {
-        console.error("[IG資料抓取] 失敗:", error.response ? error.response.data : error.message);
-        // 不拋出錯誤，避免 Cloud Function 無限重試
+        logger.error("[IG資料抓取] 嚴重失敗:", error);
         return null;
     }
 });
+
+
+
