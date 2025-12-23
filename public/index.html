@@ -1855,15 +1855,8 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         </div>
 
        <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">👥 粉絲年齡分佈 (Age)</h3>
+            <h3 class="font-bold text-slate-800 mb-4">👥 男女年齡分佈比例 (Gender & Age)</h3>
             <div class="h-80"><canvas id="chart-gender-age"></canvas></div>
-
-            <div class="mt-4 text-sm text-slate-700">
-              <div class="font-semibold mb-1">性別分佈</div>
-              <div id="gender-breakdown" class="space-y-1"></div>
-              <div id="demographics-note" class="mt-2 text-xs text-slate-500"></div>
-            </div>
-
        </div>
         
     </div>
@@ -5362,40 +5355,65 @@ function renderRealCharts(igData) {
     }
 
     // --- 圖表 3: 男女年齡分佈 (堆疊長條圖) ---
-    // --- 圖表 3：年齡分佈（改用 audience.age）---
-const age = audience.age || {};
-const labelsAge = Object.keys(age).sort((a, b) => (age[b] || 0) - (age[a] || 0));
-const valuesAge = labelsAge.map((k) => age[k] || 0);
+    if (ctxGenderAge && igData.audience && igData.audience.genderAge) {
+        const ga = igData.audience.genderAge;
+        const totalFollowers = igData.followers || 1; // 避免除以 0
 
-if (chartGenderAge) chartGenderAge.destroy();
-chartGenderAge = new Chart(ctxGenderAge, {
-  type: "bar",
-  data: {
-    labels: labelsAge,
-    datasets: [{
-      label: "Age",
-      data: valuesAge
-    }]
-  },
-  options: { responsive: true, maintainAspectRatio: false }
-});
+        // 定義年齡層順序
+        const ageGroups = ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+        
+        // 準備數據容器
+        const maleData = [];
+        const femaleData = [];
 
-// 性別分佈（文字）
-const gender = audience.gender || {};
-const genderEl = document.getElementById("gender-breakdown");
-const noteEl = document.getElementById("demographics-note");
+        ageGroups.forEach(age => {
+            const mCount = ga[`M.${age}`] || 0;
+            const fCount = ga[`F.${age}`] || 0;
+            
+            // 計算佔總粉絲數的百分比
+            maleData.push((mCount / totalFollowers * 100).toFixed(1));
+            femaleData.push((fCount / totalFollowers * 100).toFixed(1));
+        });
 
-if (genderEl) {
-  const genderKeys = Object.keys(gender).sort((a, b) => (gender[b] || 0) - (gender[a] || 0));
-  genderEl.innerHTML = genderKeys.length
-    ? genderKeys.map((k) => `<div>${k}: ${gender[k]}</div>`).join("")
-    : `<div class="text-slate-500">無資料（可能粉絲數不足或近 30 天資料不足）</div>`;
-}
-
-if (noteEl) {
-  noteEl.textContent = "若使用測試帳號/粉絲少於 100，follower_demographics 可能本來就不回傳。";
-}
-
+        window.chartInstanceGenderAge = new Chart(ctxGenderAge, {
+            type: 'bar',
+            data: {
+                labels: ageGroups,
+                datasets: [
+                    {
+                        label: '男性 (%)',
+                        data: maleData,
+                        backgroundColor: '#60a5fa', // 藍色
+                        stack: 'Stack 0'
+                    },
+                    {
+                        label: '女性 (%)',
+                        data: femaleData,
+                        backgroundColor: '#f472b6', // 粉色
+                        stack: 'Stack 0'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { 
+                        stacked: true,
+                        ticks: { callback: (val) => val + '%' } // 加上 % 符號
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}%`
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     // --- 圖表 4: 粉絲成長 (維持原本邏輯) ---
     if (ctxFollowers) {

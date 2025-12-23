@@ -173,149 +173,137 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 recentMedia = mediaRes.data.data || [];
             } catch (err) { console.warn("[IG資料] 無法取得貼文:", err.message); }
 
-                        // 3. ✅ 成效洞察：拆開抓，避免一個 metric 壞掉整包 400
+                        // 3. ✅ 成效洞察 (Insights)
+            // 根據 Log，這裡支援 profile_views, reach, total_interactions, impressions (需確認 log 是否有 impressions，若無則移除)
+            // 注意：Log 列表中沒有 'impressions'，如果有 'views' 或 'content_views' 可能需替換，但我們先抓確定的。
+            
             let insightsData = { 
-                reach_day: 0, reach_avg_30: 0,
-                impressions_day: 0, impressions_avg_30: 0,
-                profile_views_day: 0
+                reach_day: 0, 
+                reach_avg_30: 0,
+                profile_views_day: 0,
+                total_interactions_day: 0
             };
 
-            // 你 token 文件裡有存 igUserId（交換 token 時已寫入）
-            // 沒有的話就用 meRes.data.id 當備援
             const igUserId = data.igUserId || meRes.data.id;
             const INSIGHTS_URL = `https://graph.instagram.com/v21.0/${igUserId}/insights`;
 
-            // 產生 yesterday / last30days 的 since/until（用秒）
+            // 時間設定 (保持不變)
             const dayMs = 24 * 60 * 60 * 1000;
             const today0 = new Date(); today0.setHours(0, 0, 0, 0);
             const yesterday0 = new Date(today0.getTime() - dayMs);
-            const last30_0 = new Date(today0.getTime() - 30 * dayMs);
-
             const sinceYesterday = Math.floor(yesterday0.getTime() / 1000);
             const untilToday = Math.floor(today0.getTime() / 1000);
-            const since30 = Math.floor(last30_0.getTime() / 1000);
 
             async function getOneMetric(metric, period, since, until) {
-              const res = await axios.get(INSIGHTS_URL, {
-                params: {
-                  metric,
-                  period,
-                  since,
-                  until,
-                  access_token: accessToken,
+                try {
+                    const params = {
+                        metric,
+                        period,
+                        access_token: accessToken
+                    };
+                    // 只有 day 需要 since/until，lifetime 不需要
+                    if (period === 'day') {
+                        params.since = since;
+                        params.until = until;
+                    }
+
+                    const res = await axios.get(INSIGHTS_URL, { params });
+                    return res.data?.data?.[0] || null;
+                } catch (err) {
+                    // 印出錯誤但不要讓程式崩潰
+                    console.warn(`[IG Metric Skip] ${metric}:`, err?.response?.data?.error?.message || err.message);
+                    return null;
                 }
-              });
-              // res.data.data[0] 形式：{ name, period, values:[{value,end_time}...] }
-              return res.data?.data?.[0] || null;
             }
 
             function lastValue(item) {
-              const values = item?.values || [];
-              const last = values[values.length - 1];
-              return typeof last?.value === "number" ? last.value : 0;
+                const values = item?.values || [];
+                // 取最後一筆有效的數據
+                const last = values[values.length - 1];
+                return typeof last?.value === "number" ? last.value : 0;
             }
 
-            function avgValue(item) {
-              const values = (item?.values || [])
-                .map(v => (typeof v.value === "number" ? v.value : 0))
-                .filter(n => Number.isFinite(n));
-              if (!values.length) return 0;
-              return Math.round(values.reduce((a,b)=>a+b,0) / values.length);
-            }
+            // --- 3.1 抓取基礎數據 ---
+            
+            // 觸及 (Reach)
+            const r = await getOneMetric("reach", "day", sinceYesterday, untilToday);
+            insightsData.reach_day = lastValue(r);
 
-            // 3A) 昨日 profile_views
-            try {
-              const pv = await getOneMetric("profile_views", "day", sinceYesterday, untilToday);
-              insightsData.profile_views_day = lastValue(pv);
-            } catch (err) {
-              logAxiosError("[IG資料] profile_views(day) 失敗", err);
-            }
+            // 主頁瀏覽 (Profile Views) - 根據你的 Log 這是支援的！
+            const pv = await getOneMetric("profile_views", "day", sinceYesterday, untilToday);
+            insightsData.profile_views_day = lastValue(pv);
 
-            // 3B) 昨日 reach
-            try {
-              const r = await getOneMetric("reach", "day", sinceYesterday, untilToday);
-              insightsData.reach_day = lastValue(r);
-            } catch (err) {
-              logAxiosError("[IG資料] reach(day) 失敗", err);
-            }
+            // 總互動 (Total Interactions)
+            const ti = await getOneMetric("total_interactions", "day", sinceYesterday, untilToday);
+            insightsData.total_interactions_day = lastValue(ti);
 
-            // 3C) 昨日 impressions（如果這個 metric 在你帳號/權限下不支援，就只會這一項失敗，不會拖垮 reach/profile_views）
-            try {
-              const imp = await getOneMetric("impressions", "day", sinceYesterday, untilToday);
-              insightsData.impressions_day = lastValue(imp);
-            } catch (err) {
-              logAxiosError("[IG資料] impressions(day) 失敗", err);
-            }
 
-            // 3D) 近 30 天平均 reach（用 day 序列自己算平均，比 days_28 更不容易踩雷）
-            try {
-              const r30 = await getOneMetric("reach", "day", since30, untilToday);
-              insightsData.reach_avg_30 = avgValue(r30);
-            } catch (err) {
-              logAxiosError("[IG資料] reach(30d avg) 失敗", err);
-            }
-
-            // 3E) 近 30 天平均 impressions
-            try {
-              const imp30 = await getOneMetric("impressions", "day", since30, untilToday);
-              insightsData.impressions_avg_30 = avgValue(imp30);
-            } catch (err) {
-              logAxiosError("[IG資料] impressions(30d avg) 失敗", err);
-            }
-
-            // 4. ✅ 受眾輪廓：先修正你原本的 metric 字串（你現在那行有 ... 一定錯）
+            // --- 4. ✅ 受眾輪廓 (Audience Demographics) ---
+            // 修正重點：改用 follower_demographics 並加上 breakdown
+            
             let audienceData = { city: {}, genderAge: {}, country: {}, _available: true };
 
-            async function getAudienceMetric(metric) {
-              const res = await axios.get(INSIGHTS_URL, {
-                params: {
-                  metric,
-                  period: "lifetime",
-                  access_token: accessToken,
-                }
-              });
-              return res.data?.data?.[0] || null;
-            }
-
-            function lifetimeMap(item) {
-              // lifetime 常見格式：values[0].value 是一個 map
-              const v = item?.values?.[0]?.value;
-              return (v && typeof v === "object") ? v : {};
-            }
-
             try {
-              try {
-                const city = await getAudienceMetric("audience_city");
-                audienceData.city = lifetimeMap(city);
-              } catch (err) {
-                logAxiosError("[IG資料] audience_city 失敗", err);
-              }
+                // 我們一次呼叫 follower_demographics，並要求按照不同維度拆分
+                // 根據文件，我們可能需要分開呼叫三次，或者使用 breakdown
+                // 測試策略：分別請求三次 breakdown，因為這最保險
+                
+                // 4.1 城市分佈
+                const cityRes = await axios.get(INSIGHTS_URL, {
+                    params: {
+                        metric: 'follower_demographics',
+                        period: 'lifetime',
+                        breakdown: 'city', // 👈 關鍵：告訴 API 我要依「城市」拆分
+                        access_token: accessToken
+                    }
+                });
+                // 解析結構：values[0].value 應該是一個物件 { "Taipei": 123, ... }
+                audienceData.city = cityRes.data?.data?.[0]?.total_value?.breakdowns?.[0]?.results?.reduce((acc, curr) => {
+                    acc[curr.dimension_values[0]] = curr.value;
+                    return acc;
+                }, {}) || {};
 
-              try {
-                const ga = await getAudienceMetric("audience_gender_age");
-                audienceData.genderAge = lifetimeMap(ga);
-              } catch (err) {
-                logAxiosError("[IG資料] audience_gender_age 失敗", err);
-              }
+                // 4.2 國家分佈
+                const countryRes = await axios.get(INSIGHTS_URL, {
+                    params: {
+                        metric: 'follower_demographics',
+                        period: 'lifetime',
+                        breakdown: 'country', // 👈 關鍵
+                        access_token: accessToken
+                    }
+                });
+                audienceData.country = countryRes.data?.data?.[0]?.total_value?.breakdowns?.[0]?.results?.reduce((acc, curr) => {
+                    acc[curr.dimension_values[0]] = curr.value;
+                    return acc;
+                }, {}) || {};
 
-              try {
-                const country = await getAudienceMetric("audience_country");
-                audienceData.country = lifetimeMap(country);
-              } catch (err) {
-                logAxiosError("[IG資料] audience_country 失敗", err);
-              }
+                // 4.3 性別與年齡分佈
+                const genderAgeRes = await axios.get(INSIGHTS_URL, {
+                    params: {
+                        metric: 'follower_demographics',
+                        period: 'lifetime',
+                        breakdown: 'gender,age', // 👈 關鍵：有些 API 支援組合，若失敗則試單一 gender 或 age
+                        access_token: accessToken
+                    }
+                });
+                // 這裡的回傳結構可能會比較複雜，需要根據實際回傳調整
+                // 假設回傳格式類似上面，或者直接在 total_value 裡
+                // 如果 breakdown=gender,age 失敗，請試著只用 'age' 或 'gender'
+                 audienceData.genderAge = genderAgeRes.data?.data?.[0]?.total_value?.breakdowns?.[0]?.results?.reduce((acc, curr) => {
+                    // dimension_values 可能是 ["F", "18-24"] -> key 變成 "F.18-24"
+                    const key = curr.dimension_values.join('.'); 
+                    acc[key] = curr.value;
+                    return acc;
+                }, {}) || {};
 
-              if (
-                Object.keys(audienceData.city || {}).length === 0 &&
-                Object.keys(audienceData.genderAge || {}).length === 0 &&
-                Object.keys(audienceData.country || {}).length === 0
-              ) {
-                audienceData._available = false;
-              }
 
             } catch (err) {
-              audienceData._available = false;
-              logAxiosError("[IG資料] 受眾洞察總流程失敗", err);
+                console.warn("[IG Audience Skip] 受眾抓取失敗:", err?.response?.data?.error?.message || err.message);
+                audienceData._available = false;
+                
+                // 備用方案：如果上面 breakdown 寫法失敗 (API 版本差異)，
+                // 有些版本的 follower_demographics 直接回傳所有資料在 values 裡
+                // 這種情況我們可以在這裡做 fallback 處理，但先試上面的標準寫法。
             }
 
 
