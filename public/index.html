@@ -2797,90 +2797,141 @@ window.sendChatMessage = async function sendChatMessage() {
     };
 
 // === 修正版：商家活動列表 (支援影片封面) ===
-    function renderCampaigns(campaigns) {
-        const listElement = document.getElementById('campaigns-list');
-        if (!listElement) return;
+    // === 修改後：renderCampaigns (歷史項目與結案狀態) ===
+function renderCampaigns(campaigns) {
+    const listElement = document.getElementById('campaigns-list');
+    if (!listElement) return;
 
-        if (campaigns.length === 0) {
-            listElement.innerHTML = `<div class="col-span-full text-center py-10"><p class="text-gray-500 mb-4">目前沒有任何行銷活動</p><button onclick="openModal('new-campaign-modal')" class="bg-teal-600 text-white px-6 py-2 rounded-lg">立即建立第一個活動</button></div>`;
-            return;
+    if (campaigns.length === 0) {
+        listElement.innerHTML = `<div class="col-span-full text-center py-10"><p class="text-gray-500 mb-4">目前沒有任何行銷活動</p><button onclick="openModal('new-campaign-modal')" class="bg-teal-600 text-white px-6 py-2 rounded-lg">立即建立第一個活動</button></div>`;
+        return;
+    }
+
+    const now = Date.now();
+    const activeList = [];
+    const historyList = [];
+
+    // 1. 分類活動
+    campaigns.forEach(campaign => {
+        const data = campaign.data;
+        // 取得結案日期的 Timestamp
+        const closingDateStr = data.schedule?.closingDate; // "2025-12-31"
+        let isExpired = false;
+        
+        if (closingDateStr) {
+            // 將結案日期字串轉為當天 23:59:59 的時間戳記
+            const closingTs = new Date(closingDateStr).getTime() + (24 * 60 * 60 * 1000) - 1;
+            if (now > closingTs) {
+                isExpired = true;
+            }
         }
 
-        let campaignsHTML = '';
-        campaigns.forEach(campaign => {
-            const data = campaign.data;
-            const id = campaign.id;
+        if (isExpired) {
+            historyList.push(campaign);
+        } else {
+            activeList.push(campaign);
+        }
+    });
 
-            // --- ★ 修改開始：智慧封面 ---
-            let coverImage = `<div class="w-full h-32 bg-slate-100 flex items-center justify-center text-gray-400">無封面</div>`;
-            
-            if (data.imageUrls && data.imageUrls.length > 0) {
-                const url = data.imageUrls[0];
-                const isVideo = url.toLowerCase().includes('.mp4') || 
-                              url.toLowerCase().includes('.mov') || 
-                              url.toLowerCase().includes('.webm');
-                
-                if (isVideo) {
-                    // 影片封面：滑鼠滑過自動播放
-                    coverImage = `
-                        <video src="${url}" class="w-full h-32 object-cover bg-black" 
-                            muted loop playsinline
-                            onmouseover="this.play()" 
-                            onmouseout="this.pause();this.currentTime=0;"
-                        ></video>`;
-                } else {
-                    // 圖片封面
-                    coverImage = `<img src="${url}" alt="${data.productName}" class="w-full h-32 object-cover" onerror="this.style.display='none'">`;
-                }
+    // 2. 定義產生卡片 HTML 的函數
+    const generateCard = (campaign, isHistory) => {
+        const data = campaign.data;
+        const id = campaign.id;
+
+        // 封面圖
+        let coverImage = `<div class="w-full h-32 bg-slate-100 flex items-center justify-center text-gray-400">無封面</div>`;
+        if (data.imageUrls && data.imageUrls.length > 0) {
+            const url = data.imageUrls[0];
+            const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov');
+            if (isVideo) {
+                coverImage = `<video src="${url}" class="w-full h-32 object-cover bg-black" muted onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
+            } else {
+                coverImage = `<img src="${url}" alt="${data.productName}" class="w-full h-32 object-cover" onerror="this.style.display='none'">`;
             }
-            // --- ★ 修改結束 ---
+        }
 
-            // 狀態標籤
+        // 狀態標籤
+        let statusBadge = '';
+        if (isHistory) {
+            // 強制顯示為結案
+            statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-600">🏁 結案項目</span>`;
+        } else {
+            // 原本的狀態邏輯
             const statusMap = {
                 'pending_match': { text: '正在配對中', color: 'bg-yellow-100 text-yellow-800' },
                 'matched': { text: '配對完成', color: 'bg-green-100 text-green-800' },
                 'in_progress': { text: '執行中', color: 'bg-blue-100 text-blue-800' }
             };
             const st = statusMap[data.status] || { text: '未知', color: 'bg-gray-100 text-gray-800' };
-            const statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${st.color}">${st.text}</span>`;
+            statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${st.color}">${st.text}</span>`;
+        }
 
-            // 刪除按鈕邏輯
-            let deleteButtonHTML = '';
-            const now = Date.now();
-            const createdTime = data.createdAt ? data.createdAt.toMillis() : 0;
-            const diffMinutes = (now - createdTime) / 1000 / 60;
-
-            if (data.status === 'pending_match') {
-                if (diffMinutes <= 10) {
-                    deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}', ${createdTime})" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100 text-xs">刪除 (剩${Math.round(10 - diffMinutes)}分)</button>`;
-                } else {
-                    deleteButtonHTML = `<button disabled class="w-1/2 text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-400 cursor-not-allowed text-xs">已鎖定</button>`;
-                }
+        // 刪除按鈕 (只有非歷史且建立10分鐘內可刪)
+        let deleteButtonHTML = '';
+        const createdTime = data.createdAt ? data.createdAt.toMillis() : 0;
+        const diffMinutes = (now - createdTime) / 1000 / 60;
+        
+        if (!isHistory && data.status === 'pending_match') {
+            if (diffMinutes <= 10) {
+                deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}', ${createdTime})" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100 text-xs">刪除 (剩${Math.round(10 - diffMinutes)}分)</button>`;
+            } else {
+                deleteButtonHTML = `<button disabled class="w-1/2 text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-400 cursor-not-allowed text-xs">已鎖定</button>`;
             }
+        } else if (isHistory) {
+             deleteButtonHTML = `<button disabled class="w-1/2 text-center bg-gray-50 py-2 rounded-lg font-semibold text-gray-400 text-xs">僅供查閱</button>`;
+        }
 
-            campaignsHTML += `
-                <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow">
-                    ${coverImage}
-                    <div class="p-5 flex-1 flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                ${statusBadge}
-                                <span class="text-xs text-gray-400">${new Date(createdTime).toLocaleDateString()}</span>
-                            </div>
-                            <h3 class="font-bold text-lg mt-2 text-slate-800 line-clamp-1">${data.productName}</h3>
-                            <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
-                            <p class="text-sm text-gray-500 mt-1">需求: ${data.influencerCount} 位</p>
+        // 如果是歷史項目，卡片稍微變灰一點
+        const opacityClass = isHistory ? 'opacity-75 hover:opacity-100' : '';
+
+        return `
+            <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow ${opacityClass}">
+                ${coverImage}
+                <div class="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            ${statusBadge}
+                            <span class="text-xs text-gray-400">${new Date(createdTime).toLocaleDateString()}</span>
                         </div>
-                        <div class="mt-4 flex space-x-2">
-                            <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200 text-xs">查看詳情</button>
-                            ${deleteButtonHTML}
-                        </div>
+                        <h3 class="font-bold text-lg mt-2 text-slate-800 line-clamp-1">${data.productName}</h3>
+                        <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
+                        <p class="text-xs text-gray-400 mt-1">結案日: ${data.schedule?.closingDate || '未定'}</p>
+                    </div>
+                    <div class="mt-4 flex space-x-2">
+                        <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200 text-xs">查看詳情</button>
+                        ${deleteButtonHTML}
                     </div>
                 </div>
-            `;
-        });
-        listElement.innerHTML = campaignsHTML;
+            </div>
+        `;
+    };
+
+    // 3. 組合 HTML
+    let finalHTML = '';
+
+    // 渲染進行中
+    activeList.forEach(c => finalHTML += generateCard(c, false));
+
+    // 如果有歷史項目，加分隔線
+    if (historyList.length > 0) {
+        finalHTML += `
+            <div class="col-span-full mt-8 mb-4 flex items-center">
+                <div class="flex-grow border-t border-gray-300"></div>
+                <span class="flex-shrink mx-4 text-gray-400 text-sm font-bold uppercase tracking-widest">歷史項目 (History)</span>
+                <div class="flex-grow border-t border-gray-300"></div>
+            </div>
+        `;
+        historyList.forEach(c => finalHTML += generateCard(c, true));
     }
+
+    listElement.innerHTML = finalHTML;
+}
+
+
+
+
+
+
 
     // 功能 2: 建立一個即時監聽器，當資料庫有變化時自動更新畫面
         let unsubscribeCampaigns = null; 
@@ -3106,146 +3157,115 @@ window.handleSaveBrief = async function() {
 
 
         // === 新增功能：打開活動詳情彈窗 ===
-    // === 修改後：openBriefDetail (UI 美化版) ===
-window.openBriefDetail = async function(briefId, showAcceptBtn = false) {
-    try {
-        const docRef = doc(db, 'briefs', briefId);
-        const snap = await getDoc(docRef);
-        
-        if(!snap.exists()) return alert('找不到此活動資料');
-        
-        const data = snap.data();
-        
-        // 1. 處理頂部標籤與標題
-        document.getElementById('modal-brief-title').innerHTML = `
-            <div class="flex flex-col gap-1">
-                <span class="text-sm font-normal text-teal-600 tracking-wider">PROJECT</span>
-                <span class="text-3xl font-extrabold text-slate-800">${data.productName}</span>
-            </div>`;
+    window.openBriefDetail = async function(briefId, showAcceptBtn = false) {
+        try {
+            const docRef = doc(db, 'briefs', briefId);
+            const snap = await getDoc(docRef);
+            
+            if(!snap.exists()) return alert('找不到此活動資料');
+            
+            const data = snap.data();
+            
+            // 1. 填寫文字資料
+            document.getElementById('modal-brief-title').textContent = data.productName;
+            document.getElementById('modal-brief-desc').textContent = data.productDesc;
+            document.getElementById('modal-brief-budget').textContent = `NT$ ${data.budget.toLocaleString()}`;
+            document.getElementById('modal-brief-count').textContent = `${data.influencerCount} 人`;
+            document.getElementById('modal-brief-platform').textContent = data.platforms ? data.platforms.join(', ') : '不限';
 
-        // 2. 生成詳細內容 HTML (美化版)
-        const platformBadges = data.platforms.map(p => 
-            `<span class="inline-flex items-center gap-1 bg-white border border-gray-200 text-slate-700 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
-                📱 ${p}
-             </span>`
-        ).join(' ');
 
-        const categoryBadges = data.categories ? data.categories.map(c => 
-            `<span class="text-blue-600 bg-blue-50 px-2 py-1 rounded text-sm font-medium">#${c}</span>`
-        ).join(' ') : '';
 
-        // 格式化日期
-        const formatDate = (d) => d ? d.replace('T', ' ') : '未定';
+    // 格式化平台顯示
+            const platformBadges = data.platforms.map(p => 
+                `<span class="bg-teal-100 text-teal-700 px-2 py-0.5 rounded text-xs font-bold">${p}</span>`
+            ).join(' ');
 
-        document.getElementById('modal-brief-desc').innerHTML = `
-            <div class="space-y-8">
-                <div class="flex flex-wrap items-center gap-3 pb-4 border-b border-gray-100">
-                    ${categoryBadges}
-                    <span class="text-gray-400 text-sm">|</span>
-                    <span class="text-gray-500 text-sm">需求人數: <b class="text-slate-800">${data.influencerCount}人</b></span>
-                </div>
+    // 格式化類別標籤
+            const categoryBadges = data.categories ? data.categories.map(c => 
+                `<span class="text-gray-500 text-xs">#${c}</span>`
+            ).join(' ') : '';
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-2 space-y-6">
-                        <div>
-                            <h4 class="flex items-center gap-2 text-lg font-bold text-slate-800 mb-3">
-                                <span class="w-1 h-6 bg-teal-500 rounded-full"></span> 
-                                產品與活動描述
-                            </h4>
-                            <div class="bg-slate-50 p-5 rounded-xl border border-slate-100 text-slate-700 leading-relaxed text-base">
-                                ${data.productDesc || '（商家未提供詳細描述）'}
-                            </div>
-                        </div>
 
-                        <div>
-                            <h4 class="flex items-center gap-2 text-lg font-bold text-slate-800 mb-3">
-                                <span class="w-1 h-6 bg-indigo-500 rounded-full"></span> 
-                                詳細執行需求
-                            </h4>
-                            <div class="bg-indigo-50 p-5 rounded-xl border border-indigo-100 text-slate-800 leading-relaxed text-base whitespace-pre-line">
-                                ${data.requirementDesc || '請依照商家指示製作素材。'}
-                            </div>
-                        </div>
+            document.getElementById('modal-brief-title').textContent = data.productName;
+            document.getElementById('modal-brief-desc').innerHTML = `
+                <div class="mb-4">${categoryBadges}</div>
+                <div class="space-y-4">
+                   <div>
+                        <h4 class="font-bold text-slate-800 text-sm">📌 合作格式</h4>
+                        <div class="flex gap-2 mt-1">${platformBadges}</div>
                     </div>
-
-                    <div class="space-y-4">
-                        <div class="bg-white border-2 border-teal-100 rounded-xl p-5 shadow-sm">
-                            <p class="text-xs text-teal-600 font-bold uppercase mb-1">Total Budget</p>
-                            <p class="text-3xl font-black text-slate-800">NT$ ${data.budget.toLocaleString()}</p>
-                            <div class="mt-4 pt-4 border-t border-gray-100 space-y-2">
-                                <p class="text-xs text-gray-500">預估曝光: <span class="font-bold text-slate-700">${data.impressions}</span></p>
-                                <p class="text-xs text-gray-500">預估點擊: <span class="font-bold text-slate-700">${data.expectedClicks}</span></p>
-                            </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">📝 需求描述</h4>
+                        <p class="text-gray-600 text-sm mt-1">${data.requirementDesc || '無詳細說明'}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-xs">📅 預計發佈區間</h4>
+                            <p class="text-gray-600 text-xs">${data.schedule.publishStart} ~ ${data.schedule.publishEnd}</p>
                         </div>
-
-                        <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                             <h5 class="font-bold text-slate-700 mb-3 text-sm">指定平台</h5>
-                             <div class="flex flex-wrap gap-2">${platformBadges}</div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 space-y-3">
-                            <h5 class="font-bold text-slate-700 mb-1 text-sm">時程規劃</h5>
-                            <div>
-                                <p class="text-xs text-gray-400">發佈區間</p>
-                                <p class="text-sm font-bold text-slate-700">${formatDate(data.schedule.publishStart)} <br>~ ${formatDate(data.schedule.publishEnd)}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400">結案日期</p>
-                                <p class="text-sm font-bold text-red-500">${data.schedule.closingDate}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                             <h5 class="font-bold text-slate-700 mb-2 text-sm">物流資訊</h5>
-                             <p class="text-sm text-gray-600">
-                                公關品: ${data.logistics.provideProduct ? `<span class="text-green-600 font-bold">有提供 (${data.logistics.quantity}份)</span>` : '<span class="text-gray-400">無</span>'}
-                             </p>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-xs">🎁 公關品提供</h4>
+                            <p class="text-gray-600 text-xs">${data.logistics.provideProduct ? `有 (${data.logistics.quantity} 份)` : '無'}</p>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        // 3. 處理素材 (保持原邏輯，稍微加大尺寸)
-        const assetContainer = document.getElementById('modal-brief-assets');
-        if (data.imageUrls && data.imageUrls.length > 0) {
-            let assetsHtml = '';
-            data.imageUrls.forEach(url => {
-                const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov');
-                if(isVideo) {
-                    assetsHtml += `<video src="${url}" class="w-full h-48 object-cover rounded-xl bg-black shadow-sm" controls></video>`;
-                } else {
-                    assetsHtml += `<a href="${url}" target="_blank"><img src="${url}" class="w-full h-48 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"></a>`;
-                }
-            });
-            assetContainer.innerHTML = assetsHtml;
-        } else {
-            assetContainer.innerHTML = '<p class="text-gray-400 col-span-full text-center py-6 bg-gray-50 rounded-xl border border-dashed">商家未上傳參考素材</p>';
+
+
+
+            // 2. 處理標籤
+            const tagContainer = document.getElementById('modal-brief-tags');
+            tagContainer.innerHTML = `
+                <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">#${data.category}</span>
+                <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">預估曝光: ${data.impressions}</span>
+            `;
+
+            // 3. 處理素材 (圖片/影片)
+            const assetContainer = document.getElementById('modal-brief-assets');
+            if (data.imageUrls && data.imageUrls.length > 0) {
+                let assetsHtml = '';
+                data.imageUrls.forEach(url => {
+                    const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov') || url.toLowerCase().includes('.webm');
+                    if(isVideo) {
+                        assetsHtml += `
+                            <div class="relative group">
+                                <video src="${url}" class="w-full h-40 object-cover rounded-lg bg-black" controls></video>
+                            </div>`;
+                    } else {
+                        assetsHtml += `
+                            <div class="relative group">
+                                <a href="${url}" target="_blank">
+                                    <img src="${url}" class="w-full h-40 object-cover rounded-lg border hover:opacity-80 transition cursor-zoom-in">
+                                </a>
+                            </div>`;
+                    }
+                });
+                assetContainer.innerHTML = assetsHtml;
+            } else {
+                assetContainer.innerHTML = '<p class="text-gray-400 col-span-full text-center py-4">商家未上傳參考素材</p>';
+            }
+
+            // 4. 設定接單按鈕 (如果是從「合作邀請」點進來，顯示按鈕；如果是「已接單」點進來，隱藏按鈕)
+            const acceptBtn = document.getElementById('modal-btn-accept');
+            if(showAcceptBtn) {
+                acceptBtn.classList.remove('hidden');
+                // 綁定接單事件
+                acceptBtn.onclick = function() {
+                    handleAcceptInvite(briefId, data.merchantId);
+                    closeModal('brief-detail-modal');
+                };
+            } else {
+                acceptBtn.classList.add('hidden');
+            }
+
+            openModal('brief-detail-modal');
+
+        } catch(e) {
+            console.error(e);
+            alert('讀取失敗');
         }
-
-        // 4. 設定標籤容器清空 (因為我們已經整合到 innerHTML 裡了)
-        document.getElementById('modal-brief-tags').innerHTML = ''; 
-
-        // 5. 設定接單按鈕
-        const acceptBtn = document.getElementById('modal-btn-accept');
-        if(showAcceptBtn) {
-            acceptBtn.classList.remove('hidden');
-            acceptBtn.textContent = `確認接單 (NT$ ${Math.floor(data.budget / data.influencerCount).toLocaleString()} /人)`; // 簡單估算
-            acceptBtn.onclick = function() {
-                handleAcceptInvite(briefId, data.merchantId);
-                closeModal('brief-detail-modal');
-            };
-        } else {
-            acceptBtn.classList.add('hidden');
-        }
-
-        openModal('brief-detail-modal');
-
-    } catch(e) {
-        console.error(e);
-        alert('讀取失敗');
-    }
-};
+    };
 
 
 
