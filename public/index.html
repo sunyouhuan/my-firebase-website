@@ -96,217 +96,6 @@ html.dark       #role-selection-view .min-h-screen{ background: transparent !imp
 /* 確保動畫層在最底 */
 #bg-anim{ z-index: 0 !important; pointer-events: none; }
 
-
-
-/* =========================
-   Expert Report (Merchant)
-========================= */
-.report-select{
-    height: 40px;
-    min-width: 260px;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 12px;
-    padding: 0 12px;
-    background: white;
-    color: rgb(15 23 42);
-    font-weight: 600;
-    box-shadow: 0 1px 0 rgba(15,23,42,0.02);
-}
-.btn-primary, .btn-secondary{
-    height: 40px;
-    padding: 0 14px;
-    border-radius: 12px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid transparent;
-    user-select: none;
-    transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
-}
-.btn-primary{
-    color: white;
-    background: linear-gradient(135deg, rgb(99 102 241), rgb(139 92 246));
-    box-shadow: 0 10px 24px rgba(99,102,241,.22);
-}
-.btn-secondary{
-    background: white;
-    color: rgb(30 41 59);
-    border-color: rgb(226 232 240);
-    box-shadow: 0 10px 24px rgba(15,23,42,.06);
-}
-.btn-primary:active, .btn-secondary:active{ transform: translateY(1px); }
-.btn-icon{ font-weight: 900; opacity:.9; }
-
-.kpi-card{
-    background: white;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 18px;
-    padding: 18px;
-    box-shadow: 0 12px 30px rgba(15,23,42,.06);
-    position: relative;
-    overflow: hidden;
-}
-.kpi-card.kpi-emv{
-    background: linear-gradient(135deg, rgba(16,185,129,.10), rgba(255,255,255,1));
-    border-color: rgba(16,185,129,.20);
-}
-.kpi-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.kpi-badge{
-    display:inline-flex; align-items:center; gap:10px;
-    font-size: 12px; font-weight: 800;
-    color: rgb(51 65 85);
-}
-.kpi-dot{ width:10px; height:10px; border-radius:999px; display:inline-block; }
-.kpi-dot-emv{ background: rgb(16 185 129); }
-.kpi-dot-spend{ background: rgb(99 102 241); }
-.kpi-dot-reach{ background: rgb(168 85 247); }
-.kpi-dot-cpe{ background: rgb(245 158 11); }
-
-.kpi-icon{
-    width: 40px; height: 40px;
-    border-radius: 14px;
-    display:flex; align-items:center; justify-content:center;
-    color: rgb(15 23 42);
-    background: rgba(15,23,42,.04);
-}
-.kpi-icon svg{ width:22px; height:22px; }
-.kpi-icon-emv{ color: rgb(16 185 129); background: rgba(16,185,129,.12); }
-.kpi-icon-spend{ color: rgb(99 102 241); background: rgba(99,102,241,.12); }
-.kpi-icon-reach{ color: rgb(168 85 247); background: rgba(168,85,247,.12); }
-.kpi-icon-cpe{ color: rgb(245 158 11); background: rgba(245,158,11,.14); }
-
-.kpi-value{
-    margin-top: 10px;
-    font-size: 30px;
-    font-weight: 900;
-    color: rgb(15 23 42);
-    letter-spacing: -.02em;
-}
-.kpi-sub{ margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-.kpi-pill{
-    display:inline-flex; align-items:center; gap:6px;
-    font-size: 12px; font-weight: 800;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid rgb(226 232 240);
-    color: rgb(30 41 59);
-    background: rgba(255,255,255,.85);
-}
-.kpi-pill-emv{ color: rgb(6 95 70); border-color: rgba(16,185,129,.25); background: rgba(16,185,129,.10); }
-.kpi-pill-reach{ color: rgb(88 28 135); border-color: rgba(168,85,247,.25); background: rgba(168,85,247,.10); }
-.kpi-pill-cpe{ color: rgb(124 45 18); border-color: rgba(245,158,11,.25); background: rgba(245,158,11,.12); }
-.kpi-compare{
-    margin-top: 10px;
-    font-size: 12px;
-    font-weight: 800;
-    color: rgb(16 185 129);
-}
-.kpi-progress{ height: 10px; border-radius: 999px; background: rgba(99,102,241,.10); overflow:hidden; border: 1px solid rgba(99,102,241,.14); }
-.kpi-progress-bar{ height:100%; border-radius: 999px; background: linear-gradient(90deg, rgb(99 102 241), rgb(139 92 246)); }
-
-.report-card{
-    background: white;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 18px;
-    padding: 18px;
-    box-shadow: 0 12px 30px rgba(15,23,42,.06);
-}
-.report-title{ font-weight: 900; color: rgb(15 23 42); }
-.report-subtitle{ font-weight: 700; color: rgb(148 163 184); }
-.report-meta{ font-size: 12px; font-weight: 700; color: rgb(100 116 139); margin-top: 2px; }
-.report-chip{
-    font-size: 12px;
-    font-weight: 900;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid rgb(226 232 240);
-    background: rgba(15,23,42,.02);
-    color: rgb(30 41 59);
-    white-space: nowrap;
-}
-.report-chip-ai{
-    border-color: rgba(99,102,241,.25);
-    background: rgba(99,102,241,.10);
-    color: rgb(67 56 202);
-}
-
-.funnel-step{
-    height: 54px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding: 0 14px;
-    color: white;
-    border-radius: 16px;
-    font-weight: 900;
-    letter-spacing: -.01em;
-}
-.funnel-step-1{
-    background: linear-gradient(90deg, rgb(99 102 241), rgb(139 92 246));
-    clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
-}
-.funnel-step-2{
-    width: 88%;
-    margin: 0 auto;
-    background: linear-gradient(90deg, rgb(99 102 241), rgb(124 58 237));
-    opacity: .92;
-    clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
-}
-.funnel-step-3{
-    width: 76%;
-    margin: 0 auto;
-    background: linear-gradient(90deg, rgb(99 102 241), rgb(109 40 217));
-    opacity: .88;
-    clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
-}
-.funnel-left{ font-size: 13px; }
-.funnel-right{ font-size: 13px; }
-
-.ai-insight-skeleton{
-    padding: 14px;
-    border-radius: 14px;
-    border: 1px dashed rgb(226 232 240);
-    background: rgb(248 250 252);
-    color: rgb(100 116 139);
-    font-weight: 700;
-}
-.ai-insight{
-    border: 1px solid rgb(226 232 240);
-    border-radius: 16px;
-    padding: 14px;
-    background: linear-gradient(180deg, rgba(99,102,241,.06), rgba(255,255,255,1));
-}
-.ai-insight h4{ font-weight: 900; color: rgb(15 23 42); margin-bottom: 6px; }
-.ai-insight ul{ margin: 0; padding-left: 18px; color: rgb(51 65 85); font-weight: 700; font-size: 14px; line-height: 1.6; }
-.ai-insight .ai-tag{
-    display:inline-flex; align-items:center; gap:8px;
-    font-size: 12px; font-weight: 900;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(99,102,241,.22);
-    background: rgba(99,102,241,.10);
-    color: rgb(67 56 202);
-}
-
-.strategy-box{
-    border: 1px solid rgb(226 232 240);
-    border-radius: 16px;
-    padding: 12px 14px;
-    background: rgb(248 250 252);
-}
-.strategy-k{ font-size: 12px; font-weight: 900; color: rgb(100 116 139); }
-.strategy-v{ margin-top: 6px; font-weight: 900; color: rgb(15 23 42); line-height: 1.4; }
-
-@media print{
-    @page{ size: A4; margin: 12mm; }
-    body{ background: white !important; }
-    body *{ visibility: hidden !important; }
-    #report-print-area, #report-print-area *{ visibility: visible !important; }
-    #report-print-area{ position: absolute; left: 0; top: 0; width: 100%; }
-    .no-print{ display:none !important; }
-    .report-card, .kpi-card{ box-shadow:none !important; }
-}
 </style>
 
 <style>
@@ -1680,276 +1469,9 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                         </div>                        
 
                         <div id="merchant-reports-content" class="dashboard-content">
-    <!-- =========================
-         Merchant Expert Report Page
-         - Data is loaded from Firestore (briefs/{id}/report/summary)
-         - PDF export via window.print() + print CSS
-    ========================== -->
-    <div id="report-print-area" class="max-w-6xl mx-auto px-2 sm:px-4">
-        <!-- Report Header -->
-        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
-            <div class="min-w-0">
-                <div class="flex flex-wrap items-center gap-3">
-                    <h1 id="report-campaign-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight truncate">
-                        商家成效報告
-                    </h1>
-                    <span id="report-status-pill" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-                        已結案 (Completed)
-                    </span>
-                </div>
-
-                <div class="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                    <div class="flex items-center gap-2">
-                        <span class="text-slate-500">活動選擇</span>
-                        <select id="report-campaign-select" class="no-print report-select">
-                            <option value="">讀取中…</option>
-                        </select>
-                    </div>
-                    <div class="hidden sm:block h-4 w-px bg-slate-300"></div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-slate-500">日期範圍</span>
-                        <span id="report-date-range" class="font-semibold text-slate-800">—</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2 no-print">
-                <button id="report-share-btn" class="btn-secondary">
-                    <span class="btn-icon">⤴</span>
-                    分享報告
-                </button>
-                <button id="report-pdf-btn" class="btn-primary">
-                    <span class="btn-icon">⤓</span>
-                    下載 PDF
-                </button>
-            </div>
-        </div>
-
-        <!-- KPI Panel (Money Cards) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-            <!-- EMV -->
-            <div class="kpi-card kpi-emv">
-                <div class="kpi-top">
-                    <div class="kpi-badge">
-                        <span class="kpi-dot kpi-dot-emv"></span>
-                        媒體價值 (EMV)
-                    </div>
-                    <div class="kpi-icon kpi-icon-emv" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M4 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M7 15l3-3 3 2 4-5 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="kpi-value" id="kpi-emv-value">NT$ 0</div>
-                <div class="kpi-sub">
-                    <span id="kpi-emv-roi" class="kpi-pill kpi-pill-emv">ROI 0%</span>
-                </div>
-                <div id="kpi-emv-delta" class="kpi-compare">—</div>
-            </div>
-
-            <!-- Spend -->
-            <div class="kpi-card">
-                <div class="kpi-top">
-                    <div class="kpi-badge">
-                        <span class="kpi-dot kpi-dot-spend"></span>
-                        總花費 (Total Spend)
-                    </div>
-                    <div class="kpi-icon kpi-icon-spend" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M16 6H10a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="kpi-value" id="kpi-spend-value">NT$ 0</div>
-                <div class="mt-3">
-                    <div class="flex items-center justify-between text-xs text-slate-600 mb-1">
-                        <span>預算執行率</span>
-                        <span id="kpi-spend-progress-label" class="font-semibold text-slate-800">0%</span>
-                    </div>
-                    <div class="kpi-progress">
-                        <div id="kpi-spend-progress-bar" class="kpi-progress-bar" style="width:0%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reach -->
-            <div class="kpi-card">
-                <div class="kpi-top">
-                    <div class="kpi-badge">
-                        <span class="kpi-dot kpi-dot-reach"></span>
-                        總觸及 (Total Reach)
-                    </div>
-                    <div class="kpi-icon kpi-icon-reach" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M12 20c4.418 0 8-3.582 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M12 20c-4.418 0-8-3.582-8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M12 4c4.418 0 8 3.582 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M12 4c-4.418 0-8 3.582-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M12 12h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="kpi-value" id="kpi-reach-value">0</div>
-                <div class="kpi-sub">
-                    <span id="kpi-reach-tag" class="kpi-pill kpi-pill-reach">AI 把關：0% 假粉流量</span>
-                </div>
-            </div>
-
-            <!-- CPE -->
-            <div class="kpi-card">
-                <div class="kpi-top">
-                    <div class="kpi-badge">
-                        <span class="kpi-dot kpi-dot-cpe"></span>
-                        平均 CPE (互動成本)
-                    </div>
-                    <div class="kpi-icon kpi-icon-cpe" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M20 12H4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M7 7h10v10H7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="kpi-value" id="kpi-cpe-value">NT$ 0</div>
-                <div class="kpi-sub">
-                    <span id="kpi-cpe-compare" class="kpi-pill kpi-pill-cpe">—</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Trend + Funnel -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-            <div class="lg:col-span-2 report-card">
-                <div class="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                        <h3 class="report-title">互動熱力趨勢圖 <span class="report-subtitle">(Interactive Line Chart)</span></h3>
-                        <div class="report-meta">X：時間　Y：互動次數</div>
-                    </div>
-                    <span class="report-chip">Engagements</span>
-                </div>
-                <div class="h-80">
-                    <canvas id="reportEngagementChart"></canvas>
-                </div>
-            </div>
-
-            <div class="report-card">
-                <div class="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                        <h3 class="report-title">轉化漏斗 <span class="report-subtitle">(Vertical Funnel)</span></h3>
-                        <div class="report-meta">各階段轉化率（%）</div>
-                    </div>
-                    <span class="report-chip report-chip-ai">AI 解讀</span>
-                </div>
-
-                <div class="space-y-2 mt-3">
-                    <div id="funnel-impressions" class="funnel-step funnel-step-1">
-                        <div class="funnel-left">曝光 (Impressions)</div>
-                        <div id="funnel-impressions-val" class="funnel-right">100%</div>
-                    </div>
-                    <div id="funnel-engagements" class="funnel-step funnel-step-2">
-                        <div class="funnel-left">互動 (Engagements)</div>
-                        <div id="funnel-engagements-val" class="funnel-right">0%</div>
-                    </div>
-                    <div id="funnel-clicks" class="funnel-step funnel-step-3">
-                        <div class="funnel-left">點擊 (Link Clicks)</div>
-                        <div id="funnel-clicks-val" class="funnel-right">0%</div>
-                    </div>
-                </div>
-
-                <div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <div class="text-xs font-semibold text-slate-700 mb-1">平台建議</div>
-                    <div id="report-funnel-suggestion" class="text-sm text-slate-600">
-                        點擊率偏低，建議下次在文案中增加「限時優惠」字眼。
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- AI Unique Insights + Strategy -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-            <div class="lg:col-span-2 report-card">
-                <div class="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                        <h3 class="report-title">AI Unique Insights</h3>
-                        <div class="report-meta">把數字翻成「下一步策略」</div>
-                    </div>
-                    <span class="report-chip report-chip-ai">Actionable</span>
-                </div>
-
-                <div id="report-ai-insights" class="space-y-3">
-                    <!-- JS will render insights -->
-                    <div class="ai-insight-skeleton">
-                        讀取報表資料中…
-                    </div>
-                </div>
-            </div>
-
-            <div class="report-card">
-                <div class="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                        <h3 class="report-title">策略摘要</h3>
-                        <div class="report-meta">可直接複製給團隊/代理商</div>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="strategy-box">
-                        <div class="strategy-k">主要目標</div>
-                        <div id="strategy-goal" class="strategy-v">提升互動與點擊轉化</div>
-                    </div>
-                    <div class="strategy-box">
-                        <div class="strategy-k">優先動作</div>
-                        <div id="strategy-priority" class="strategy-v">強化 CTA 與利益點（限時/贈品/套組）</div>
-                    </div>
-                    <div class="strategy-box">
-                        <div class="strategy-k">需要優化</div>
-                        <div id="strategy-risk" class="strategy-v">點擊率與落地頁承接</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Influencer Leaderboard -->
-        <div class="report-card mb-10">
-            <div class="flex items-start justify-between gap-3 mb-3">
-                <div>
-                    <h3 class="report-title">網紅貢獻榜 <span class="report-subtitle">(Leaderboard Table)</span></h3>
-                    <div class="report-meta">可後續接你真實合作資料</div>
-                </div>
-                <span class="report-chip">Top Contributors</span>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead>
-                        <tr class="text-left text-slate-500 border-b border-slate-200">
-                            <th class="py-3 pr-4">排名</th>
-                            <th class="py-3 pr-4">網紅</th>
-                            <th class="py-3 pr-4">平台</th>
-                            <th class="py-3 pr-4">CPE</th>
-                            <th class="py-3 pr-4">互動率</th>
-                            <th class="py-3 pr-4">AI 評價 (Tag)</th>
-                            <th class="py-3">下一步</th>
-                        </tr>
-                    </thead>
-                    <tbody id="report-leaderboard-body">
-                        <tr class="border-b border-slate-100">
-                            <td colspan="7" class="py-4 text-slate-500">讀取中…</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="text-xs text-slate-400 pb-8">
-            報表資料來源：InfluenceAI 平台 / 匯入資料 / 合作成效彙整。此頁支援列印輸出 PDF。
-        </div>
-    </div>
-</div>
-
+                            <div class="bg-white rounded-xl shadow p-6"><h3 class="font-bold text-slate-800 mb-4">曝光 & 點擊趨勢</h3><div class="h-80"><canvas id="performanceLineChart"></canvas></div></div>
+                        </div>
+                        
                         <!-- v2 (本次修改): 財務管理介面更新 -->
                         <div id="merchant-finance-content" class="dashboard-content">
                              <!-- 帳戶餘額：ID (finance-account-balance) 用於 JS 更新，預設為 0 -->
@@ -3023,15 +2545,6 @@ const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
                 }
             }
         }
-
-// Merchant: Report page should load completed/closed campaigns only
-if (role === 'merchant') {
-    if (tabId === 'reports') {
-        if (typeof renderMerchantReports === 'function') {
-            renderMerchantReports();
-        }
-    }
-}
     };
 
 
@@ -3284,90 +2797,141 @@ window.sendChatMessage = async function sendChatMessage() {
     };
 
 // === 修正版：商家活動列表 (支援影片封面) ===
-    function renderCampaigns(campaigns) {
-        const listElement = document.getElementById('campaigns-list');
-        if (!listElement) return;
+    // === 修改後：renderCampaigns (歷史項目與結案狀態) ===
+function renderCampaigns(campaigns) {
+    const listElement = document.getElementById('campaigns-list');
+    if (!listElement) return;
 
-        if (campaigns.length === 0) {
-            listElement.innerHTML = `<div class="col-span-full text-center py-10"><p class="text-gray-500 mb-4">目前沒有任何行銷活動</p><button onclick="openModal('new-campaign-modal')" class="bg-teal-600 text-white px-6 py-2 rounded-lg">立即建立第一個活動</button></div>`;
-            return;
+    if (campaigns.length === 0) {
+        listElement.innerHTML = `<div class="col-span-full text-center py-10"><p class="text-gray-500 mb-4">目前沒有任何行銷活動</p><button onclick="openModal('new-campaign-modal')" class="bg-teal-600 text-white px-6 py-2 rounded-lg">立即建立第一個活動</button></div>`;
+        return;
+    }
+
+    const now = Date.now();
+    const activeList = [];
+    const historyList = [];
+
+    // 1. 分類活動
+    campaigns.forEach(campaign => {
+        const data = campaign.data;
+        // 取得結案日期的 Timestamp
+        const closingDateStr = data.schedule?.closingDate; // "2025-12-31"
+        let isExpired = false;
+        
+        if (closingDateStr) {
+            // 將結案日期字串轉為當天 23:59:59 的時間戳記
+            const closingTs = new Date(closingDateStr).getTime() + (24 * 60 * 60 * 1000) - 1;
+            if (now > closingTs) {
+                isExpired = true;
+            }
         }
 
-        let campaignsHTML = '';
-        campaigns.forEach(campaign => {
-            const data = campaign.data;
-            const id = campaign.id;
+        if (isExpired) {
+            historyList.push(campaign);
+        } else {
+            activeList.push(campaign);
+        }
+    });
 
-            // --- ★ 修改開始：智慧封面 ---
-            let coverImage = `<div class="w-full h-32 bg-slate-100 flex items-center justify-center text-gray-400">無封面</div>`;
-            
-            if (data.imageUrls && data.imageUrls.length > 0) {
-                const url = data.imageUrls[0];
-                const isVideo = url.toLowerCase().includes('.mp4') || 
-                              url.toLowerCase().includes('.mov') || 
-                              url.toLowerCase().includes('.webm');
-                
-                if (isVideo) {
-                    // 影片封面：滑鼠滑過自動播放
-                    coverImage = `
-                        <video src="${url}" class="w-full h-32 object-cover bg-black" 
-                            muted loop playsinline
-                            onmouseover="this.play()" 
-                            onmouseout="this.pause();this.currentTime=0;"
-                        ></video>`;
-                } else {
-                    // 圖片封面
-                    coverImage = `<img src="${url}" alt="${data.productName}" class="w-full h-32 object-cover" onerror="this.style.display='none'">`;
-                }
+    // 2. 定義產生卡片 HTML 的函數
+    const generateCard = (campaign, isHistory) => {
+        const data = campaign.data;
+        const id = campaign.id;
+
+        // 封面圖
+        let coverImage = `<div class="w-full h-32 bg-slate-100 flex items-center justify-center text-gray-400">無封面</div>`;
+        if (data.imageUrls && data.imageUrls.length > 0) {
+            const url = data.imageUrls[0];
+            const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov');
+            if (isVideo) {
+                coverImage = `<video src="${url}" class="w-full h-32 object-cover bg-black" muted onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
+            } else {
+                coverImage = `<img src="${url}" alt="${data.productName}" class="w-full h-32 object-cover" onerror="this.style.display='none'">`;
             }
-            // --- ★ 修改結束 ---
+        }
 
-            // 狀態標籤
+        // 狀態標籤
+        let statusBadge = '';
+        if (isHistory) {
+            // 強制顯示為結案
+            statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-600"> 結案項目</span>`;
+        } else {
+            // 原本的狀態邏輯
             const statusMap = {
                 'pending_match': { text: '正在配對中', color: 'bg-yellow-100 text-yellow-800' },
                 'matched': { text: '配對完成', color: 'bg-green-100 text-green-800' },
                 'in_progress': { text: '執行中', color: 'bg-blue-100 text-blue-800' }
             };
             const st = statusMap[data.status] || { text: '未知', color: 'bg-gray-100 text-gray-800' };
-            const statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${st.color}">${st.text}</span>`;
+            statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${st.color}">${st.text}</span>`;
+        }
 
-            // 刪除按鈕邏輯
-            let deleteButtonHTML = '';
-            const now = Date.now();
-            const createdTime = data.createdAt ? data.createdAt.toMillis() : 0;
-            const diffMinutes = (now - createdTime) / 1000 / 60;
-
-            if (data.status === 'pending_match') {
-                if (diffMinutes <= 10) {
-                    deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}', ${createdTime})" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100 text-xs">刪除 (剩${Math.round(10 - diffMinutes)}分)</button>`;
-                } else {
-                    deleteButtonHTML = `<button disabled class="w-1/2 text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-400 cursor-not-allowed text-xs">已鎖定</button>`;
-                }
+        // 刪除按鈕 (只有非歷史且建立10分鐘內可刪)
+        let deleteButtonHTML = '';
+        const createdTime = data.createdAt ? data.createdAt.toMillis() : 0;
+        const diffMinutes = (now - createdTime) / 1000 / 60;
+        
+        if (!isHistory && data.status === 'pending_match') {
+            if (diffMinutes <= 10) {
+                deleteButtonHTML = `<button onclick="handleDeleteCampaign('${id}', ${createdTime})" class="w-1/2 text-center bg-red-50 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100 text-xs">刪除 (剩${Math.round(10 - diffMinutes)}分)</button>`;
+            } else {
+                deleteButtonHTML = `<button disabled class="w-1/2 text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-400 cursor-not-allowed text-xs">已鎖定</button>`;
             }
+        } else if (isHistory) {
+             deleteButtonHTML = `<button disabled class="w-1/2 text-center bg-gray-50 py-2 rounded-lg font-semibold text-gray-400 text-xs">僅供查閱</button>`;
+        }
 
-            campaignsHTML += `
-                <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow">
-                    ${coverImage}
-                    <div class="p-5 flex-1 flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                ${statusBadge}
-                                <span class="text-xs text-gray-400">${new Date(createdTime).toLocaleDateString()}</span>
-                            </div>
-                            <h3 class="font-bold text-lg mt-2 text-slate-800 line-clamp-1">${data.productName}</h3>
-                            <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
-                            <p class="text-sm text-gray-500 mt-1">需求: ${data.influencerCount} 位</p>
+        // 如果是歷史項目，卡片稍微變灰一點
+        const opacityClass = isHistory ? 'opacity-75 hover:opacity-100' : '';
+
+        return `
+            <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow ${opacityClass}">
+                ${coverImage}
+                <div class="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            ${statusBadge}
+                            <span class="text-xs text-gray-400">${new Date(createdTime).toLocaleDateString()}</span>
                         </div>
-                        <div class="mt-4 flex space-x-2">
-                            <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200 text-xs">查看詳情</button>
-                            ${deleteButtonHTML}
-                        </div>
+                        <h3 class="font-bold text-lg mt-2 text-slate-800 line-clamp-1">${data.productName}</h3>
+                        <p class="text-sm text-gray-500 mt-1">預算: NT$ ${data.budget.toLocaleString()}</p>
+                        <p class="text-xs text-gray-400 mt-1">結案日: ${data.schedule?.closingDate || '未定'}</p>
+                    </div>
+                    <div class="mt-4 flex space-x-2">
+                        <button onclick="showCampaignDetail('${id}')" class="w-full text-center bg-gray-100 py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-200 text-xs">查看詳情</button>
+                        ${deleteButtonHTML}
                     </div>
                 </div>
-            `;
-        });
-        listElement.innerHTML = campaignsHTML;
+            </div>
+        `;
+    };
+
+    // 3. 組合 HTML
+    let finalHTML = '';
+
+    // 渲染進行中
+    activeList.forEach(c => finalHTML += generateCard(c, false));
+
+    // 如果有歷史項目，加分隔線
+    if (historyList.length > 0) {
+        finalHTML += `
+            <div class="col-span-full mt-8 mb-4 flex items-center">
+                <div class="flex-grow border-t border-gray-300"></div>
+                <span class="flex-shrink mx-4 text-gray-400 text-sm font-bold uppercase tracking-widest">歷史項目 (History)</span>
+                <div class="flex-grow border-t border-gray-300"></div>
+            </div>
+        `;
+        historyList.forEach(c => finalHTML += generateCard(c, true));
     }
+
+    listElement.innerHTML = finalHTML;
+}
+
+
+
+
+
+
 
     // 功能 2: 建立一個即時監聽器，當資料庫有變化時自動更新畫面
         let unsubscribeCampaigns = null; 
@@ -3489,39 +3053,59 @@ window.sendChatMessage = async function sendChatMessage() {
 
 
   //   === v3 (新功能): 修改 handleSaveBrief 以儲存 imageUrls ===
-        window.handleSaveBrief = async function() {
+        // === 修改後：handleSaveBrief (加入日期防呆與配對欄位) ===
+window.handleSaveBrief = async function() {
     const user = auth.currentUser;
     if (!user) return alert('請先登入！');
 
+    // --- 防呆驗證 START (對應您的第 3 點需求) ---
+    const startVal = document.getElementById('publish-start').value;
+    const endVal = document.getElementById('publish-end').value;
+    const closeVal = document.getElementById('closing-date').value;
+
+    if (!startVal || !endVal || !closeVal) return alert('請完整填寫所有日期欄位！');
+
+    const startDate = new Date(startVal);
+    const endDate = new Date(endVal);
+    const closeDate = new Date(closeVal);
+
+    // 驗證 1: 結束時間不可以小於開始時間
+    if (endDate <= startDate) {
+        return alert('日期錯誤：發佈「結束時間」必須晚於「開始時間」！');
+    }
+
+    // 驗證 2: 結案時間必須大於發佈結束時間至少 7 天
+    // 算出毫秒差異，再轉成天數 (1天 = 24 * 60 * 60 * 1000 毫秒)
+    const diffTime = closeDate.getTime() - endDate.getTime();
+    const diffDays = diffTime / (1000 * 3600 * 24);
+
+    if (diffDays < 7) {
+        return alert(`日期錯誤：結案時間必須至少比發佈結束時間晚 7 天！(目前只晚了 ${Math.round(diffDays)} 天)`);
+    }
+    // --- 防呆驗證 END ---
+
     // 抓取多選類別
     const selectedCategories = Array.from(document.querySelectorAll('#category-tags input:checked')).map(el => el.value);
-    // 抓取多選平台格式
     const selectedPlatforms = Array.from(document.querySelectorAll('input[name="platform"]:checked')).map(el => el.value);
 
     const briefData = {
-        // 基本資訊
         productName: document.getElementById('brief-product-name').value,
         categories: selectedCategories, 
         platforms: selectedPlatforms,
+        productDesc: document.getElementById('brief-product-desc')?.value || "", 
+        requirementDesc: document.getElementById('brief-requirement-desc').value, 
         
-        // 描述
-        productDesc: document.getElementById('brief-product-desc')?.value || "", // 舊欄位保留或合併
-        requirementDesc: document.getElementById('brief-requirement-desc').value, // 新增需求描述
-        
-        // 時間排程
         schedule: {
-            publishStart: document.getElementById('publish-start').value,
-            publishEnd: document.getElementById('publish-end').value,
-            closingDate: document.getElementById('closing-date').value,
-            createdAtText: "送出 10 分鐘後自動開始配對"
+            publishStart: startVal,
+            publishEnd: endVal,
+            closingDate: closeVal,
+            createdAtText: "送出後需等待平台配對"
         },
         
-        // 規模與報價
         impressions: parseInt(document.getElementById('range-impressions').value),
         expectedClicks: parseInt(document.getElementById('range-clicks').value),
         budget: parseInt(document.getElementById('total-campaign-price').textContent.replace(/,/g, '')),
         
-        // 網紅條件
         influencerCount: parseInt(document.getElementById('brief-influencer-count').value),
         influencerCountRange: {
             min: Math.floor(parseInt(document.getElementById('brief-influencer-count').value) * 0.7),
@@ -3529,66 +3113,30 @@ window.sendChatMessage = async function sendChatMessage() {
         },
         followerRange: document.getElementById('brief-follower-range').value,
         
-        // 公關品
         logistics: {
             provideProduct: document.getElementById('provide-product').checked,
             quantity: parseInt(document.getElementById('product-quantity').value) || 0
         },
 
-        // 系統欄位
         imageUrls: uploadedImageUrls,
         status: 'pending_match',
         isDeleted: false,
         merchantId: user.uid,
         merchantEmail: user.email,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+
+        // ★★★ 關鍵修改：加入配對欄位 ★★★
+        // 預設為空，您需要在 Firebase Console 手動將網紅 UID 加入此陣列
+        targetAudience: [] 
     };
 
     if (!briefData.productName) return alert('請輸入專案名稱！');
     if (selectedPlatforms.length === 0) return alert('請至少選擇一個發佈平台與格式！');
 
     try {
-        const docRef = await addDoc(collection(db, "briefs"), briefData);
-
-// 建立活動時：系統自動在後端資料庫建立好「報表資料夾」，並填入預設值（例如 0）。
-// 路徑：briefs/{briefId}/report/summary
-const defaultReport = {
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    kpis: {
-        emv: 0,
-        roi: 0,
-        emvDeltaPct: 0, // vs. 上次活動（百分比）
-        spend: 0,
-        budgetUtilizationPct: 0,
-        reach: 0,
-        fakeTrafficFilteredPct: 0,
-        cpe: 0,
-        industryAvgCpe: 0
-    },
-    trend: {
-        labels: [],
-        engagements: []
-    },
-    funnel: {
-        impressionsPct: 100,
-        engagementsPct: 0,
-        clicksPct: 0
-    },
-    insights: {
-        headline: "尚未有足夠資料產生洞察",
-        bullets: [
-            "請先匯入本次活動的曝光、互動、點擊等資料（或由後端排程寫入）",
-            "完成後系統將自動產出下一步策略與優化建議"
-        ],
-        platformSuggestion: "點擊率偏低，建議下次在文案中增加「限時優惠」字眼。"
-    },
-    leaderboard: []
-};
-await setDoc(doc(db, "briefs", docRef.id, "report", "summary"), defaultReport);
-
-alert('需求已發佈！系統將於 10 分鐘後開始媒合網紅。');
-closeModal('new-campaign-modal');
+        await addDoc(collection(db, "briefs"), briefData);
+        alert('需求已發佈！10分鐘內為您完成配對！');
+        closeModal('new-campaign-modal');
     } catch (error) {
         console.error("儲存失敗:", error);
         alert('儲存失敗');
@@ -3735,125 +3283,125 @@ closeModal('new-campaign-modal');
 
 
 
-    // === 修正版：網紅合作邀請列表 (修復影片破圖問題) ===
-    window.renderInfluencerInvitations = async function() {
-        const user = auth.currentUser;
-        const listEl = document.getElementById('influencer-invitations-list');
-        if (!listEl || !user) return;
+
+
+
+    // === 修改後：renderInfluencerInvitations (加入指定 ID 篩選) ===
+window.renderInfluencerInvitations = async function() {
+    const user = auth.currentUser;
+    const listEl = document.getElementById('influencer-invitations-list');
+    if (!listEl || !user) return;
+    
+    listEl.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10"><div class="animate-spin inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full mb-2"></div><br>正在讀取專屬於您的邀請...</div>';
+
+    try {
+        // 1. 查出我已經接過的單
+        const myCollabsSnap = await getDocs(query(collection(db, "collaborations"), where("influencerId", "==", user.uid)));
+        const myJoinedBriefIds = new Set(myCollabsSnap.docs.map(doc => doc.data().briefId));
+
+        // 2. ★★★ 關鍵查詢修改 ★★★
+        // 條件：狀態是 pending_match 且 targetAudience 陣列包含我的 UID
+        const q = query(collection(db, "briefs"), 
+                       where("status", "==", "pending_match"),
+                       where("isDeleted", "==", false),
+                       where("targetAudience", "array-contains", user.uid)); // 這裡做篩選
         
-        listEl.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">正在尋找適合您的機會...</div>';
+        const snapshot = await getDocs(q);
+        
+        let html = '';
+        let count = 0;
 
-        try {
-            // 步驟 A: 先查出「我已經接過」的 briefId
-            const myCollabsSnap = await getDocs(query(collection(db, "collaborations"), where("influencerId", "==", user.uid)));
-            const myJoinedBriefIds = new Set(myCollabsSnap.docs.map(doc => doc.data().briefId));
+        snapshot.docs.forEach(docSnap => {
+            const briefId = docSnap.id;
+            const brief = docSnap.data();
 
-            // 步驟 B: 查出所有待媒合 (pending_match) 的活動
-            const q = query(collection(db, "briefs"), 
-                           where("status", "==", "pending_match"),
-                           where("isDeleted", "==", false));
+            // 如果已經接過，跳過
+            if (myJoinedBriefIds.has(briefId)) return;
+
+            count++;
             
-            const snapshot = await getDocs(q);
-            
-            let html = '';
-            let count = 0;
-
-            snapshot.docs.forEach(docSnap => {
-                const briefId = docSnap.id;
-                const brief = docSnap.data();
-
-                // 過濾：如果我已經接過這個單，就跳過
-                if (myJoinedBriefIds.has(briefId)) return;
-
-                count++;
-                
-                // --- ★ 修改重點：智慧封面 (圖片/影片判斷) ---
-                let coverImg = `<div class="w-24 h-24 bg-slate-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">無素材</div>`;
-                
-                if (brief.imageUrls && brief.imageUrls.length > 0) {
-                    const url = brief.imageUrls[0];
-                    // 簡單判斷副檔名
-                    const isVideo = url.toLowerCase().includes('.mp4') || 
-                                  url.toLowerCase().includes('.mov') || 
-                                  url.toLowerCase().includes('.webm');
-                    
-                    if (isVideo) {
-                        // 影片：滑鼠滑過預覽播放
-                        coverImg = `
-                            <video src="${url}" 
-                                class="w-24 h-24 object-cover rounded-lg flex-shrink-0 bg-black border" 
-                                muted loop playsinline
-                                onmouseover="this.play()" 
-                                onmouseout="this.pause();this.currentTime=0;"
-                            ></video>`;
-                    } else {
-                        // 圖片
-                        coverImg = `<img src="${url}" class="w-24 h-24 object-cover rounded-lg flex-shrink-0 bg-slate-200 border">`;
-                    }
+            // 素材顯示邏輯 (維持原樣)
+            let coverImg = `<div class="w-24 h-24 bg-slate-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">無素材</div>`;
+            if (brief.imageUrls && brief.imageUrls.length > 0) {
+                const url = brief.imageUrls[0];
+                const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov');
+                if (isVideo) {
+                    coverImg = `<video src="${url}" class="w-24 h-24 object-cover rounded-lg bg-black border" muted onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
+                } else {
+                    coverImg = `<img src="${url}" class="w-24 h-24 object-cover rounded-lg border">`;
                 }
-                // ------------------------------------------
+            }
 
-                html += `
-                    <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-6 items-start hover:shadow-lg transition-shadow border border-gray-100">
-                        <div class="cursor-pointer" onclick="openBriefDetail('${briefId}', true)">
-                            ${coverImg}
-                        </div>
-                        <div class="flex-1 w-full">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-bold text-lg text-slate-800 cursor-pointer hover:text-teal-600" onclick="openBriefDetail('${briefId}', true)">
-                                        ${brief.productName}
-                                    </h3>
-                                    <div class="flex gap-2 mt-1">
-                                        <span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100">
-                                            類別: ${brief.category || '一般'}
-                                        </span>
-                                    </div>
-                                    <p class="text-sm text-gray-500 mt-2 line-clamp-2">${brief.productDesc}</p>
-                                </div>
-                                <div class="flex flex-col items-end gap-1">
-                                    <span class="bg-teal-50 text-teal-700 text-sm px-3 py-1 rounded-full font-bold border border-teal-100">
-                                        預算: $${brief.budget.toLocaleString()}
+            html += `
+                <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-6 items-start hover:shadow-lg transition-shadow border border-gray-100 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-teal-500 text-white text-xs px-2 py-1 rounded-bl-lg font-bold">專屬邀請</div>
+                    <div class="cursor-pointer" onclick="openBriefDetail('${briefId}', true)">
+                        ${coverImg}
+                    </div>
+                    <div class="flex-1 w-full">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-800 cursor-pointer hover:text-teal-600" onclick="openBriefDetail('${briefId}', true)">
+                                    ${brief.productName}
+                                </h3>
+                                <div class="flex gap-2 mt-1">
+                                    <span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100">
+                                        #${brief.categories ? brief.categories[0] : '精選'}
                                     </span>
                                 </div>
+                                <p class="text-sm text-gray-500 mt-2 line-clamp-2">${brief.productDesc || brief.requirementDesc}</p>
                             </div>
-                            <div class="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-2 text-xs text-gray-600 items-center justify-between">
+                             <div class="flex gap-2">
                                 <span class="bg-slate-100 px-2 py-1 rounded">需求: ${brief.influencerCount} 人</span>
-                                <span class="bg-slate-100 px-2 py-1 rounded">平台: ${brief.platforms ? brief.platforms.join(', ') : '不限'}</span>
-                            </div>
-
-                            <div class="mt-4 flex justify-end gap-3">
+                                <span class="bg-slate-100 px-2 py-1 rounded">預算: $${brief.budget.toLocaleString()}</span>
+                             </div>
+                             <div class="flex gap-2">
                                 <button onclick="openBriefDetail('${briefId}', true)" 
                                         class="px-4 py-2 border border-gray-300 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm">
                                     查看完整內容
                                 </button>
-                                
                                 <button onclick="handleAcceptInvite('${briefId}', '${brief.merchantId}')" 
-                                        class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95">
-                                    接單合作
+                                        class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-all shadow-md">
+                                    接單
                                 </button>
-                            </div>
+                             </div>
                         </div>
                     </div>
-                `;
-            });
+                </div>
+            `;
+        });
 
-            if (count === 0) {
-                listEl.innerHTML = '<div class="col-span-full text-center py-12 bg-white rounded-xl shadow border border-dashed border-gray-300"><p class="text-4xl mb-2">📭</p><p class="text-gray-500 text-lg">目前沒有新的合作邀請，晚點再來看看！</p></div>';
-            } else {
-                listEl.innerHTML = html;
-            }
-
-        } catch (error) {
-            console.error("載入失敗:", error);
-            // 這裡也加上友善的錯誤提示，如果是索引錯誤就引導使用者
-            if(error.message.includes("index")) {
-                listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">系統升級中 (缺少索引)，請管理員至 Console 點擊連結建立。</p>`;
-            } else {
-                listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">載入失敗: ${error.message}</p>`;
-            }
+        if (count === 0) {
+            listEl.innerHTML = '<div class="col-span-full text-center py-12 bg-white rounded-xl shadow border border-dashed border-gray-300"><p class="text-4xl mb-2">📭</p><p class="text-gray-500 text-lg">目前沒有專屬您的合作邀請。</p></div>';
+        } else {
+            listEl.innerHTML = html;
         }
-    };
+
+    } catch (error) {
+        console.error("載入失敗:", error);
+        if(error.message.includes("index")) {
+            listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">系統提示：請管理員至 Firebase Console 建立複合索引 (Index)。</p>`;
+        } else {
+            listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">載入失敗: ${error.message}</p>`;
+        }
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     // === 改良版：接單功能 (含除錯訊息) ===
@@ -5991,481 +5539,6 @@ function getFutureISO(days, hours = 0) {
     d.setHours(d.getHours() + hours);
     return d.toISOString().slice(0, 16);
 }
-
-
-
-// =========================================================
-// Merchant Expert Report (Firestore-driven) + PDF export
-// =========================================================
-let _merchantReportChart = null;
-
-const _REPORT_CLOSED_STATUSES = new Set(["completed", "closed", "archived", "done", "結案", "已結案"]);
-function _isClosedCampaign(brief) {
-    const s = (brief?.status || "").toString().toLowerCase().trim();
-    return brief?.isClosed === true || brief?.completed === true || _REPORT_CLOSED_STATUSES.has(s);
-}
-
-function _fmtTWD(value, digits = 0) {
-    const n = Number(value || 0);
-    // NT$ 128,000  or  NT$ 2.5
-    return "NT$ " + n.toLocaleString("en-US", { maximumFractionDigits: digits, minimumFractionDigits: digits });
-}
-
-function _fmtCompact(value) {
-    const n = Number(value || 0);
-    if (!isFinite(n)) return "0";
-    // 1.2M, 12K
-    return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
-}
-
-function _safeText(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-}
-
-function _setWidth(id, pct) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const p = Math.max(0, Math.min(100, Number(pct || 0)));
-    el.style.width = p + "%";
-}
-
-function _dateRangeFromBrief(brief) {
-    const s = brief?.schedule?.publishStart || brief?.publishStart || brief?.startDate || "";
-    const e = brief?.schedule?.publishEnd || brief?.publishEnd || brief?.endDate || "";
-    if (s && e) return `${s} - ${e}`;
-    if (s) return s;
-    return "—";
-}
-
-function _buildDailyLabels(startISO, endISO) {
-    try {
-        const start = new Date(startISO);
-        const end = new Date(endISO);
-        if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
-        const labels = [];
-        const cur = new Date(start);
-        while (cur <= end && labels.length < 370) {
-            labels.push(cur.toISOString().slice(0, 10));
-            cur.setDate(cur.getDate() + 1);
-        }
-        return labels;
-    } catch (e) {
-        return [];
-    }
-}
-
-function _ensureReportDefaults(report, brief) {
-    const r = report || {};
-    r.kpis = r.kpis || {};
-    r.trend = r.trend || {};
-    r.funnel = r.funnel || {};
-    r.insights = r.insights || {};
-
-    // Trend fallback: build labels from brief schedule if empty
-    if (!Array.isArray(r.trend.labels) || r.trend.labels.length === 0) {
-        const s = brief?.schedule?.publishStart;
-        const e = brief?.schedule?.publishEnd;
-        const labels = (s && e) ? _buildDailyLabels(s, e) : [];
-        r.trend.labels = labels;
-    }
-    if (!Array.isArray(r.trend.engagements) || r.trend.engagements.length !== r.trend.labels.length) {
-        r.trend.engagements = new Array(r.trend.labels.length).fill(0);
-    }
-
-    // Funnel defaults
-    if (typeof r.funnel.impressionsPct !== "number") r.funnel.impressionsPct = 100;
-    if (typeof r.funnel.engagementsPct !== "number") r.funnel.engagementsPct = 0;
-    if (typeof r.funnel.clicksPct !== "number") r.funnel.clicksPct = 0;
-
-    // Suggestion default
-    if (!r.insights.platformSuggestion) {
-        r.insights.platformSuggestion = "點擊率偏低，建議下次在文案中增加「限時優惠」字眼。";
-    }
-    return r;
-}
-
-function _renderReportChart(labels, data) {
-    const canvas = document.getElementById("reportEngagementChart");
-    if (!canvas) return;
-
-    // Destroy previous instance
-    if (_merchantReportChart) {
-        _merchantReportChart.destroy();
-        _merchantReportChart = null;
-    }
-
-    const ctx = canvas.getContext("2d");
-    _merchantReportChart = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels,
-            datasets: [{
-                label: "Engagements",
-                data,
-                tension: 0.35,
-                borderWidth: 3,
-                pointRadius: 0,
-                fill: true,
-                borderColor: "rgba(99, 102, 241, 1)",
-                backgroundColor: "rgba(99, 102, 241, 0.12)"
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { mode: "index", intersect: false }
-            },
-            interaction: { mode: "index", intersect: false },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { maxTicksLimit: 8 }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: "rgba(148,163,184,0.25)" },
-                    ticks: { precision: 0 }
-                }
-            }
-        }
-    });
-}
-
-function _renderInsights(report) {
-    const host = document.getElementById("report-ai-insights");
-    if (!host) return;
-
-    const k = report?.kpis || {};
-    const f = report?.funnel || {};
-    const headline = report?.insights?.headline || "AI 洞察摘要";
-    const bullets = Array.isArray(report?.insights?.bullets) ? report.insights.bullets : [];
-    const clicksPct = Number(f.clicksPct || 0);
-
-    // Auto-derive a few next steps (if DB didn't provide)
-    const derived = [];
-    if (clicksPct > 0 && clicksPct < 1.5) {
-        derived.push("點擊率偏低：建議加入「限時優惠 / 贈品 / 套組」等利益點，並在首行放置 CTA。");
-    } else if (clicksPct >= 1.5) {
-        derived.push("點擊率表現可接受：建議把預算集中在高轉化素材與高互動網紅，放大 ROI。");
-    } else {
-        derived.push("尚無點擊資料：請先匯入 Link Clicks，才能產出更精準的 CTA 優化策略。");
-    }
-
-    const cpe = Number(k.cpe || 0);
-    const industry = Number(k.industryAvgCpe || 0);
-    if (industry > 0 && cpe > 0) {
-        if (cpe <= industry) derived.push(`CPE 優於業界平均：可維持素材方向，並增加相似受眾擴量。`);
-        else derived.push(`CPE 高於業界平均：建議縮小受眾、換更聚焦的主題與腳本，降低互動成本。`);
-    }
-
-    const reach = Number(k.reach || 0);
-    if (reach > 0) {
-        derived.push(`觸及已達 ${_fmtCompact(reach)}：下一步可追蹤「觸及→互動→點擊」的素材貢獻，建立可複製 SOP。`);
-    }
-
-    const mergedBullets = [...bullets, ...derived].slice(0, 6);
-
-    host.innerHTML = `
-        <div class="ai-insight">
-            <div class="flex items-center justify-between gap-3 mb-2">
-                <h4>${headline}</h4>
-                <span class="ai-tag">AI → Strategy</span>
-            </div>
-            <ul>
-                ${mergedBullets.map(b => `<li>${b}</li>`).join("")}
-            </ul>
-        </div>
-    `;
-
-    // Strategy summary (right panel)
-    const goal = clicksPct > 0 ? "提升互動與點擊轉化" : "先補齊成效資料，建立可追蹤鏈路";
-    const priority = clicksPct > 0 && clicksPct < 1.5 ? "強化 CTA（限時/贈品/套組）＋首行利益點" : "集中預算於高貢獻素材與高互動網紅";
-    const risk = clicksPct > 0 && clicksPct < 1.5 ? "點擊率偏低與落地頁承接" : "素材疲乏、頻次過高導致邊際效益下降";
-
-    _safeText("strategy-goal", goal);
-    _safeText("strategy-priority", priority);
-    _safeText("strategy-risk", risk);
-}
-
-function _renderLeaderboard(report) {
-    const body = document.getElementById("report-leaderboard-body");
-    if (!body) return;
-
-    const list = Array.isArray(report?.leaderboard) ? report.leaderboard : [];
-    const fallback = [
-        { rank: 1, name: "Alice", platform: "Instagram", cpe: 1.2, er: 8.5, tag: "帶貨王", action: "加入收藏" },
-        { rank: 2, name: "Bob", platform: "YouTube", cpe: 3.5, er: 4.2, tag: "曝光強", action: "加入收藏" },
-        { rank: 3, name: "David", platform: "Instagram", cpe: 15.0, er: 0.8, tag: "粉絲不精準", action: "尋找替代人選" }
-    ];
-
-    const rows = (list.length ? list : fallback).map((r) => {
-        const rank = r.rank ?? "";
-        const name = r.name ?? "—";
-        const platform = r.platform ?? "—";
-        const cpe = (r.cpe !== undefined) ? _fmtTWD(r.cpe, (Number(r.cpe) % 1 === 0 ? 0 : 1)).replace("NT$ ", "$") : "—";
-        const er = (r.er !== undefined) ? `${Number(r.er).toFixed(1)}%` : "—";
-        const tag = r.tag ?? "—";
-        const action = r.action ?? "—";
-
-        const tagClass =
-            (tag.includes("帶貨") || tag.includes("極優")) ? "bg-emerald-100 text-emerald-800 border-emerald-200" :
-            (tag.includes("曝光") || tag.includes("強")) ? "bg-indigo-100 text-indigo-800 border-indigo-200" :
-            (tag.includes("不精準") || tag.includes("差")) ? "bg-amber-100 text-amber-900 border-amber-200" :
-            "bg-slate-100 text-slate-700 border-slate-200";
-
-        return `
-            <tr class="border-b border-slate-100">
-                <td class="py-3 pr-4 font-extrabold text-slate-700">${rank}</td>
-                <td class="py-3 pr-4 font-bold text-slate-900">${name}${list.length ? "" : "（示例）"}</td>
-                <td class="py-3 pr-4 text-slate-600">${platform}</td>
-                <td class="py-3 pr-4 font-bold text-slate-900">${cpe}</td>
-                <td class="py-3 pr-4 font-bold text-slate-900">${er}</td>
-                <td class="py-3 pr-4">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full border text-xs font-extrabold ${tagClass}">
-                        ${tag}
-                    </span>
-                </td>
-                <td class="py-3">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full border border-slate-200 bg-white text-xs font-extrabold text-slate-700">
-                        ${action}
-                    </span>
-                </td>
-            </tr>
-        `;
-    }).join("");
-
-    body.innerHTML = rows || `
-        <tr class="border-b border-slate-100">
-            <td colspan="7" class="py-4 text-slate-500">尚無合作網紅資料（可後續由後端寫入 report.leaderboard）。</td>
-        </tr>
-    `;
-}
-
-async function renderMerchantReports() {
-    try {
-        const select = document.getElementById("report-campaign-select");
-        if (!select) return;
-
-        if (!auth.currentUser) {
-            select.innerHTML = `<option value="">請先登入</option>`;
-            return;
-        }
-
-        select.disabled = true;
-        select.innerHTML = `<option value="">讀取已結案活動中…</option>`;
-
-        // 先取出所有該商家的活動，再由前端過濾「歷史/結案項目」
-        const q = query(collection(db, "briefs"), where("merchantId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
-        const snap = await getDocs(q);
-        const all = [];
-        snap.forEach(d => all.push({ id: d.id, ...d.data() }));
-
-        const closed = all.filter(_isClosedCampaign);
-        if (closed.length === 0) {
-            select.innerHTML = `<option value="">（目前沒有已結案活動）</option>`;
-            select.disabled = true;
-
-            _safeText("report-campaign-title", "商家成效報告");
-            _safeText("report-date-range", "—");
-            _safeText("kpi-emv-value", "NT$ 0");
-            _safeText("kpi-spend-value", "NT$ 0");
-            _safeText("kpi-reach-value", "0");
-            _safeText("kpi-cpe-value", "NT$ 0");
-            _renderReportChart([], []);
-            _renderInsights({ kpis: {}, funnel: {}, insights: { headline: "尚無已結案活動", bullets: ["完成活動結案後，會自動出現在此處供下載與分享。"] } });
-            _renderLeaderboard({ leaderboard: [] });
-            return;
-        }
-
-        select.innerHTML = closed.map((b) => {
-            const title = (b.productName || b.campaignName || "未命名活動");
-            const range = _dateRangeFromBrief(b);
-            return `<option value="${b.id}">${title} ｜ ${range}</option>`;
-        }).join("");
-
-        select.disabled = false;
-
-        // Restore last selected if exists
-        const last = localStorage.getItem("merchant_last_report_id");
-        const initId = (last && closed.some(x => x.id === last)) ? last : closed[0].id;
-        select.value = initId;
-        await loadMerchantReport(initId);
-    } catch (e) {
-        console.error("renderMerchantReports error:", e);
-        const select = document.getElementById("report-campaign-select");
-        if (select) select.innerHTML = `<option value="">讀取失敗，請稍後重試</option>`;
-    }
-}
-
-async function loadMerchantReport(briefId) {
-    if (!briefId) return;
-    try {
-        localStorage.setItem("merchant_last_report_id", briefId);
-
-        const briefRef = doc(db, "briefs", briefId);
-        const briefSnap = await getDoc(briefRef);
-        if (!briefSnap.exists()) return;
-        const brief = briefSnap.data();
-
-        // Header
-        const title = brief?.productName || brief?.campaignName || "商家成效報告";
-        _safeText("report-campaign-title", title);
-
-        const pill = document.getElementById("report-status-pill");
-        if (pill) {
-            const closed = _isClosedCampaign(brief);
-            pill.innerHTML = closed
-                ? `<span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span> 已結案 (Completed)`
-                : `<span class="inline-block w-2 h-2 rounded-full bg-slate-400"></span> 進行中`;
-            pill.className = closed
-                ? "inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800"
-                : "inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700";
-        }
-
-        _safeText("report-date-range", _dateRangeFromBrief(brief));
-
-        // Fetch report summary
-        const reportRef = doc(db, "briefs", briefId, "report", "summary");
-        let reportSnap = await getDoc(reportRef);
-        if (!reportSnap.exists()) {
-            // 保險：若舊資料沒有 report folder，補建一次
-            const defaultReport = {
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                kpis: {
-                    emv: 0, roi: 0, emvDeltaPct: 0,
-                    spend: 0, budgetUtilizationPct: 0,
-                    reach: 0, fakeTrafficFilteredPct: 0,
-                    cpe: 0, industryAvgCpe: 0
-                },
-                trend: { labels: [], engagements: [] },
-                funnel: { impressionsPct: 100, engagementsPct: 0, clicksPct: 0 },
-                insights: {
-                    headline: "尚未有足夠資料產生洞察",
-                    bullets: ["請先匯入本次活動的曝光、互動、點擊等資料", "完成後系統將自動產出下一步策略與優化建議"],
-                    platformSuggestion: "點擊率偏低，建議下次在文案中增加「限時優惠」字眼。"
-                },
-                leaderboard: []
-            };
-            await setDoc(reportRef, defaultReport);
-            reportSnap = await getDoc(reportRef);
-        }
-
-        const report = _ensureReportDefaults(reportSnap.data(), brief);
-
-        // KPI mapping (DB-driven)
-        const k = report.kpis || {};
-
-        // 1) EMV
-        _safeText("kpi-emv-value", _fmtTWD(k.emv || 0, 0));
-        const roi = Number(k.roi || 0);
-        _safeText("kpi-emv-roi", `ROI ${roi.toFixed(0)}%${roi >= 200 ? " 🚀" : ""}`);
-
-        const delta = Number(k.emvDeltaPct || 0);
-        const deltaEl = document.getElementById("kpi-emv-delta");
-        if (deltaEl) {
-            if (delta > 0) {
-                deltaEl.textContent = `↑ ${delta.toFixed(0)}% vs. 上次活動`;
-                deltaEl.style.color = "rgb(16 185 129)";
-            } else if (delta < 0) {
-                deltaEl.textContent = `↓ ${Math.abs(delta).toFixed(0)}% vs. 上次活動`;
-                deltaEl.style.color = "rgb(239 68 68)";
-            } else {
-                deltaEl.textContent = "—";
-                deltaEl.style.color = "rgb(100 116 139)";
-            }
-        }
-
-        // 2) Spend
-        _safeText("kpi-spend-value", _fmtTWD(k.spend || 0, 0));
-        const bu = Number(k.budgetUtilizationPct || 0);
-        _safeText("kpi-spend-progress-label", `${Math.max(0, Math.min(100, bu)).toFixed(0)}%`);
-        _setWidth("kpi-spend-progress-bar", bu);
-
-        // 3) Reach
-        const reach = Number(k.reach || 0);
-        _safeText("kpi-reach-value", reach >= 1000 ? _fmtCompact(reach) : reach.toLocaleString("en-US"));
-        const fake = Number(k.fakeTrafficFilteredPct || 0);
-        _safeText("kpi-reach-tag", `已過濾 ${Math.max(0, fake).toFixed(0)}% 假粉流量`);
-
-        // 4) CPE
-        const cpe = Number(k.cpe || 0);
-        _safeText("kpi-cpe-value", _fmtTWD(cpe || 0, (cpe % 1 === 0 ? 0 : 1)));
-        const industry = Number(k.industryAvgCpe || 0);
-        if (industry > 0) {
-            _safeText("kpi-cpe-compare", `優於業界平均 (NT$ ${industry.toLocaleString("en-US", { maximumFractionDigits: 1 })})`);
-        } else {
-            _safeText("kpi-cpe-compare", "—");
-        }
-
-        // Trend chart
-        _renderReportChart(report.trend.labels, report.trend.engagements);
-
-        // Funnel
-        const imp = Number(report.funnel.impressionsPct || 100);
-        const eng = Number(report.funnel.engagementsPct || 0);
-        const clk = Number(report.funnel.clicksPct || 0);
-        _safeText("funnel-impressions-val", `${imp.toFixed(0)}%`);
-        _safeText("funnel-engagements-val", `${eng.toFixed(1)}%`);
-        _safeText("funnel-clicks-val", `${clk.toFixed(1)}%`);
-
-        // Visual width (readable even for small pct)
-        const w = (pct) => Math.max(58, Math.min(92, 58 + Number(pct || 0) * 10));
-        const f2 = document.getElementById("funnel-engagements");
-        const f3 = document.getElementById("funnel-clicks");
-        if (f2) f2.style.width = w(eng) + "%";
-        if (f3) f3.style.width = w(clk) + "%";
-
-        _safeText("report-funnel-suggestion", report?.insights?.platformSuggestion || "—");
-
-        // AI insights + leaderboard
-        _renderInsights(report);
-        _renderLeaderboard(report);
-
-    } catch (e) {
-        console.error("loadMerchantReport error:", e);
-        alert("讀取報表失敗，請稍後重試。");
-    }
-}
-
-// Event wiring (once)
-document.addEventListener("DOMContentLoaded", () => {
-    const select = document.getElementById("report-campaign-select");
-    if (select) {
-        select.addEventListener("change", async (e) => {
-            const id = e.target.value;
-            if (id) await loadMerchantReport(id);
-        });
-    }
-
-    const pdfBtn = document.getElementById("report-pdf-btn");
-    if (pdfBtn) {
-        pdfBtn.addEventListener("click", () => {
-            window.print();
-        });
-    }
-
-    const shareBtn = document.getElementById("report-share-btn");
-    if (shareBtn) {
-        shareBtn.addEventListener("click", async () => {
-            const text = `InfluenceAI 成效報告：${document.getElementById("report-campaign-title")?.textContent || ""}`;
-            const url = window.location.href;
-            try {
-                if (navigator.share) {
-                    await navigator.share({ title: "InfluenceAI Campaign Report", text, url });
-                } else {
-                    await navigator.clipboard.writeText(url);
-                    alert("已複製報告連結，可直接貼給團隊/客戶。");
-                }
-            } catch (e) {
-                console.warn("Share cancelled/error:", e);
-            }
-        });
-    }
-});
 
 </script>
 
