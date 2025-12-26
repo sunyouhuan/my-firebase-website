@@ -2854,7 +2854,7 @@ function renderCampaigns(campaigns) {
         let statusBadge = '';
         if (isHistory) {
             // 強制顯示為結案
-            statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-600">🏁 結案項目</span>`;
+            statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-600"> 結案項目</span>`;
         } else {
             // 原本的狀態邏輯
             const statusMap = {
@@ -2882,7 +2882,7 @@ function renderCampaigns(campaigns) {
         }
 
         // 如果是歷史項目，卡片稍微變灰一點
-        const opacityClass = isHistory ? 'opacity-75 hover:opacity-100' : '';
+        // const opacityClass = isHistory ? 'opacity-75 hover:opacity-100' : '';
 
         return `
             <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow ${opacityClass}">
