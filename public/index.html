@@ -1394,7 +1394,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 <div id="merchant-dashboard-content" class="dashboard-content active">
     <div class="mb-8 flex justify-between items-end">
         <div>
-            <h2 class="text-3xl font-bold text-slate-800">早安，<span id="m-dash-name">商家</span> 👋</h2>
+            <h2 class="text-3xl font-bold text-slate-800">歡迎回來<span id="m-dash-name">商家</span> 👋</h2>
             <p class="text-gray-500 mt-1">這是您目前的行銷活動概況</p>
         </div>
         <div class="text-right">
@@ -3002,39 +3002,59 @@ window.sendChatMessage = async function sendChatMessage() {
 
 
   //   === v3 (新功能): 修改 handleSaveBrief 以儲存 imageUrls ===
-        window.handleSaveBrief = async function() {
+        // === 修改後：handleSaveBrief (加入日期防呆與配對欄位) ===
+window.handleSaveBrief = async function() {
     const user = auth.currentUser;
     if (!user) return alert('請先登入！');
 
+    // --- 防呆驗證 START (對應您的第 3 點需求) ---
+    const startVal = document.getElementById('publish-start').value;
+    const endVal = document.getElementById('publish-end').value;
+    const closeVal = document.getElementById('closing-date').value;
+
+    if (!startVal || !endVal || !closeVal) return alert('請完整填寫所有日期欄位！');
+
+    const startDate = new Date(startVal);
+    const endDate = new Date(endVal);
+    const closeDate = new Date(closeVal);
+
+    // 驗證 1: 結束時間不可以小於開始時間
+    if (endDate <= startDate) {
+        return alert('日期錯誤：發佈「結束時間」必須晚於「開始時間」！');
+    }
+
+    // 驗證 2: 結案時間必須大於發佈結束時間至少 7 天
+    // 算出毫秒差異，再轉成天數 (1天 = 24 * 60 * 60 * 1000 毫秒)
+    const diffTime = closeDate.getTime() - endDate.getTime();
+    const diffDays = diffTime / (1000 * 3600 * 24);
+
+    if (diffDays < 7) {
+        return alert(`日期錯誤：結案時間必須至少比發佈結束時間晚 7 天！(目前只晚了 ${Math.round(diffDays)} 天)`);
+    }
+    // --- 防呆驗證 END ---
+
     // 抓取多選類別
     const selectedCategories = Array.from(document.querySelectorAll('#category-tags input:checked')).map(el => el.value);
-    // 抓取多選平台格式
     const selectedPlatforms = Array.from(document.querySelectorAll('input[name="platform"]:checked')).map(el => el.value);
 
     const briefData = {
-        // 基本資訊
         productName: document.getElementById('brief-product-name').value,
         categories: selectedCategories, 
         platforms: selectedPlatforms,
+        productDesc: document.getElementById('brief-product-desc')?.value || "", 
+        requirementDesc: document.getElementById('brief-requirement-desc').value, 
         
-        // 描述
-        productDesc: document.getElementById('brief-product-desc')?.value || "", // 舊欄位保留或合併
-        requirementDesc: document.getElementById('brief-requirement-desc').value, // 新增需求描述
-        
-        // 時間排程
         schedule: {
-            publishStart: document.getElementById('publish-start').value,
-            publishEnd: document.getElementById('publish-end').value,
-            closingDate: document.getElementById('closing-date').value,
-            createdAtText: "送出 10 分鐘後自動開始配對"
+            publishStart: startVal,
+            publishEnd: endVal,
+            closingDate: closeVal,
+            createdAtText: "送出後需等待平台配對"
         },
         
-        // 規模與報價
         impressions: parseInt(document.getElementById('range-impressions').value),
         expectedClicks: parseInt(document.getElementById('range-clicks').value),
         budget: parseInt(document.getElementById('total-campaign-price').textContent.replace(/,/g, '')),
         
-        // 網紅條件
         influencerCount: parseInt(document.getElementById('brief-influencer-count').value),
         influencerCountRange: {
             min: Math.floor(parseInt(document.getElementById('brief-influencer-count').value) * 0.7),
@@ -3042,19 +3062,21 @@ window.sendChatMessage = async function sendChatMessage() {
         },
         followerRange: document.getElementById('brief-follower-range').value,
         
-        // 公關品
         logistics: {
             provideProduct: document.getElementById('provide-product').checked,
             quantity: parseInt(document.getElementById('product-quantity').value) || 0
         },
 
-        // 系統欄位
         imageUrls: uploadedImageUrls,
         status: 'pending_match',
         isDeleted: false,
         merchantId: user.uid,
         merchantEmail: user.email,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+
+        // ★★★ 關鍵修改：加入配對欄位 ★★★
+        // 預設為空，您需要在 Firebase Console 手動將網紅 UID 加入此陣列
+        targetAudience: [] 
     };
 
     if (!briefData.productName) return alert('請輸入專案名稱！');
@@ -3062,7 +3084,7 @@ window.sendChatMessage = async function sendChatMessage() {
 
     try {
         await addDoc(collection(db, "briefs"), briefData);
-        alert('需求已發佈！系統將於 10 分鐘後開始媒合網紅。');
+        alert('需求已發佈！請通知管理員進行後台配對設定。');
         closeModal('new-campaign-modal');
     } catch (error) {
         console.error("儲存失敗:", error);
