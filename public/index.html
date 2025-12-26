@@ -1468,9 +1468,91 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             </div>
                         </div>                        
 
-                        <div id="merchant-reports-content" class="dashboard-content">
-                            <div class="bg-white rounded-xl shadow p-6"><h3 class="font-bold text-slate-800 mb-4">曝光 & 點擊趨勢</h3><div class="h-80"><canvas id="performanceLineChart"></canvas></div></div>
-                        </div>
+<div id="merchant-reports-content" class="dashboard-content">
+    <div class="bg-white rounded-xl shadow p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h2 id="report-campaign-title" class="text-2xl font-bold text-slate-800 mb-1">請選擇活動...</h2>
+            <p class="text-gray-500 text-sm" id="report-date-range">--/-- - --/--</p>
+        </div>
+        <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+            <select id="report-campaign-select" onchange="loadReportData(this.value)" class="border border-gray-300 rounded-lg px-4 py-2 bg-slate-50 text-slate-700 font-bold focus:ring-teal-500 focus:border-teal-500">
+                <option value="">載入活動列表...</option>
+            </select>
+            
+            <button onclick="window.print()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 flex items-center gap-2 shadow-sm whitespace-nowrap">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                下載 PDF
+            </button>
+        </div>
+    </div>
+
+    <h3 class="font-bold text-slate-800 text-lg mb-4">Executive Summary ("The Money Cards")</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="report-kpi-grid">
+        <div class="col-span-full text-center py-10 text-gray-400 bg-white rounded-xl border border-dashed">
+            請選擇一個活動以查看數據
+        </div>
+    </div>
+
+    <h3 class="font-bold text-slate-800 text-lg mb-4">Marketing Funnel & Trends</h3>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-2 bg-white rounded-xl shadow p-6 border border-gray-100">
+            <h4 class="font-bold text-slate-700 mb-4 text-sm">互動熱力趨勢圖 (Interactive Line Chart)</h4>
+            <div class="h-64 relative">
+                <canvas id="reportTrendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 flex flex-col justify-center">
+            <h4 class="font-bold text-slate-700 mb-6 text-sm">轉化漏斗 (Vertical Funnel)</h4>
+            <div id="report-funnel-container" class="flex flex-col items-center space-y-2 relative">
+                <p class="text-gray-400 text-sm">載入中...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 lg:col-span-1">
+             <h3 class="font-bold text-slate-800 mb-4">AI Unique Insights</h3>
+             <div id="report-ai-insights" class="space-y-3 text-sm text-gray-600">等待數據...</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 lg:col-span-2">
+             <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-800">網紅賽馬榜 (Leaderboard Table)</h3>
+                <button onclick="loadReportData(document.getElementById('report-campaign-select').value)" class="text-xs text-gray-500 border px-2 py-1 rounded hover:bg-gray-50">↻ 重新整理</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-4 py-3">排名</th>
+                            <th class="px-4 py-3">網紅</th>
+                            <th class="px-4 py-3">CPE (預估)</th>
+                            <th class="px-4 py-3">互動率</th>
+                            <th class="px-4 py-3">AI 評價</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-influencer-table">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-8 bg-slate-900 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-xl hidden" id="report-next-step">
+        <div class="flex items-start gap-4">
+            <div class="text-3xl">🤖</div>
+            <div>
+                <h4 class="font-bold text-lg mb-1">MatchAI 建議您的下一步...</h4>
+                <div class="flex gap-2 text-sm text-gray-400" id="report-next-step-text">
+                   </div>
+            </div>
+        </div>
+        <div class="flex gap-3">
+             <button class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-bold text-sm transition">一鍵發起</button>
+        </div>
+    </div>
+</div>
                         
                         <!-- v2 (本次修改): 財務管理介面更新 -->
                         <div id="merchant-finance-content" class="dashboard-content">
@@ -3054,11 +3136,13 @@ function renderCampaigns(campaigns) {
 
   //   === v3 (新功能): 修改 handleSaveBrief 以儲存 imageUrls ===
         // === 修改後：handleSaveBrief (加入日期防呆與配對欄位) ===
+// === 修改後：handleSaveBrief (自動建立空報表結構) ===
+// === 修改後：handleSaveBrief (建立活動時，自動產生報表欄位) ===
 window.handleSaveBrief = async function() {
     const user = auth.currentUser;
     if (!user) return alert('請先登入！');
 
-    // --- 防呆驗證 START (對應您的第 3 點需求) ---
+    // 1. 取得表單資料
     const startVal = document.getElementById('publish-start').value;
     const endVal = document.getElementById('publish-end').value;
     const closeVal = document.getElementById('closing-date').value;
@@ -3069,77 +3153,89 @@ window.handleSaveBrief = async function() {
     const endDate = new Date(endVal);
     const closeDate = new Date(closeVal);
 
-    // 驗證 1: 結束時間不可以小於開始時間
-    if (endDate <= startDate) {
-        return alert('日期錯誤：發佈「結束時間」必須晚於「開始時間」！');
-    }
-
-    // 驗證 2: 結案時間必須大於發佈結束時間至少 7 天
-    // 算出毫秒差異，再轉成天數 (1天 = 24 * 60 * 60 * 1000 毫秒)
+    if (endDate <= startDate) return alert('日期錯誤：發佈「結束時間」必須晚於「開始時間」！');
     const diffTime = closeDate.getTime() - endDate.getTime();
-    const diffDays = diffTime / (1000 * 3600 * 24);
+    if ((diffTime / (1000 * 3600 * 24)) < 7) return alert(`日期錯誤：結案時間必須至少比發佈結束時間晚 7 天！`);
 
-    if (diffDays < 7) {
-        return alert(`日期錯誤：結案時間必須至少比發佈結束時間晚 7 天！(目前只晚了 ${Math.round(diffDays)} 天)`);
-    }
-    // --- 防呆驗證 END ---
-
-    // 抓取多選類別
     const selectedCategories = Array.from(document.querySelectorAll('#category-tags input:checked')).map(el => el.value);
     const selectedPlatforms = Array.from(document.querySelectorAll('input[name="platform"]:checked')).map(el => el.value);
+    const productName = document.getElementById('brief-product-name').value;
 
+    if (!productName) return alert('請輸入專案名稱！');
+    if (selectedPlatforms.length === 0) return alert('請至少選擇一個發佈平台與格式！');
+
+    // 2. 準備 Brief 資料
     const briefData = {
-        productName: document.getElementById('brief-product-name').value,
+        productName: productName,
         categories: selectedCategories, 
         platforms: selectedPlatforms,
         productDesc: document.getElementById('brief-product-desc')?.value || "", 
         requirementDesc: document.getElementById('brief-requirement-desc').value, 
-        
-        schedule: {
-            publishStart: startVal,
-            publishEnd: endVal,
-            closingDate: closeVal,
-            createdAtText: "送出後需等待平台配對"
-        },
-        
+        schedule: { publishStart: startVal, publishEnd: endVal, closingDate: closeVal, createdAtText: "送出後需等待平台配對" },
         impressions: parseInt(document.getElementById('range-impressions').value),
         expectedClicks: parseInt(document.getElementById('range-clicks').value),
         budget: parseInt(document.getElementById('total-campaign-price').textContent.replace(/,/g, '')),
-        
         influencerCount: parseInt(document.getElementById('brief-influencer-count').value),
         influencerCountRange: {
             min: Math.floor(parseInt(document.getElementById('brief-influencer-count').value) * 0.7),
             max: Math.ceil(parseInt(document.getElementById('brief-influencer-count').value) * 1.3)
         },
         followerRange: document.getElementById('brief-follower-range').value,
-        
         logistics: {
             provideProduct: document.getElementById('provide-product').checked,
             quantity: parseInt(document.getElementById('product-quantity').value) || 0
         },
-
         imageUrls: uploadedImageUrls,
         status: 'pending_match',
         isDeleted: false,
         merchantId: user.uid,
         merchantEmail: user.email,
         createdAt: serverTimestamp(),
-
-        // ★★★ 關鍵修改：加入配對欄位 ★★★
-        // 預設為空，您需要在 Firebase Console 手動將網紅 UID 加入此陣列
         targetAudience: [] 
     };
 
-    if (!briefData.productName) return alert('請輸入專案名稱！');
-    if (selectedPlatforms.length === 0) return alert('請至少選擇一個發佈平台與格式！');
-
     try {
-        await addDoc(collection(db, "briefs"), briefData);
-        alert('需求已發佈！10分鐘內為您完成配對！');
+        // 3. 寫入活動資料
+        const docRef = await addDoc(collection(db, "briefs"), briefData);
+        console.log("活動建立成功，ID:", docRef.id);
+
+        // --- ★★★ 關鍵：自動建立後台輸入用的欄位 (預設為 0) ★★★ ---
+        // 這些就是您要去 Firebase Console 手動改的欄位！
+        const initialReportData = {
+            emv: 0,             // 媒體價值
+            roi: 0,             // ROI
+            growth_vs_last: 0,  // 成長率
+            spend: 0,           // 實際花費
+            reach: 0,           // 總觸及
+            fake_filtered_rate: 0, // 假粉過濾率
+            cpe: 0,             // CPE
+            industry_cpe: 3.8,  // 業界平均
+
+            // 漏斗數據
+            funnel_view: 0,     // 曝光
+            funnel_click: 0,    // 點擊
+            funnel_convert: 0,  // 轉化
+            
+            // 趨勢圖數據 (陣列)
+            trend_labels: [],   // 例如 ["12/01", "12/02"]
+            trend_values: [],   // 例如 [100, 250]
+
+            // 文字建議
+            ai_insights: ["資料累積中..."],
+            next_step_strategy: "", // 下一步策略
+
+            updatedAt: serverTimestamp()
+        };
+
+        // 寫入路徑：briefs/{ID}/report/summary
+        await setDoc(doc(db, "briefs", docRef.id, "report", "summary"), initialReportData);
+
+        alert('活動已發佈！\n\n系統已自動建立報表欄位。\n請管理員至 Firebase Console (briefs > ID > report > summary) 輸入數據。');
         closeModal('new-campaign-modal');
+
     } catch (error) {
         console.error("儲存失敗:", error);
-        alert('儲存失敗');
+        alert('儲存失敗：' + error.message);
     }
 };
     // === 修改部分 END ===
@@ -5539,6 +5635,265 @@ function getFutureISO(days, hours = 0) {
     d.setHours(d.getHours() + hours);
     return d.toISOString().slice(0, 16);
 }
+
+// ==========================================
+// NEW: 專家報表模組 (從資料庫讀取數據版)
+// ==========================================
+
+let reportChartInstance = null; // 全域變數，存圖表實例
+
+// 1. 初始化下拉選單：列出所有活動讓您選
+window.initMerchantReports = async function() {
+    const user = auth.currentUser;
+    if (!user) return;
+    const selectEl = document.getElementById('report-campaign-select');
+    selectEl.innerHTML = '<option>載入中...</option>';
+
+    try {
+        // 查詢所有未刪除的活動，按時間排序
+        const q = query(collection(db, "briefs"), 
+            where("isDeleted", "==", false),
+            orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+            selectEl.innerHTML = '<option value="">無活動資料</option>';
+            return;
+        }
+
+        let options = '<option value="">請選擇活動...</option>';
+        snap.forEach(doc => {
+            const data = doc.data();
+            options += `<option value="${doc.id}">${data.productName} (${data.status})</option>`;
+        });
+        selectEl.innerHTML = options;
+
+    } catch (e) {
+        console.error("載入列表失敗", e);
+        if(e.message.includes("index")) alert("請至 Firebase Console 建立索引 (briefs: createdAt desc)"); 
+        selectEl.innerHTML = '<option>列表載入失敗</option>';
+    }
+};
+
+// 2. 核心：讀取數據並顯示
+window.loadReportData = async function(briefId) {
+    if (!briefId) return;
+
+    // 顯示 Loading
+    document.getElementById('report-kpi-grid').innerHTML = '<div class="col-span-full text-center py-10 text-teal-600">正在從資料庫讀取數據...</div>';
+
+    try {
+        // A. 讀取活動基本資料 (名稱、預算)
+        const briefSnap = await getDoc(doc(db, "briefs", briefId));
+        const briefData = briefSnap.data();
+        
+        // 更新標題
+        document.getElementById('report-campaign-title').innerHTML = `
+            ${briefData.productName} 
+            <span class="text-sm ${briefData.status==='completed'?'bg-green-100 text-green-700':'bg-blue-100 text-blue-700'} px-2 py-1 rounded-full ml-2">
+                ● ${briefData.status}
+            </span>`;
+        document.getElementById('report-date-range').textContent = `${briefData.schedule.publishStart} ~ ${briefData.schedule.publishEnd}`;
+
+        // B. 讀取報表數據 (briefs/{id}/report/summary)
+        const reportRef = doc(db, "briefs", briefId, "report", "summary");
+        const reportSnap = await getDoc(reportRef);
+
+        let d = {}; 
+        if (reportSnap.exists()) {
+            d = reportSnap.data();
+        } else {
+            console.log("後台尚未填寫數據，顯示 0");
+            d = { emv:0, spend:0, reach:0, cpe:0 }; // 防止報錯
+        }
+
+        // C. 呼叫各個渲染函式
+        renderMoneyCards(d, briefData.budget); // 渲染 4 張大卡
+        renderCharts(d);                       // 渲染圖表
+        renderInsightsAndTable(d, briefId);    // 渲染 AI 與 榜單
+
+    } catch (e) {
+        console.error("讀取報告失敗", e);
+        alert("讀取失敗：" + e.message);
+    }
+};
+
+// 3. 渲染四大卡片 (The Money Cards)
+function renderMoneyCards(d, totalBudget) {
+    const grid = document.getElementById('report-kpi-grid');
+    
+    // 計算預算執行率
+    const budgetRate = totalBudget > 0 ? Math.round((d.spend / totalBudget) * 100) : 0;
+    // 判斷 CPE 是否優於業界
+    const isCpeGood = (d.cpe || 0) < (d.industry_cpe || 3.8);
+
+    grid.innerHTML = `
+        <div class="bg-white p-6 rounded-xl shadow border border-gray-100 flex flex-col items-center text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
+            <p class="text-sm font-bold text-gray-500 mb-2">媒體價值 (EMV)</p>
+            <h3 class="text-3xl font-black text-green-600 mb-1">NT$ ${(d.emv||0).toLocaleString()}</h3>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded">ROI ${d.roi||0}% 🚀</span>
+            </div>
+            <p class="text-xs text-green-600 font-medium">↑ ${d.growth_vs_last||0}% vs. 上次活動</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow border border-gray-100 flex flex-col items-center text-center relative overflow-hidden">
+             <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
+            <p class="text-sm font-bold text-gray-500 mb-2">總花費 (Total Spend)</p>
+            <h3 class="text-3xl font-black text-slate-800 mb-3">NT$ ${(d.spend||0).toLocaleString()}</h3>
+            <div class="w-full px-4">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>預算執行率</span><span>${budgetRate}%</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2">
+                    <div class="bg-indigo-500 h-2 rounded-full" style="width: ${budgetRate}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow border border-gray-100 flex flex-col items-center text-center relative overflow-hidden">
+            <p class="text-sm font-bold text-gray-500 mb-2">總觸及 (Total Reach)</p>
+            <h3 class="text-3xl font-black text-slate-800 mb-2">${formatReportNumber(d.reach||0)}</h3>
+            <div class="flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold mt-1">
+                <span class="text-lg">🤖</span> 已過濾 ${d.fake_filtered_rate||0}% 假粉流量
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow border border-gray-100 flex flex-col items-center text-center relative overflow-hidden">
+            <p class="text-sm font-bold text-gray-500 mb-2">平均 CPE (互動成本)</p>
+            <h3 class="text-3xl font-black text-slate-800 mb-2">NT$ ${d.cpe||0}</h3>
+            <p class="text-xs font-bold ${isCpeGood ? 'text-green-600' : 'text-red-500'} bg-gray-50 px-2 py-1 rounded border border-gray-200">
+                ${isCpeGood ? '優於' : '高於'}業界平均 (NT$ ${d.industry_cpe||3.8})
+            </p>
+        </div>
+    `;
+}
+
+// 4. 渲染圖表 (Chart.js + CSS Funnel)
+function renderCharts(d) {
+    // A. 漏斗圖
+    const v = d.funnel_view || 0;
+    const c = d.funnel_click || 0;
+    const cv = d.funnel_convert || 0;
+    const pEng = v > 0 ? ((c/v)*100).toFixed(1) + '%' : '0%';
+    
+    document.getElementById('report-funnel-container').innerHTML = `
+        <div class="w-full relative group">
+            <div class="h-12 mx-auto bg-gradient-to-r from-indigo-500 to-blue-500 rounded-lg flex items-center justify-between px-6 text-white shadow-md z-30 relative" style="width: 100%;">
+                <span class="font-bold text-sm">曝光</span><span class="font-bold">100%</span>
+            </div>
+            <div class="text-center text-xs text-gray-400 mt-1">${v.toLocaleString()}</div>
+        </div>
+        <div class="w-full relative group mt-2">
+            <div class="h-12 mx-auto bg-gradient-to-r from-indigo-400 to-blue-400 rounded-lg flex items-center justify-between px-6 text-white shadow-md z-20 relative" style="width: 80%;">
+                <span class="font-bold text-sm">互動/點擊</span><span class="font-bold">${pEng}</span>
+            </div>
+            <div class="text-center text-xs text-gray-400 mt-1">${c.toLocaleString()}</div>
+        </div>
+        <div class="w-full relative group mt-2">
+            <div class="h-12 mx-auto bg-gradient-to-r from-indigo-300 to-blue-300 rounded-lg flex items-center justify-between px-6 text-white shadow-md z-10 relative" style="width: 60%;">
+                <span class="font-bold text-sm">轉化</span><span class="font-bold">${cv}</span>
+            </div>
+        </div>
+    `;
+
+    // B. 趨勢圖
+    const ctx = document.getElementById('reportTrendChart').getContext('2d');
+    if (reportChartInstance) reportChartInstance.destroy();
+
+    // 如果後台沒填陣列，就給假資料避免圖表壞掉
+    const labels = (d.trend_labels && d.trend_labels.length > 0) ? d.trend_labels : ['Day1', 'Day2', 'Day3', 'Day4'];
+    const values = (d.trend_values && d.trend_values.length > 0) ? d.trend_values : [0, 0, 0, 0];
+
+    reportChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '互動次數',
+                data: values,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+        }
+    });
+}
+
+// 5. 渲染 AI 建議 & 榜單
+async function renderInsightsAndTable(d, briefId) {
+    // AI 建議
+    const insightsContainer = document.getElementById('report-ai-insights');
+    if (d.ai_insights && d.ai_insights.length > 0) {
+        insightsContainer.innerHTML = d.ai_insights.map(text => 
+            `<div class="p-3 bg-slate-50 border border-slate-100 rounded-lg flex gap-2">
+                <span class="text-indigo-500">💡</span><span>${text}</span>
+            </div>`
+        ).join('');
+    } else {
+        insightsContainer.innerHTML = '<p class="text-gray-400">尚無分析建議</p>';
+    }
+
+    // 下一步策略
+    if (d.next_step_strategy) {
+        document.getElementById('report-next-step').classList.remove('hidden');
+        document.getElementById('report-next-step-text').innerHTML = `
+           <span class="bg-slate-800 px-2 py-1 rounded border border-slate-700">🚀 策略建議</span>
+           <span>${d.next_step_strategy}</span>
+        `;
+    } else {
+        document.getElementById('report-next-step').classList.add('hidden');
+    }
+
+    // 網紅榜 (這裡還是讀 Collaborations，因為這是真實的合作名單)
+    const tableBody = document.getElementById('report-influencer-table');
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">讀取中...</td></tr>';
+
+    const q = query(collection(db, "collaborations"), where("briefId", "==", briefId));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">尚無網紅合作資料</td></tr>';
+        return;
+    }
+
+    let html = '';
+    let rank = 1;
+    snap.docs.forEach(doc => {
+        const c = doc.data();
+        html += `
+            <tr class="bg-white border-b hover:bg-gray-50 transition">
+                <td class="px-4 py-3 font-bold text-slate-800">${rank++}</td>
+                <td class="px-4 py-3 flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                        ${c.influencerEmail?.[0].toUpperCase()}
+                    </div>
+                    ${c.influencerEmail}
+                </td>
+                <td class="px-4 py-3">NT$ ${d.cpe || '--'}</td>
+                <td class="px-4 py-3">${d.er || '--'}%</td>
+                <td class="px-4 py-3"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">一般</span></td>
+            </tr>
+        `;
+    });
+    tableBody.innerHTML = html;
+}
+
+function formatReportNumber(num) {
+    if(num >= 1000000) return (num/1000000).toFixed(1) + 'M';
+    if(num >= 1000) return (num/1000).toFixed(1) + 'K';
+    return num.toLocaleString();
+}
+
 
 </script>
 
