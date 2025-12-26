@@ -2882,10 +2882,10 @@ function renderCampaigns(campaigns) {
         }
 
         // 如果是歷史項目，卡片稍微變灰一點
-        // const opacityClass = isHistory ? 'opacity-75 hover:opacity-100' : '';
+        // const opacityClass = isHistory ? 'opacity-75 hover:opacity-100' : '';<div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow ${opacityClass}">
 
         return `
-            <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow ${opacityClass}">
+            <div class="bg-white rounded-xl shadow flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow ${isHistory}">
                 ${coverImage}
                 <div class="p-5 flex-1 flex flex-col justify-between">
                     <div>
