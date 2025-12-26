@@ -1474,13 +1474,18 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             <h2 id="report-campaign-title" class="text-2xl font-bold text-slate-800 mb-1">請選擇活動...</h2>
             <p class="text-gray-500 text-sm" id="report-date-range">--/-- - --/--</p>
         </div>
-        <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-            <select id="report-campaign-select" onchange="loadReportData(this.value)" class="border border-gray-300 rounded-lg px-4 py-2 bg-slate-50 text-slate-700 font-bold focus:ring-teal-500 focus:border-teal-500">
-                <option value="">載入活動列表...</option>
-            </select>
-            
-            <button onclick="window.print()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 flex items-center gap-2 shadow-sm whitespace-nowrap">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto items-end">
+    
+            <div class="w-full md:w-64">
+                <label class="text-xs font-extrabold tracking-widest text-slate-500 uppercase px-1">選擇活動</label>
+                <select id="report-campaign-select" onchange="loadReportData(this.value)" 
+                    class="mt-1 w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-sm transition-all cursor-pointer appearance-none">
+                    <option value="">載入中...</option>
+                </select>
+            </div>
+
+            <button onclick="window.print()" class="h-[50px] bg-white border border-slate-200 text-slate-700 px-6 py-2 rounded-xl font-bold hover:bg-slate-50 hover:shadow-md transition-all flex items-center gap-2 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                 下載 PDF
             </button>
         </div>
@@ -3230,7 +3235,7 @@ window.handleSaveBrief = async function() {
         // 寫入路徑：briefs/{ID}/report/summary
         await setDoc(doc(db, "briefs", docRef.id, "report", "summary"), initialReportData);
 
-        alert('活動已發佈！\n\n系統已自動建立報表欄位。\n請管理員至 Firebase Console (briefs > ID > report > summary) 輸入數據。');
+        alert('活動已發佈！\n\n系統已自動建立報表欄位。\n請燒等，立刻幫您配對。');
         closeModal('new-campaign-modal');
 
     } catch (error) {
@@ -5643,14 +5648,21 @@ function getFutureISO(days, hours = 0) {
 let reportChartInstance = null; // 全域變數，存圖表實例
 
 // 1. 初始化下拉選單：列出所有活動讓您選
+// === 修改後：initMerchantReports (使用原生 Option 渲染) ===
 window.initMerchantReports = async function() {
     const user = auth.currentUser;
     if (!user) return;
+
+    // 1. 抓到我們剛剛寫好的 select 元素
     const selectEl = document.getElementById('report-campaign-select');
-    selectEl.innerHTML = '<option>載入中...</option>';
+    
+    // 先給一個「載入中」的狀態，避免畫面空白
+    selectEl.innerHTML = '<option value="" disabled selected>數據讀取中...</option>';
+    selectEl.disabled = true; // 鎖住不讓亂點
 
     try {
-        // 查詢所有未刪除的活動，按時間排序
+        // 2. 從資料庫抓取活動列表
+        // 這裡我們查「所有未刪除的活動」(依照建立時間排序)
         const q = query(collection(db, "briefs"), 
             where("isDeleted", "==", false),
             orderBy("createdAt", "desc")
@@ -5658,21 +5670,42 @@ window.initMerchantReports = async function() {
         const snap = await getDocs(q);
 
         if (snap.empty) {
-            selectEl.innerHTML = '<option value="">無活動資料</option>';
+            // 如果真的沒資料
+            selectEl.innerHTML = '<option value="">目前沒有任何活動</option>';
             return;
         }
 
-        let options = '<option value="">請選擇活動...</option>';
+        // 3. 開始組合 HTML 字串
+        let optionsHtml = '<option value="" disabled selected>請選擇一個活動...</option>';
+        
         snap.forEach(doc => {
             const data = doc.data();
-            options += `<option value="${doc.id}">${data.productName} (${data.status})</option>`;
+            const id = doc.id;
+            
+            // 判斷狀態，給一點視覺提示 (例如：[結案])
+            let statusPrefix = '';
+            if(data.status === 'completed') statusPrefix = '【已結案】';
+            else if(data.status === 'pending_match') statusPrefix = '【配對中】';
+            else statusPrefix = '【進行中】';
+
+            // 組合 option
+            // value 放 ID (讓程式讀)
+            // 中間放 名稱 (讓人類看)
+            optionsHtml += `<option value="${id}">${statusPrefix} ${data.productName}</option>`;
         });
-        selectEl.innerHTML = options;
+
+        // 4. 一次性塞入 HTML
+        selectEl.innerHTML = optionsHtml;
+        selectEl.disabled = false; // 解鎖，可以選了！
 
     } catch (e) {
         console.error("載入列表失敗", e);
-        if(e.message.includes("index")) alert("請至 Firebase Console 建立索引 (briefs: createdAt desc)"); 
-        selectEl.innerHTML = '<option>列表載入失敗</option>';
+        selectEl.innerHTML = '<option value="">讀取失敗 (請檢查 Console)</option>';
+        
+        // 貼心提示：如果缺索引，會在這裡報錯
+        if(e.message.includes("index")) {
+            alert("系統提示：請管理員至 Firebase Console 建立複合索引 (briefs: isDeleted + createdAt)。");
+        }
     }
 };
 
