@@ -3084,7 +3084,7 @@ window.handleSaveBrief = async function() {
 
     try {
         await addDoc(collection(db, "briefs"), briefData);
-        alert('需求已發佈！請通知管理員進行後台配對設定。');
+        alert('需求已發佈！10分鐘內為您完成配對！');
         closeModal('new-campaign-modal');
     } catch (error) {
         console.error("儲存失敗:", error);
@@ -3232,125 +3232,125 @@ window.handleSaveBrief = async function() {
 
 
 
-    // === 修正版：網紅合作邀請列表 (修復影片破圖問題) ===
-    window.renderInfluencerInvitations = async function() {
-        const user = auth.currentUser;
-        const listEl = document.getElementById('influencer-invitations-list');
-        if (!listEl || !user) return;
+
+
+
+    // === 修改後：renderInfluencerInvitations (加入指定 ID 篩選) ===
+window.renderInfluencerInvitations = async function() {
+    const user = auth.currentUser;
+    const listEl = document.getElementById('influencer-invitations-list');
+    if (!listEl || !user) return;
+    
+    listEl.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10"><div class="animate-spin inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full mb-2"></div><br>正在讀取專屬於您的邀請...</div>';
+
+    try {
+        // 1. 查出我已經接過的單
+        const myCollabsSnap = await getDocs(query(collection(db, "collaborations"), where("influencerId", "==", user.uid)));
+        const myJoinedBriefIds = new Set(myCollabsSnap.docs.map(doc => doc.data().briefId));
+
+        // 2. ★★★ 關鍵查詢修改 ★★★
+        // 條件：狀態是 pending_match 且 targetAudience 陣列包含我的 UID
+        const q = query(collection(db, "briefs"), 
+                       where("status", "==", "pending_match"),
+                       where("isDeleted", "==", false),
+                       where("targetAudience", "array-contains", user.uid)); // 這裡做篩選
         
-        listEl.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">正在尋找適合您的機會...</div>';
+        const snapshot = await getDocs(q);
+        
+        let html = '';
+        let count = 0;
 
-        try {
-            // 步驟 A: 先查出「我已經接過」的 briefId
-            const myCollabsSnap = await getDocs(query(collection(db, "collaborations"), where("influencerId", "==", user.uid)));
-            const myJoinedBriefIds = new Set(myCollabsSnap.docs.map(doc => doc.data().briefId));
+        snapshot.docs.forEach(docSnap => {
+            const briefId = docSnap.id;
+            const brief = docSnap.data();
 
-            // 步驟 B: 查出所有待媒合 (pending_match) 的活動
-            const q = query(collection(db, "briefs"), 
-                           where("status", "==", "pending_match"),
-                           where("isDeleted", "==", false));
+            // 如果已經接過，跳過
+            if (myJoinedBriefIds.has(briefId)) return;
+
+            count++;
             
-            const snapshot = await getDocs(q);
-            
-            let html = '';
-            let count = 0;
-
-            snapshot.docs.forEach(docSnap => {
-                const briefId = docSnap.id;
-                const brief = docSnap.data();
-
-                // 過濾：如果我已經接過這個單，就跳過
-                if (myJoinedBriefIds.has(briefId)) return;
-
-                count++;
-                
-                // --- ★ 修改重點：智慧封面 (圖片/影片判斷) ---
-                let coverImg = `<div class="w-24 h-24 bg-slate-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">無素材</div>`;
-                
-                if (brief.imageUrls && brief.imageUrls.length > 0) {
-                    const url = brief.imageUrls[0];
-                    // 簡單判斷副檔名
-                    const isVideo = url.toLowerCase().includes('.mp4') || 
-                                  url.toLowerCase().includes('.mov') || 
-                                  url.toLowerCase().includes('.webm');
-                    
-                    if (isVideo) {
-                        // 影片：滑鼠滑過預覽播放
-                        coverImg = `
-                            <video src="${url}" 
-                                class="w-24 h-24 object-cover rounded-lg flex-shrink-0 bg-black border" 
-                                muted loop playsinline
-                                onmouseover="this.play()" 
-                                onmouseout="this.pause();this.currentTime=0;"
-                            ></video>`;
-                    } else {
-                        // 圖片
-                        coverImg = `<img src="${url}" class="w-24 h-24 object-cover rounded-lg flex-shrink-0 bg-slate-200 border">`;
-                    }
+            // 素材顯示邏輯 (維持原樣)
+            let coverImg = `<div class="w-24 h-24 bg-slate-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">無素材</div>`;
+            if (brief.imageUrls && brief.imageUrls.length > 0) {
+                const url = brief.imageUrls[0];
+                const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov');
+                if (isVideo) {
+                    coverImg = `<video src="${url}" class="w-24 h-24 object-cover rounded-lg bg-black border" muted onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
+                } else {
+                    coverImg = `<img src="${url}" class="w-24 h-24 object-cover rounded-lg border">`;
                 }
-                // ------------------------------------------
+            }
 
-                html += `
-                    <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-6 items-start hover:shadow-lg transition-shadow border border-gray-100">
-                        <div class="cursor-pointer" onclick="openBriefDetail('${briefId}', true)">
-                            ${coverImg}
-                        </div>
-                        <div class="flex-1 w-full">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-bold text-lg text-slate-800 cursor-pointer hover:text-teal-600" onclick="openBriefDetail('${briefId}', true)">
-                                        ${brief.productName}
-                                    </h3>
-                                    <div class="flex gap-2 mt-1">
-                                        <span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100">
-                                            類別: ${brief.category || '一般'}
-                                        </span>
-                                    </div>
-                                    <p class="text-sm text-gray-500 mt-2 line-clamp-2">${brief.productDesc}</p>
-                                </div>
-                                <div class="flex flex-col items-end gap-1">
-                                    <span class="bg-teal-50 text-teal-700 text-sm px-3 py-1 rounded-full font-bold border border-teal-100">
-                                        預算: $${brief.budget.toLocaleString()}
+            html += `
+                <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-6 items-start hover:shadow-lg transition-shadow border border-gray-100 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-teal-500 text-white text-xs px-2 py-1 rounded-bl-lg font-bold">專屬邀請</div>
+                    <div class="cursor-pointer" onclick="openBriefDetail('${briefId}', true)">
+                        ${coverImg}
+                    </div>
+                    <div class="flex-1 w-full">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-800 cursor-pointer hover:text-teal-600" onclick="openBriefDetail('${briefId}', true)">
+                                    ${brief.productName}
+                                </h3>
+                                <div class="flex gap-2 mt-1">
+                                    <span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100">
+                                        #${brief.categories ? brief.categories[0] : '精選'}
                                     </span>
                                 </div>
+                                <p class="text-sm text-gray-500 mt-2 line-clamp-2">${brief.productDesc || brief.requirementDesc}</p>
                             </div>
-                            <div class="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-2 text-xs text-gray-600 items-center justify-between">
+                             <div class="flex gap-2">
                                 <span class="bg-slate-100 px-2 py-1 rounded">需求: ${brief.influencerCount} 人</span>
-                                <span class="bg-slate-100 px-2 py-1 rounded">平台: ${brief.platforms ? brief.platforms.join(', ') : '不限'}</span>
-                            </div>
-
-                            <div class="mt-4 flex justify-end gap-3">
+                                <span class="bg-slate-100 px-2 py-1 rounded">預算: $${brief.budget.toLocaleString()}</span>
+                             </div>
+                             <div class="flex gap-2">
                                 <button onclick="openBriefDetail('${briefId}', true)" 
                                         class="px-4 py-2 border border-gray-300 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm">
                                     查看完整內容
                                 </button>
-                                
                                 <button onclick="handleAcceptInvite('${briefId}', '${brief.merchantId}')" 
-                                        class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95">
-                                    接單合作
+                                        class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-all shadow-md">
+                                    接單
                                 </button>
-                            </div>
+                             </div>
                         </div>
                     </div>
-                `;
-            });
+                </div>
+            `;
+        });
 
-            if (count === 0) {
-                listEl.innerHTML = '<div class="col-span-full text-center py-12 bg-white rounded-xl shadow border border-dashed border-gray-300"><p class="text-4xl mb-2">📭</p><p class="text-gray-500 text-lg">目前沒有新的合作邀請，晚點再來看看！</p></div>';
-            } else {
-                listEl.innerHTML = html;
-            }
-
-        } catch (error) {
-            console.error("載入失敗:", error);
-            // 這裡也加上友善的錯誤提示，如果是索引錯誤就引導使用者
-            if(error.message.includes("index")) {
-                listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">系統升級中 (缺少索引)，請管理員至 Console 點擊連結建立。</p>`;
-            } else {
-                listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">載入失敗: ${error.message}</p>`;
-            }
+        if (count === 0) {
+            listEl.innerHTML = '<div class="col-span-full text-center py-12 bg-white rounded-xl shadow border border-dashed border-gray-300"><p class="text-4xl mb-2">📭</p><p class="text-gray-500 text-lg">目前沒有專屬您的合作邀請。</p></div>';
+        } else {
+            listEl.innerHTML = html;
         }
-    };
+
+    } catch (error) {
+        console.error("載入失敗:", error);
+        if(error.message.includes("index")) {
+            listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">系統提示：請管理員至 Firebase Console 建立複合索引 (Index)。</p>`;
+        } else {
+            listEl.innerHTML = `<p class="text-red-500 col-span-full text-center">載入失敗: ${error.message}</p>`;
+        }
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     // === 改良版：接單功能 (含除錯訊息) ===
