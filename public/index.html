@@ -3106,115 +3106,146 @@ window.handleSaveBrief = async function() {
 
 
         // === 新增功能：打開活動詳情彈窗 ===
-    window.openBriefDetail = async function(briefId, showAcceptBtn = false) {
-        try {
-            const docRef = doc(db, 'briefs', briefId);
-            const snap = await getDoc(docRef);
-            
-            if(!snap.exists()) return alert('找不到此活動資料');
-            
-            const data = snap.data();
-            
-            // 1. 填寫文字資料
-            document.getElementById('modal-brief-title').textContent = data.productName;
-            document.getElementById('modal-brief-desc').textContent = data.productDesc;
-            document.getElementById('modal-brief-budget').textContent = `NT$ ${data.budget.toLocaleString()}`;
-            document.getElementById('modal-brief-count').textContent = `${data.influencerCount} 人`;
-            document.getElementById('modal-brief-platform').textContent = data.platforms ? data.platforms.join(', ') : '不限';
+    // === 修改後：openBriefDetail (UI 美化版) ===
+window.openBriefDetail = async function(briefId, showAcceptBtn = false) {
+    try {
+        const docRef = doc(db, 'briefs', briefId);
+        const snap = await getDoc(docRef);
+        
+        if(!snap.exists()) return alert('找不到此活動資料');
+        
+        const data = snap.data();
+        
+        // 1. 處理頂部標籤與標題
+        document.getElementById('modal-brief-title').innerHTML = `
+            <div class="flex flex-col gap-1">
+                <span class="text-sm font-normal text-teal-600 tracking-wider">PROJECT</span>
+                <span class="text-3xl font-extrabold text-slate-800">${data.productName}</span>
+            </div>`;
 
+        // 2. 生成詳細內容 HTML (美化版)
+        const platformBadges = data.platforms.map(p => 
+            `<span class="inline-flex items-center gap-1 bg-white border border-gray-200 text-slate-700 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
+                📱 ${p}
+             </span>`
+        ).join(' ');
 
+        const categoryBadges = data.categories ? data.categories.map(c => 
+            `<span class="text-blue-600 bg-blue-50 px-2 py-1 rounded text-sm font-medium">#${c}</span>`
+        ).join(' ') : '';
 
-    // 格式化平台顯示
-            const platformBadges = data.platforms.map(p => 
-                `<span class="bg-teal-100 text-teal-700 px-2 py-0.5 rounded text-xs font-bold">${p}</span>`
-            ).join(' ');
+        // 格式化日期
+        const formatDate = (d) => d ? d.replace('T', ' ') : '未定';
 
-    // 格式化類別標籤
-            const categoryBadges = data.categories ? data.categories.map(c => 
-                `<span class="text-gray-500 text-xs">#${c}</span>`
-            ).join(' ') : '';
+        document.getElementById('modal-brief-desc').innerHTML = `
+            <div class="space-y-8">
+                <div class="flex flex-wrap items-center gap-3 pb-4 border-b border-gray-100">
+                    ${categoryBadges}
+                    <span class="text-gray-400 text-sm">|</span>
+                    <span class="text-gray-500 text-sm">需求人數: <b class="text-slate-800">${data.influencerCount}人</b></span>
+                </div>
 
-
-            document.getElementById('modal-brief-title').textContent = data.productName;
-            document.getElementById('modal-brief-desc').innerHTML = `
-                <div class="mb-4">${categoryBadges}</div>
-                <div class="space-y-4">
-                   <div>
-                        <h4 class="font-bold text-slate-800 text-sm">📌 合作格式</h4>
-                        <div class="flex gap-2 mt-1">${platformBadges}</div>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm">📝 需求描述</h4>
-                        <p class="text-gray-600 text-sm mt-1">${data.requirementDesc || '無詳細說明'}</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-2 space-y-6">
                         <div>
-                            <h4 class="font-bold text-slate-800 text-xs">📅 預計發佈區間</h4>
-                            <p class="text-gray-600 text-xs">${data.schedule.publishStart} ~ ${data.schedule.publishEnd}</p>
+                            <h4 class="flex items-center gap-2 text-lg font-bold text-slate-800 mb-3">
+                                <span class="w-1 h-6 bg-teal-500 rounded-full"></span> 
+                                產品與活動描述
+                            </h4>
+                            <div class="bg-slate-50 p-5 rounded-xl border border-slate-100 text-slate-700 leading-relaxed text-base">
+                                ${data.productDesc || '（商家未提供詳細描述）'}
+                            </div>
                         </div>
+
                         <div>
-                            <h4 class="font-bold text-slate-800 text-xs">🎁 公關品提供</h4>
-                            <p class="text-gray-600 text-xs">${data.logistics.provideProduct ? `有 (${data.logistics.quantity} 份)` : '無'}</p>
+                            <h4 class="flex items-center gap-2 text-lg font-bold text-slate-800 mb-3">
+                                <span class="w-1 h-6 bg-indigo-500 rounded-full"></span> 
+                                詳細執行需求
+                            </h4>
+                            <div class="bg-indigo-50 p-5 rounded-xl border border-indigo-100 text-slate-800 leading-relaxed text-base whitespace-pre-line">
+                                ${data.requirementDesc || '請依照商家指示製作素材。'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-white border-2 border-teal-100 rounded-xl p-5 shadow-sm">
+                            <p class="text-xs text-teal-600 font-bold uppercase mb-1">Total Budget</p>
+                            <p class="text-3xl font-black text-slate-800">NT$ ${data.budget.toLocaleString()}</p>
+                            <div class="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                                <p class="text-xs text-gray-500">預估曝光: <span class="font-bold text-slate-700">${data.impressions}</span></p>
+                                <p class="text-xs text-gray-500">預估點擊: <span class="font-bold text-slate-700">${data.expectedClicks}</span></p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                             <h5 class="font-bold text-slate-700 mb-3 text-sm">指定平台</h5>
+                             <div class="flex flex-wrap gap-2">${platformBadges}</div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 space-y-3">
+                            <h5 class="font-bold text-slate-700 mb-1 text-sm">時程規劃</h5>
+                            <div>
+                                <p class="text-xs text-gray-400">發佈區間</p>
+                                <p class="text-sm font-bold text-slate-700">${formatDate(data.schedule.publishStart)} <br>~ ${formatDate(data.schedule.publishEnd)}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">結案日期</p>
+                                <p class="text-sm font-bold text-red-500">${data.schedule.closingDate}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                             <h5 class="font-bold text-slate-700 mb-2 text-sm">物流資訊</h5>
+                             <p class="text-sm text-gray-600">
+                                公關品: ${data.logistics.provideProduct ? `<span class="text-green-600 font-bold">有提供 (${data.logistics.quantity}份)</span>` : '<span class="text-gray-400">無</span>'}
+                             </p>
                         </div>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
 
-
-
-
-            // 2. 處理標籤
-            const tagContainer = document.getElementById('modal-brief-tags');
-            tagContainer.innerHTML = `
-                <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">#${data.category}</span>
-                <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">預估曝光: ${data.impressions}</span>
-            `;
-
-            // 3. 處理素材 (圖片/影片)
-            const assetContainer = document.getElementById('modal-brief-assets');
-            if (data.imageUrls && data.imageUrls.length > 0) {
-                let assetsHtml = '';
-                data.imageUrls.forEach(url => {
-                    const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov') || url.toLowerCase().includes('.webm');
-                    if(isVideo) {
-                        assetsHtml += `
-                            <div class="relative group">
-                                <video src="${url}" class="w-full h-40 object-cover rounded-lg bg-black" controls></video>
-                            </div>`;
-                    } else {
-                        assetsHtml += `
-                            <div class="relative group">
-                                <a href="${url}" target="_blank">
-                                    <img src="${url}" class="w-full h-40 object-cover rounded-lg border hover:opacity-80 transition cursor-zoom-in">
-                                </a>
-                            </div>`;
-                    }
-                });
-                assetContainer.innerHTML = assetsHtml;
-            } else {
-                assetContainer.innerHTML = '<p class="text-gray-400 col-span-full text-center py-4">商家未上傳參考素材</p>';
-            }
-
-            // 4. 設定接單按鈕 (如果是從「合作邀請」點進來，顯示按鈕；如果是「已接單」點進來，隱藏按鈕)
-            const acceptBtn = document.getElementById('modal-btn-accept');
-            if(showAcceptBtn) {
-                acceptBtn.classList.remove('hidden');
-                // 綁定接單事件
-                acceptBtn.onclick = function() {
-                    handleAcceptInvite(briefId, data.merchantId);
-                    closeModal('brief-detail-modal');
-                };
-            } else {
-                acceptBtn.classList.add('hidden');
-            }
-
-            openModal('brief-detail-modal');
-
-        } catch(e) {
-            console.error(e);
-            alert('讀取失敗');
+        // 3. 處理素材 (保持原邏輯，稍微加大尺寸)
+        const assetContainer = document.getElementById('modal-brief-assets');
+        if (data.imageUrls && data.imageUrls.length > 0) {
+            let assetsHtml = '';
+            data.imageUrls.forEach(url => {
+                const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov');
+                if(isVideo) {
+                    assetsHtml += `<video src="${url}" class="w-full h-48 object-cover rounded-xl bg-black shadow-sm" controls></video>`;
+                } else {
+                    assetsHtml += `<a href="${url}" target="_blank"><img src="${url}" class="w-full h-48 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"></a>`;
+                }
+            });
+            assetContainer.innerHTML = assetsHtml;
+        } else {
+            assetContainer.innerHTML = '<p class="text-gray-400 col-span-full text-center py-6 bg-gray-50 rounded-xl border border-dashed">商家未上傳參考素材</p>';
         }
-    };
+
+        // 4. 設定標籤容器清空 (因為我們已經整合到 innerHTML 裡了)
+        document.getElementById('modal-brief-tags').innerHTML = ''; 
+
+        // 5. 設定接單按鈕
+        const acceptBtn = document.getElementById('modal-btn-accept');
+        if(showAcceptBtn) {
+            acceptBtn.classList.remove('hidden');
+            acceptBtn.textContent = `確認接單 (NT$ ${Math.floor(data.budget / data.influencerCount).toLocaleString()} /人)`; // 簡單估算
+            acceptBtn.onclick = function() {
+                handleAcceptInvite(briefId, data.merchantId);
+                closeModal('brief-detail-modal');
+            };
+        } else {
+            acceptBtn.classList.add('hidden');
+        }
+
+        openModal('brief-detail-modal');
+
+    } catch(e) {
+        console.error(e);
+        alert('讀取失敗');
+    }
+};
 
 
 
