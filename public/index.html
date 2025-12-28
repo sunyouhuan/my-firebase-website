@@ -96,6 +96,10 @@ html.dark       #role-selection-view .min-h-screen{ background: transparent !imp
 /* 確保動畫層在最底 */
 #bg-anim{ z-index: 0 !important; pointer-events: none; }
 
+
+/* Report: hide controls when printing */
+.no-print{}
+@media print{.no-print{display:none !important;}}
 </style>
 
 <style>
@@ -1114,6 +1118,76 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
 </head>
 <body>
+    <!-- ✅ 本機 file:// 開啟時的提示（避免 ES Module / Firebase 無法載入） -->
+    <script>
+      (function () {
+        function showLocalHostHint() {
+          if (location.protocol !== 'file:') return;
+          var box = document.createElement('div');
+          box.style.position = 'fixed';
+          box.style.left = '16px';
+          box.style.right = '16px';
+          box.style.bottom = '16px';
+          box.style.zIndex = '999999';
+          box.style.padding = '14px 16px';
+          box.style.borderRadius = '12px';
+          box.style.background = '#0f172a';
+          box.style.color = '#fff';
+          box.style.fontFamily = 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+          box.style.boxShadow = '0 10px 30px rgba(0,0,0,.25)';
+          box.innerHTML =
+            '<div style="font-weight:700; margin-bottom:6px;">偵測到你用 <code>file://</code> 直接開啟 HTML</div>' +
+            '<div style="opacity:.9; line-height:1.5;">此專案使用 <b>ES Module import</b>（Firebase / Chart.js 等），在 file:// 會被瀏覽器阻擋，造成所有 JS 功能失效。<br>' +
+            '請改用本機伺服器：在此檔案資料夾執行 <code>python3 -m http.server 8000</code>，再開 <code>http://localhost:8000/</code>。</div>' +
+            '<div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">' +
+            '<button id="__hintClose" style="background:#fff; color:#0f172a; border:0; padding:8px 10px; border-radius:10px; font-weight:700; cursor:pointer;">我知道了</button>' +
+            '</div>';
+          document.body.appendChild(box);
+          document.getElementById('__hintClose').onclick = function(){ box.remove(); };
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', showLocalHostHint);
+        } else {
+          showLocalHostHint();
+        }
+      })();
+    </script>
+    <!-- ✅ 全域錯誤顯示（新手除錯友善） -->
+    <script>
+      (function () {
+        function banner(msg) {
+          var box = document.getElementById('__globalErrorBanner');
+          if (!box) {
+            box = document.createElement('div');
+            box.id = '__globalErrorBanner';
+            box.style.position = 'fixed';
+            box.style.left = '16px';
+            box.style.right = '16px';
+            box.style.top = '16px';
+            box.style.zIndex = '999998';
+            box.style.padding = '12px 14px';
+            box.style.borderRadius = '12px';
+            box.style.background = '#fee2e2';
+            box.style.color = '#991b1b';
+            box.style.fontFamily = 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+            box.style.boxShadow = '0 10px 30px rgba(0,0,0,.15)';
+            box.style.whiteSpace = 'pre-wrap';
+            document.body.appendChild(box);
+          }
+          box.textContent = msg;
+        }
+        window.addEventListener('error', function (e) {
+          if (!e || !e.message) return;
+          banner('JS 發生錯誤：' + e.message + (e.filename ? ('\n' + e.filename + ':' + e.lineno) : ''));
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e && e.reason;
+          var msg = (r && (r.message || String(r))) || 'Promise rejection';
+          banner('JS 發生錯誤（Promise）：' + msg);
+        });
+      })();
+    </script>
+
 
     <div id="bg-anim" style="display:none" aria-hidden="true"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
 
@@ -1468,30 +1542,55 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             </div>
                         </div>                        
 
-<div id="merchant-reports-content" class="dashboard-content">
-    <div class="bg-white rounded-xl shadow p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-            <h2 id="report-campaign-title" class="text-2xl font-bold text-slate-800 mb-1">請選擇活動...</h2>
-            <p class="text-gray-500 text-sm" id="report-date-range">--/-- - --/--</p>
-        </div>
-        <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto items-end">
-    
-            <div class="w-full md:w-64">
-                <label class="text-xs font-extrabold tracking-widest text-slate-500 uppercase px-1">選擇活動</label>
-                <select id="report-campaign-select" onchange="loadReportData(this.value)" 
-                    class="mt-1 w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-sm transition-all cursor-pointer appearance-none">
-                    <option value="">載入中...</option>
-                </select>
-            </div>
 
-            <button onclick="window.print()" class="h-[50px] bg-white border border-slate-200 text-slate-700 px-6 py-2 rounded-xl font-bold hover:bg-slate-50 hover:shadow-md transition-all flex items-center gap-2 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                下載 PDF
-            </button>
-        </div>
+<div id="merchant-reports-content" class="dashboard-content">
+  <!-- 專家級成效報告 Header（參考：行銷表單參考.html） -->
+  <div class="bg-white rounded-xl shadow p-6 mb-6 border border-slate-100">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h2 id="report-campaign-title" class="text-2xl font-bold text-slate-800 mb-1">Campaign Report</h2>
+        <p class="text-slate-500 text-sm">以專家視角解讀結案成效（資料來源：briefs/&lt;活動ID&gt;/report/*）</p>
+        <p class="text-slate-400 text-xs mt-1" id="report-date-range">--/-- - --/--</p>
+      </div>
+
+      <div class="flex flex-wrap gap-2 items-center no-print">
+        <button id="reportShareBtn" type="button"
+          class="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition">
+          分享報告
+        </button>
+        <button id="reportPdfBtn" type="button"
+          class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition">
+          下載 PDF
+        </button>
+      </div>
     </div>
 
-    <h3 class="font-bold text-slate-800 text-lg mb-4">Executive Summary ("The Money Cards")</h3>
+    <div class="h-px bg-slate-100 my-5"></div>
+
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+      <div class="md:col-span-6">
+        <div class="text-xs font-extrabold tracking-widest text-slate-500 uppercase px-1">結案活動</div>
+        <select id="report-campaign-select"
+          class="mt-2 w-full bg-white border border-slate-200 rounded-lg px-3 py-3 shadow-sm transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400"
+          onchange="loadReportData(this.value)">
+          <option value="">（載入中...）</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-3">
+        <div class="text-xs font-extrabold tracking-widest text-slate-500 uppercase px-1">起始日</div>
+        <input id="reportFrom" type="date"
+          class="mt-2 w-full bg-white border border-slate-200 rounded-lg px-3 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+      </div>
+
+      <div class="md:col-span-3">
+        <div class="text-xs font-extrabold tracking-widest text-slate-500 uppercase px-1">結束日</div>
+        <input id="reportTo" type="date"
+          class="mt-2 w-full bg-white border border-slate-200 rounded-lg px-3 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+      </div>
+    </div>
+  </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="report-kpi-grid">
         <div class="col-span-full text-center py-10 text-gray-400 bg-white rounded-xl border border-dashed">
             請選擇一個活動以查看數據
@@ -1544,7 +1643,26 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         </div>
     </div>
     
-    <div class="mt-8 bg-slate-900 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-xl hidden" id="report-next-step">
+    
+    <!-- Report 資料夾（原始資料） -->
+    <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8" id="report-rawdata-card">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+                <h4 class="font-bold text-slate-800 text-base">Report 資料夾（原始資料）</h4>
+                <p class="text-sm text-slate-500 mt-1">會列出 <code class="px-1 py-0.5 bg-slate-100 rounded">briefs/&lt;活動ID&gt;/report</code> 內所有文件（例如 summary、timeseries、...）。</p>
+            </div>
+            <div class="no-print">
+                <button id="reportRawRefreshBtn" type="button"
+                  class="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition">
+                  重新載入
+                </button>
+            </div>
+        </div>
+        <div id="report-rawdata" class="mt-4 space-y-3">
+            <p class="text-gray-400">請先選擇活動。</p>
+        </div>
+    </div>
+<div class="mt-8 bg-slate-900 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-xl hidden" id="report-next-step">
         <div class="flex items-start gap-4">
             <div class="text-3xl">🤖</div>
             <div>
@@ -2629,6 +2747,16 @@ const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
                 // 如果切換到「總覽」，就去資料庫撈進行中的工作
                 if (typeof renderInfluencerActiveJobs === 'function') {
                     renderInfluencerActiveJobs();
+                }
+            }
+        }
+        // ==========================================
+        // NEW: Merchant reports（成效報告）載入
+        // ==========================================
+        if (role === 'merchant') {
+            if (tabId === 'reports') {
+                if (typeof initMerchantReports === 'function') {
+                    initMerchantReports();
                 }
             }
         }
@@ -5648,109 +5776,264 @@ function getFutureISO(days, hours = 0) {
 let reportChartInstance = null; // 全域變數，存圖表實例
 
 // 1. 初始化下拉選單：列出所有活動讓您選
-// === 修改後：initMerchantReports (使用原生 Option 渲染) ===
-window.initMerchantReports = async function() {
+  // 初始化「結案成效報告」下拉選單（只顯示結案/已截止專案）
+  window.initMerchantReports = async function(){
     const user = auth.currentUser;
-    if (!user) return;
+    const sel = document.getElementById('report-campaign-select');
+    if(!user || !sel) return;
 
-    // 1. 抓到我們剛剛寫好的 select 元素
-    const selectEl = document.getElementById('report-campaign-select');
-    
-    // 先給一個「載入中」的狀態，避免畫面空白
-    selectEl.innerHTML = '<option value="" disabled selected>數據讀取中...</option>';
-    selectEl.disabled = true; // 鎖住不讓亂點
+    sel.innerHTML = `<option value="">（載入中...）</option>`;
 
-    try {
-        // 2. 從資料庫抓取活動列表
-        // 這裡我們查「所有未刪除的活動」(依照建立時間排序)
-        const q = query(collection(db, "briefs"), 
-            where("isDeleted", "==", false),
-            orderBy("createdAt", "desc")
-        );
-        const snap = await getDocs(q);
+    try{
+      // 1) 只抓「自己的」專案（merchantId == user.uid），避免看到其他商家資料
+      const q = query(
+        collection(db, "briefs"),
+        where("merchantId", "==", user.uid),
+        where("isDeleted", "==", false)
+      );
+      const snap = await getDocs(q);
 
-        if (snap.empty) {
-            // 如果真的沒資料
-            selectEl.innerHTML = '<option value="">目前沒有任何活動</option>';
-            return;
+      if(snap.empty){
+        sel.innerHTML = `<option value="">尚無結案活動</option>`;
+        return;
+      }
+
+      // 2) 組成 list（先不加 where/status 避免 Firestore 需要額外 composite index）
+      const all = [];
+      snap.forEach(d => all.push({ id: d.id, data: d.data() || {} }));
+
+      // 3) 排序（createdAt 新 → 舊）
+      all.sort((a,b) => {
+        const ta = a.data.createdAt?.toMillis ? a.data.createdAt.toMillis()
+                 : (a.data.createdAt?.seconds ? a.data.createdAt.seconds * 1000 : 0);
+        const tb = b.data.createdAt?.toMillis ? b.data.createdAt.toMillis()
+                 : (b.data.createdAt?.seconds ? b.data.createdAt.seconds * 1000 : 0);
+        return tb - ta;
+      });
+
+      // 4) 篩選「結案 / 已截止」：優先用 schedule.closingDate；沒有就退回 publishEnd；再退回 status
+      const now = Date.now();
+      const closed = all.filter(c => {
+        const s = c.data.schedule || {};
+        const closing = s.closingDate || s.publishEnd || s.endDate || "";
+        const status = (c.data.status || "").toLowerCase();
+        if(closing){
+          const ts = new Date(closing).getTime();
+          if(!Number.isNaN(ts)) return now > (ts + 24*60*60*1000 - 1);
         }
+        return ["completed","closed","finished","結案","已結案"].includes(status) || status.includes("close") || status.includes("complete");
+      });
 
-        // 3. 開始組合 HTML 字串
-        let optionsHtml = '<option value="" disabled selected>請選擇一個活動...</option>';
-        
-        snap.forEach(doc => {
-            const data = doc.data();
-            const id = doc.id;
-            
-            // 判斷狀態，給一點視覺提示 (例如：[結案])
-            let statusPrefix = '';
-            if(data.status === 'completed') statusPrefix = '【已結案】';
-            else if(data.status === 'pending_match') statusPrefix = '【配對中】';
-            else statusPrefix = '【進行中】';
+      const list = closed.length ? closed : all;
+      window.__merchantReportCampaigns = list;
 
-            // 組合 option
-            // value 放 ID (讓程式讀)
-            // 中間放 名稱 (讓人類看)
-            optionsHtml += `<option value="${id}">${statusPrefix} ${data.productName}</option>`;
-        });
+      sel.innerHTML = [
+        `<option value="">請選擇結案活動...</option>`,
+        ...list.map(c => {
+          const name = c.data.productName || c.data.title || "(未命名活動)";
+          const s = c.data.schedule || {};
+          const closing = s.closingDate || s.publishEnd || "";
+          const suffix = closing ? `｜結案日 ${closing}` : "";
+          return `<option value="${c.id}">${escapeHtml(name)}${escapeHtml(suffix)}</option>`;
+        })
+      ].join("");
 
-        // 4. 一次性塞入 HTML
-        selectEl.innerHTML = optionsHtml;
-        selectEl.disabled = false; // 解鎖，可以選了！
+      // 5) 若網址帶 ?report=<id>，自動載入該活動報告
+      const params = new URLSearchParams(window.location.search);
+      const preId = params.get("report");
+      if(preId){
+        sel.value = preId;
+        if(sel.value) await window.loadReportData(preId);
+      }
 
-    } catch (e) {
-        console.error("載入列表失敗", e);
-        selectEl.innerHTML = '<option value="">讀取失敗 (請檢查 Console)</option>';
-        
-        // 貼心提示：如果缺索引，會在這裡報錯
-        if(e.message.includes("index")) {
-            alert("系統提示：請管理員至 Firebase Console 建立複合索引 (briefs: isDeleted + createdAt)。");
-        }
+      // 6) 綁定 Header 按鈕（只需一次）
+      if(typeof window.bindReportHeaderActions === "function"){
+        window.bindReportHeaderActions();
+      }
+    }catch(err){
+      console.error("[initMerchantReports] failed:", err);
+      sel.innerHTML = `<option value="">載入失敗：${escapeHtml(err?.message || "unknown")}</option>`;
     }
-};
+  };
 
 // 2. 核心：讀取數據並顯示
-window.loadReportData = async function(briefId) {
-    if (!briefId) return;
+  window.loadReportData = async function(briefId){
+    const kpiGrid = document.getElementById('report-kpi-grid');
+    const rawBox  = document.getElementById('report-rawdata');
 
-    // 顯示 Loading
-    document.getElementById('report-kpi-grid').innerHTML = '<div class="col-span-full text-center py-10 text-teal-600">正在從資料庫讀取數據...</div>';
-
-    try {
-        // A. 讀取活動基本資料 (名稱、預算)
-        const briefSnap = await getDoc(doc(db, "briefs", briefId));
-        const briefData = briefSnap.data();
-        
-        // 更新標題
-        document.getElementById('report-campaign-title').innerHTML = `
-            ${briefData.productName} 
-            <span class="text-sm ${briefData.status==='completed'?'bg-green-100 text-green-700':'bg-blue-100 text-blue-700'} px-2 py-1 rounded-full ml-2">
-                ● ${briefData.status}
-            </span>`;
-        document.getElementById('report-date-range').textContent = `${briefData.schedule.publishStart} ~ ${briefData.schedule.publishEnd}`;
-
-        // B. 讀取報表數據 (briefs/{id}/report/summary)
-        const reportRef = doc(db, "briefs", briefId, "report", "summary");
-        const reportSnap = await getDoc(reportRef);
-
-        let d = {}; 
-        if (reportSnap.exists()) {
-            d = reportSnap.data();
-        } else {
-            console.log("後台尚未填寫數據，顯示 0");
-            d = { emv:0, spend:0, reach:0, cpe:0 }; // 防止報錯
-        }
-
-        // C. 呼叫各個渲染函式
-        renderMoneyCards(d, briefData.budget); // 渲染 4 張大卡
-        renderCharts(d);                       // 渲染圖表
-        renderInsightsAndTable(d, briefId);    // 渲染 AI 與 榜單
-
-    } catch (e) {
-        console.error("讀取報告失敗", e);
-        alert("讀取失敗：" + e.message);
+    // A) 未選擇：清空畫面
+    if(!briefId){
+      if(document.getElementById('report-campaign-title')) document.getElementById('report-campaign-title').textContent = 'Campaign Report';
+      if(document.getElementById('report-date-range')) document.getElementById('report-date-range').textContent = '--/-- - --/--';
+      if(kpiGrid) kpiGrid.innerHTML = `<div class="col-span-full text-gray-400">請選擇一個結案活動以查看報告</div>`;
+      if(rawBox) rawBox.innerHTML = `<p class="text-gray-400">請先選擇活動。</p>`;
+      return;
     }
-};
+
+    // B) 更新網址（方便分享）
+    try{
+      const url = new URL(window.location.href);
+      url.searchParams.set("report", briefId);
+      history.replaceState({}, "", url.toString());
+    }catch(_){}
+
+    // C) Loading UI
+    if(kpiGrid) kpiGrid.innerHTML = `<div class="col-span-full text-gray-400">載入中...</div>`;
+    if(rawBox) rawBox.innerHTML = `<p class="text-gray-400">載入 report 資料夾中...</p>`;
+
+    try{
+      // 1) 讀取 brief 本體
+      const briefRef = doc(db, "briefs", briefId);
+      const briefSnap = await getDoc(briefRef);
+      if(!briefSnap.exists()){
+        if(kpiGrid) kpiGrid.innerHTML = `<div class="col-span-full text-red-500">找不到該活動</div>`;
+        return;
+      }
+      const briefData = briefSnap.data() || {};
+      const schedule = briefData.schedule || {};
+
+      // 2) Header 更新
+      const titleEl = document.getElementById('report-campaign-title');
+      if(titleEl){
+        const badgeCls = (briefData.status === 'completed')
+          ? 'bg-emerald-100 text-emerald-700'
+          : 'bg-slate-100 text-slate-700';
+        const badge = briefData.status ? `<span class="text-xs px-2 py-1 rounded-full ml-2 ${badgeCls}">● ${escapeHtml(briefData.status)}</span>` : '';
+        titleEl.innerHTML = `${escapeHtml(briefData.productName || briefData.title || 'Campaign Report')}${badge}`;
+      }
+      if(document.getElementById('report-date-range')){
+        const s = schedule.publishStart || '';
+        const e = schedule.publishEnd || schedule.closingDate || '';
+        document.getElementById('report-date-range').textContent = (s && e) ? `${s} ~ ${e}` : '--/-- - --/--';
+      }
+
+      // 3) 同步日期欄位（提供使用者檢視/調整）
+      const fromEl = document.getElementById('reportFrom');
+      const toEl = document.getElementById('reportTo');
+      if(fromEl) fromEl.value = schedule.publishStart || '';
+      if(toEl)   toEl.value   = schedule.publishEnd || schedule.closingDate || '';
+
+      // 4) 讀取報表數據 (briefs/{id}/report/summary)
+      const reportRef = doc(db, "briefs", briefId, "report", "summary");
+      const reportSnap = await getDoc(reportRef);
+
+      if(!reportSnap.exists()){
+        if(kpiGrid) kpiGrid.innerHTML = `<div class="col-span-full text-gray-400">此活動尚無結案報告（report/summary 不存在）</div>`;
+      }else{
+        const d = reportSnap.data() || {};
+
+        // 4-1) KPI / 圖表 / AI Insights / Influencer 表格
+        if(typeof renderMoneyCards === "function") renderMoneyCards(d, briefData.budget);
+        if(typeof renderCharts === "function") renderCharts(d);
+        if(typeof renderAiInsights === "function") renderAiInsights(d);
+        if(typeof renderInsightsAndTable === "function") await renderInsightsAndTable(d, briefId);
+      }
+
+      // 5) 顯示 report 資料夾內所有文件（符合「report 資料夾數據」需求）
+      if(typeof window.loadReportFolderDocs === "function"){
+        await window.loadReportFolderDocs(briefId);
+      }
+
+    }catch(err){
+      console.error("[loadReportData] failed:", err);
+      if(kpiGrid) kpiGrid.innerHTML = `<div class="col-span-full text-red-500">載入失敗：${escapeHtml(err?.message || "unknown")}</div>`;
+      if(rawBox) rawBox.innerHTML = `<p class="text-red-500">載入失敗：${escapeHtml(err?.message || "unknown")}</p>`;
+    }
+  };
+
+  // ---------- 報告 Header 按鈕（分享 / 下載 PDF / 原始資料刷新） ----------
+  window.bindReportHeaderActions = function(){
+    const pdfBtn = document.getElementById('reportPdfBtn');
+    if(pdfBtn && !pdfBtn.__bound){
+      pdfBtn.__bound = true;
+      pdfBtn.addEventListener('click', () => window.print());
+    }
+
+    const shareBtn = document.getElementById('reportShareBtn');
+    if(shareBtn && !shareBtn.__bound){
+      shareBtn.__bound = true;
+      shareBtn.addEventListener('click', async () => {
+        try{
+          const sel = document.getElementById('report-campaign-select');
+          const briefId = sel?.value || "";
+          const url = new URL(window.location.href);
+          if(briefId) url.searchParams.set("report", briefId);
+
+          // 優先使用原生 Share（行動裝置體驗佳）
+          if(navigator.share){
+            await navigator.share({ title: "Campaign Report", url: url.toString() });
+            return;
+          }
+
+          // 否則複製連結
+          await navigator.clipboard.writeText(url.toString());
+          alert('已複製報告連結');
+        }catch(e){
+          alert('無法自動分享/複製，請手動複製網址。');
+        }
+      });
+    }
+
+    const rawRefresh = document.getElementById('reportRawRefreshBtn');
+    if(rawRefresh && !rawRefresh.__bound){
+      rawRefresh.__bound = true;
+      rawRefresh.addEventListener('click', () => {
+        const sel = document.getElementById('report-campaign-select');
+        if(sel?.value && typeof window.loadReportFolderDocs === "function"){
+          window.loadReportFolderDocs(sel.value);
+        }
+      });
+    }
+  };
+
+  // ---------- 顯示 briefs/{id}/report 內所有文件（原始資料） ----------
+  window.loadReportFolderDocs = async function(briefId){
+    const box = document.getElementById('report-rawdata');
+    if(!box) return;
+
+    if(!briefId){
+      box.innerHTML = `<p class="text-gray-400">請先選擇活動。</p>`;
+      return;
+    }
+
+    box.innerHTML = `<p class="text-gray-400">讀取中...</p>`;
+
+    try{
+      const snap = await getDocs(collection(db, "briefs", briefId, "report"));
+      if(snap.empty){
+        box.innerHTML = `<p class="text-gray-400">report 資料夾尚無資料</p>`;
+        return;
+      }
+
+      const items = snap.docs.map(d => ({ id: d.id, data: d.data() || {} }))
+        .sort((a,b) => a.id.localeCompare(b.id));
+
+      box.innerHTML = items.map(it => `
+        <details class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <summary class="cursor-pointer font-semibold text-slate-800">${escapeHtml(it.id)}</summary>
+          <div class="mt-3">
+            <div class="text-xs text-slate-500 mb-2">鍵值預覽：${escapeHtml(Object.keys(it.data || {}).slice(0, 12).join(", "))}${Object.keys(it.data||{}).length>12 ? "…" : ""}</div>
+            <pre class="text-xs overflow-auto whitespace-pre-wrap bg-white border border-slate-200 rounded p-3">${escapeHtml(JSON.stringify(it.data, null, 2))}</pre>
+          </div>
+        </details>
+      `).join("");
+    }catch(err){
+      console.error("[loadReportFolderDocs] failed:", err);
+      box.innerHTML = `<p class="text-red-500">讀取 report 資料夾失敗：${escapeHtml(err?.message || "unknown")}</p>`;
+    }
+  };
+
+  // ---------- 基本 HTML escape（避免資料中含有 < > 造成版面/安全問題） ----------
+  function escapeHtml(input){
+    return String(input ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+ 
 
 // 3. 渲染四大卡片 (The Money Cards)
 function renderMoneyCards(d, totalBudget) {
@@ -5928,6 +6211,47 @@ function formatReportNumber(num) {
 }
 
 
+
+
+    // ============================
+    // v3（本次補強）：成效報告 Header 按鈕行為（分享 / 下載PDF）
+    // ============================
+    (function setupReportHeaderActions(){
+      const shareBtn = document.getElementById('reportShareBtn');
+      const pdfBtn   = document.getElementById('reportPdfBtn');
+      if (shareBtn && !shareBtn.__bound) {
+        shareBtn.__bound = true;
+        shareBtn.addEventListener('click', async () => {
+          try {
+            const sel = document.getElementById('report-campaign-select');
+            const briefId = sel?.value || '';
+            const url = new URL(location.href);
+            if (briefId) url.searchParams.set('report', briefId);
+            const shareData = {
+              title: document.getElementById('report-campaign-title')?.innerText || 'Campaign Report',
+              text: '結案成效報告連結',
+              url: url.toString()
+            };
+            if (navigator.share) {
+              await navigator.share(shareData);
+            } else if (navigator.clipboard) {
+              await navigator.clipboard.writeText(shareData.url);
+              alert('已複製分享連結到剪貼簿');
+            } else {
+              prompt('請手動複製連結：', shareData.url);
+            }
+          } catch (err) {
+            console.error('[reportShareBtn] failed:', err);
+            alert('分享失敗：' + (err?.message || err));
+          }
+        });
+      }
+      if (pdfBtn && !pdfBtn.__bound) {
+        pdfBtn.__bound = true;
+        // 最穩定：呼叫瀏覽器列印，使用者可「另存為 PDF」
+        pdfBtn.addEventListener('click', () => window.print());
+      }
+    })();
 </script>
 
 
