@@ -1505,6 +1505,16 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
       })();
     </script>
 
+    <script>
+  function toggleTopNav() {
+    // 找到剛剛設定好 id 的選單區塊
+    var nav = document.getElementById('mobile-nav-collapse');
+    // 切換 active 樣式：如果沒有就加上去(顯示)，如果有了就拿掉(隱藏)
+    nav.classList.toggle('active');
+  }
+</script>
+
+
 
     <div id="bg-anim" style="display:none" aria-hidden="true"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
 
@@ -1542,14 +1552,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
   </div>
 </nav>
 
-<script>
-  function toggleTopNav() {
-    // 找到剛剛設定好 id 的選單區塊
-    var nav = document.getElementById('mobile-nav-collapse');
-    // 切換 active 樣式：如果沒有就加上去(顯示)，如果有了就拿掉(隱藏)
-    nav.classList.toggle('active');
-  }
-</script>
+
                 <div class="text-4xl font-bold text-gray-800 mb-2">Influence<span class="text-teal-500">AI</span></div>
                 <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
                 <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
