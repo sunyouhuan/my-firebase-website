@@ -2642,39 +2642,46 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
     // === 新增：執行註冊的函式 (給 register-view 使用) ===
         window.handlePerformRegistration = async function() {
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            const confirmPassword = document.getElementById('register-password-confirm').value;
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value;
+    const confirmPassword = document.getElementById('register-password-confirm').value;
+    const agreeTerms = document.getElementById('agree-terms');
 
-            if (!email || !password || !confirmPassword) {
-                alert('請填寫所有欄位！');
-                return;
-            }
-            if (password !== confirmPassword) {
-                alert('兩次輸入的密碼不一致！');
-                return;
-            }
-            if (password.length < 6) {
-                alert('密碼長度至少需要 6 個字元。');
-                return;
-            }
+    if (!email || !password || !confirmPassword) {
+        alert('請填寫所有欄位！');
+        return;
+    }
 
-            try {
-                // 使用我們匯入的 createUserWithEmailAndPassword
-                await createUserWithEmailAndPassword(auth, email, password);
-                alert('註冊成功！將為您導向登入頁面。');
-                navigateTo('login-view'); // 註冊成功後跳回登入頁
-                document.getElementById('register-form').reset(); // 清空註冊表單
-                document.getElementById('email').value = email; // 貼心地幫使用者填上 email
-            } catch (error) {
-                console.error("註冊失敗:", error);
-                if (error.code === 'auth/email-already-in-use') {
-                    alert('註冊失敗：這個 Email 已經被註冊了。');
-                } else {
-                    alert('註冊失敗：' + error.message);
-                }
-            }
-        };
+    if (!agreeTerms || !agreeTerms.checked) {
+        alert('請先閱讀並同意使用條款與隱私權保護政策。');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        alert('兩次輸入的密碼不一致！');
+        return;
+    }
+
+    if (password.length < 6) {
+        alert('密碼長度至少需要 6 個字元。');
+        return;
+    }
+
+    try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert('註冊成功！將為您導向登入頁面。');
+        navigateTo('login-view');
+        document.getElementById('register-form').reset();
+        document.getElementById('email').value = email;
+    } catch (error) {
+        console.error("註冊失敗:", error);
+        if (error.code === 'auth/email-already-in-use') {
+            alert('註冊失敗：這個 Email 已經被註冊了。');
+        } else {
+            alert('註冊失敗：' + error.message);
+        }
+    }
+};
 
         // === 新增：處理忘記密碼的函式 ===
         window.handleForgotPassword = async function() {
