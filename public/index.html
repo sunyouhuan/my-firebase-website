@@ -1131,6 +1131,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     font-weight: 800;
     color: #0f172a;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .top-navbar-logo span {
@@ -1140,30 +1141,31 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
   .top-navbar-menu {
     display: flex;
     align-items: center;
-    gap: 15px;
-    flex-wrap: wrap;
+    gap: 28px;
+    flex-wrap: nowrap;
   }
 
   .top-navbar-menu a {
     text-decoration: none;
     color: #334155;
-    font-weight: 600;
-    font-size: 1.15rem;
-    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 10px 6px;
     border-radius: 9999px;
     transition: all 0.2s ease;
+    white-space: nowrap;
   }
 
   .top-navbar-menu a:hover {
-    background: #f1f5f9;
     color: #0f172a;
   }
 
   .top-navbar-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .nav-btn-outline {
@@ -1195,24 +1197,94 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     background: #0f766e;
   }
 
-  /* 手機版 */
-  @media (max-width: 1024px) {
+  /* ===== 平板 ===== */
+  @media (max-width: 1100px) {
     .top-navbar-inner {
       flex-direction: column;
       align-items: stretch;
       gap: 14px;
+      padding: 16px 20px;
+    }
+
+    .top-navbar-logo {
+      text-align: center;
     }
 
     .top-navbar-menu {
       justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px 28px;
     }
 
     .top-navbar-actions {
       justify-content: center;
+      flex-wrap: wrap;
     }
   }
 
-  /* 暗色模式 */
+  /* ===== 手機版 ===== */
+  @media (max-width: 768px) {
+    .top-navbar {
+      position: static;   /* 關鍵：手機不要 fixed，避免一直壓著內容 */
+    }
+
+    .top-navbar-inner {
+      padding: 18px 16px;
+      gap: 18px;
+    }
+
+    .top-navbar-logo {
+      font-size: 1.2rem;
+      text-align: left;
+    }
+
+    .top-navbar-menu {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 20px;
+      width: 100%;
+      justify-items: center;
+    }
+
+    .top-navbar-menu a {
+      font-size: 0.95rem;
+      padding: 4px 0;
+      text-align: center;
+    }
+
+    .top-navbar-actions {
+      width: 100%;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .nav-btn-outline,
+    .nav-btn-solid {
+      padding: 12px 20px;
+      font-size: 0.95rem;
+    }
+  }
+
+  /* ===== 超小手機 ===== */
+  @media (max-width: 480px) {
+    .top-navbar-menu {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .top-navbar-actions {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn-outline,
+    .nav-btn-solid {
+      min-width: 140px;
+      text-align: center;
+    }
+  }
+
+  /* ===== Dark Mode ===== */
   html.dark .top-navbar {
     background: rgba(15, 23, 42, 0.82);
     border-bottom: 1px solid rgba(148, 163, 184, 0.18);
@@ -1232,7 +1304,6 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
   }
 
   html.dark .top-navbar-menu a:hover {
-    background: rgba(51, 65, 85, 0.65);
     color: #ffffff;
   }
 
@@ -1242,17 +1313,17 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     color: #e2e8f0;
   }
 
-  html.dark .nav-btn-outline:hover {
-    background: rgba(51, 65, 85, 0.85);
-  }
-
   html.dark .nav-btn-solid {
     background: #818cf8;
     color: #ffffff;
   }
+</style>
 
-  html.dark .nav-btn-solid:hover {
-    background: #6366f1;
+<style>
+  @media (max-width: 768px) {
+    #login-view .min-h-screen {
+      padding-top: 24px !important;
+    }
   }
 </style>
 
