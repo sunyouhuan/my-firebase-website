@@ -1,20 +1,5 @@
 <!DOCTYPE html>
-<!--
-  檔名：12.html (v3)
-  說明：
-  1. [行銷活動] "建立新活動" 的彈出式表單 (new-campaign-modal) 中，新增圖片上傳區塊。
-     - 包含一個 <input type="file" multiple>
-     - 一個 "上傳選取的圖片" 按鈕
-     - 一個預覽區域 (image-preview-area)
-     - 一個進度條與狀態文字
-  2. [JS] 新增 let uploadedImageUrls = [] 暫存陣列。
-  3. [JS] 新增 handleUplorderBy("createdAt", "desc"));oadCampaignImages() 函式，處理多檔案上傳至 Firebase Storage，並將回傳的 URL 存入暫存陣列，同時顯示預覽圖。
-  4. [JS] 修改 handleSaveBrief()，將暫存的 uploadedImageUrls 陣列一併存入 Firestore 的 briefs 文件中 (欄位為 imageUrls)。
-  5. [JS] 修改 closeModal()，在關閉 "new-campaign-modal" 時，自動清空 uploadedImageUrls 暫存陣列與圖片預覽區。
-  6. [JS] 修改 renderCampaigns()，讓行銷活動卡片會抓取 imageUrls[0] (第一張圖) 作為封面圖顯示。
-  7. [JS] 修改 showCampaignDetail()，在活動詳情頁中，顯示所有上傳的行銷圖片。
-  8. [表單滾輪] 彈出式表單的內容區塊本來就有 overflow-y-auto，在新增圖片預覽後，內容變長，滾輪會自動生效。
--->
+
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
@@ -1116,6 +1101,311 @@ body.glow-on #bg-anim{opacity:1;}
 body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 </style>
 
+<style>
+  /* ===== Top Navbar ===== */
+  .top-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1200;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  }
+
+  .top-navbar-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .top-navbar-logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+  }
+
+  .top-navbar-logo span {
+    color: #0d9488;
+  }
+
+  .top-navbar-menu {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  .top-navbar-menu a {
+    text-decoration: none;
+    color: #334155;
+    font-weight: 600;
+    font-size: 1.15rem;
+    padding: 10px 14px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+  }
+
+  .top-navbar-menu a:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  .top-navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+  }
+
+  .nav-btn-outline {
+    text-decoration: none;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    padding: 10px 16px;
+    border-radius: 9999px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    background: #ffffff;
+  }
+
+  .nav-btn-outline:hover {
+    background: #f8fafc;
+  }
+
+  .nav-btn-solid {
+    text-decoration: none;
+    background: #0d9488;
+    color: #ffffff;
+    padding: 10px 16px;
+    border-radius: 9999px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+  }
+
+  .nav-btn-solid:hover {
+    background: #0f766e;
+  }
+
+  /* 手機版 */
+  @media (max-width: 1024px) {
+    .top-navbar-inner {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+    }
+
+    .top-navbar-menu {
+      justify-content: center;
+    }
+
+    .top-navbar-actions {
+      justify-content: center;
+    }
+  }
+
+  /* 暗色模式 */
+  html.dark .top-navbar {
+    background: rgba(15, 23, 42, 0.82);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 0 8px 30px rgba(2, 6, 23, 0.28);
+  }
+
+  html.dark .top-navbar-logo {
+    color: #f8fafc;
+  }
+
+  html.dark .top-navbar-logo span {
+    color: #a78bfa;
+  }
+
+  html.dark .top-navbar-menu a {
+    color: #cbd5e1;
+  }
+
+  html.dark .top-navbar-menu a:hover {
+    background: rgba(51, 65, 85, 0.65);
+    color: #ffffff;
+  }
+
+  html.dark .nav-btn-outline {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(148, 163, 184, 0.3);
+    color: #e2e8f0;
+  }
+
+  html.dark .nav-btn-outline:hover {
+    background: rgba(51, 65, 85, 0.85);
+  }
+
+  html.dark .nav-btn-solid {
+    background: #818cf8;
+    color: #ffffff;
+  }
+
+  html.dark .nav-btn-solid:hover {
+    background: #6366f1;
+  }
+</style>
+
+<style>
+  /* ===== Global footer ===== */
+  .site-footer {
+    margin-top: 72px;
+    background: #2f3347;
+    color: #e5e7eb;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .site-footer-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 56px 24px 28px;
+  }
+
+  .site-footer-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1.5fr 1fr 1.3fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .site-footer-brand {
+    max-width: 520px;
+  }
+
+  .site-footer-logo {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 22px;
+    letter-spacing: -0.02em;
+  }
+
+  .site-footer-logo span {
+    color: #8b5cf6;
+  }
+
+  .site-footer-desc {
+    color: #d1d5db;
+    font-size: 1rem;
+    line-height: 1.95;
+    margin-bottom: 22px;
+  }
+
+  .site-footer-contact {
+    color: #f3f4f6;
+    line-height: 1.9;
+    font-size: 1rem;
+    margin-bottom: 24px;
+  }
+
+  .site-footer-title {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 18px;
+  }
+
+  .site-footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .site-footer-links a {
+    color: #e5e7eb;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .site-footer-links a:hover {
+    color: #a78bfa;
+    transform: translateX(2px);
+  }
+
+  .site-footer-socials {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .site-footer-socials a {
+    width: 46px;
+    height: 46px;
+    border-radius: 9999px;
+    background: #ffffff;
+    color: #2f3347;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+  }
+
+  .site-footer-socials a:hover {
+    transform: translateY(-2px);
+    background: #c4b5fd;
+    color: #1f2937;
+  }
+
+  .site-footer-divider {
+    margin: 34px 0 22px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .site-footer-bottom {
+    color: #d1d5db;
+    font-size: 0.98rem;
+  }
+
+  @media (max-width: 1100px) {
+    .site-footer-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .site-footer-inner {
+      padding: 40px 20px 24px;
+    }
+
+    .site-footer-grid {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+
+    .site-footer-logo {
+      font-size: 2rem;
+    }
+
+    .site-footer-title {
+      font-size: 1.25rem;
+      margin-bottom: 14px;
+    }
+  }
+</style>
+
+
+
+
+
 </head>
 <body>
     <!-- ✅ 本機 file:// 開啟時的提示（避免 ES Module / Firebase 無法載入） -->
@@ -1194,7 +1484,28 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 <div id="app">
 
         <div id="login-view" class="view active">
-            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
+           <div class="min-h-screen bg-slate-100 flex flex-col items-center p-4 pt-28">
+            <!-- ===== Top Navbar ===== -->
+<nav class="top-navbar">
+  <div class="top-navbar-inner">
+    <div class="top-navbar-logo">
+      Influence<span>AI</span>
+    </div>
+
+    <div class="top-navbar-menu">
+      <a href="solution_1.html"> 最新AI資訊 </a>
+      <a href="solution_2.html">成功案例</a>
+      <a href="solution_3.html">關於我們</a>
+      <a href="solution_4.html">使用指南</a>
+      <a href="solution_5.html">專人客服/免費諮詢</a>
+    </div>
+
+    <div class="top-navbar-actions">
+      <a href="#" class="nav-btn-outline" onclick="handleLogin(); return false;">登入</a>
+      <a href="solution-contact.html" class="nav-btn-solid">註冊新帳號</a>
+    </div>
+  </div>
+</nav>
                 <div class="text-4xl font-bold text-gray-800 mb-2">Influence<span class="text-teal-500">AI</span></div>
                 <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
                 <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
@@ -1379,10 +1690,69 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         </section>
 
 </div>
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="site-footer-grid">
+      <div class="site-footer-brand">
+        <div class="site-footer-logo">Influence<span>AI</span></div>
+
+        <div class="site-footer-contact">
+          盈賦科技有限公司<br>
+          統一編號｜60321229<br>
+          聯絡電話｜(09) 65586609 <br>
+          客戶服務信箱｜influenceai@influenceai.tw<br>
+        </div>
+
+
+      </div>
+
+      <div>
+        <div class="site-footer-title"> 簡介 </div>
+        <div class="site-footer-links">
+          <p class="site-footer-desc">
+          盈賦科技旗下 InfluenceAI 提供 AI 驅動的網紅行銷與創作者媒合服務，結合資料分析、成效預測、
+          專案管理與合作流程設計，協助品牌更有效率地找到合適的創作者，並提升整體行銷成果。
+        </p>
+        </div>
+      </div>
+
+      <div>
+        <div class="site-footer-title">關於我們</div>
+        <div class="site-footer-links">
+          <a href="solution-livestream.html">公司資訊</a>
+          <a href="solution-koc.html">專案服務\成功案例</a>
+          <a href="solution-youtube.html">成功案例</a>
+          <a href="terms.html">使用條款</a>
+          <a href="privacy.html">隱私權政策</a>
+          <a href="contact.html">聯絡我們</a>
+        </div>
+      </div>
+
+
+
+      <div>
+        <div class="site-footer-title">產品服務</div>
+        <div class="site-footer-links">
+          <a href="index.html">InfluenceAI</a>
+          <a href="solution-wordofmouth.html">中短期高曝光廣告服務</a>
+          <a href="solution-koc.html">網紅專案</a>
+          <a href="solution-youtube.html">影音行銷</a>
+          <a href="solution-youtube.html">AI置入行銷</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="site-footer-divider"></div>
+
+    <div class="site-footer-bottom">
+      Copyright © 2026 InfluenceAI All Rights Reserved.
+    </div>
+  </div>
+</footer>
         </div>
         
         <div id="register-view" class="view">
-            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
+            <div class="min-h-screen bg-slate-100 flex flex-col items-center p-4 pt-28">
                 <div class="text-4xl font-bold text-gray-800 mb-2">Influence<span class="text-teal-500">AI</span></div>
                 <p class="text-gray-600 mb-8">建立您的 AI 行銷帳號</p>
                 
