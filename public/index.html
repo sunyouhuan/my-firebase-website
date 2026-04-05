@@ -1164,7 +1164,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
   .top-navbar-menu {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 13px;
   }
 
   .top-navbar-menu a {
@@ -1429,7 +1429,25 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
   }
 </style>
 
+<script>
+    // 1. 網頁載入時，立即檢查設備的系統設定
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // 如果使用者的手機/電腦是暗色模式，就在 HTML 標籤加上 'dark'
+        document.documentElement.classList.add('dark');
+    } else {
+        // 否則就移除 'dark'，保持亮色模式
+        document.documentElement.classList.remove('dark');
+    }
 
+    // 2. (進階功能) 當使用者在使用網頁的途中，把手機從亮色切換成暗色時，網頁也會跟著秒切換！
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+        if (event.matches) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    });
+</script>
 
 
 
@@ -1848,18 +1866,169 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
 
         <div id="role-selection-view" class="view">
-            <div class="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-                <h1 class="text-4xl font-bold text-gray-800 mb-2 relative z-10">Influence<span class="text-teal-500">AI</span></h1>
-                <p class="text-gray-600 mb-8 relative z-10">用 AI 預見行銷成效</p>
-                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
-                    <h2 class="text-2xl font-bold text-center text-slate-800">請選擇您的身分</h2>
-                    <div class="flex flex-col space-y-4">
-                        <button onclick="enterDashboard('merchant')" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors">我是商家</button>
-                        <button onclick="enterDashboard('influencer')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">我是網紅</button>
+    <style>
+        /* 科技流光邊框動畫 */
+        @keyframes tech-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 網格背景緩動 */
+        @keyframes grid-move {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 20px; }
+        }
+        
+        .tech-card-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.25rem; /* 20px */
+            padding: 2px; /* 留給發光邊框的空間 */
+            transform: translateZ(0); 
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.5s ease;
+        }
+
+        .tech-card-wrapper:hover {
+            transform: translateY(-6px) scale(1.02);
+        }
+
+        /* 隱藏的旋轉漸層光束 (通用設定) */
+        .tech-card-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            animation: tech-spin 3s linear infinite;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 0;
+        }
+
+        .tech-card-wrapper:hover::before {
+            opacity: 1; 
+        }
+
+        /* 實體白/深色 卡片內層 (通用設定) */
+        .tech-card-inner {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            border-radius: calc(1.25rem - 2px);
+            background-color: #ffffff;
+            background-size: 16px 16px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .tech-card-wrapper:hover .tech-card-inner {
+            animation: grid-move 3s linear infinite;
+        }
+        
+        html.dark .tech-card-inner {
+            background-color: #0f172a; /* slate-900 */
+        }
+
+        /* ====== 商家專屬主題 (藍色系) ====== */
+        .merchant-theme:hover {
+            box-shadow: 0 20px 40px -12px rgba(59, 130, 246, 0.35); /* 藍色高級發光陰影 */
+        }
+        .merchant-theme::before {
+            background: conic-gradient(from 0deg, transparent 70%, #93c5fd 80%, #3b82f6 100%);
+        }
+        html.dark .merchant-theme::before {
+            background: conic-gradient(from 0deg, transparent 70%, #3b82f6 80%, #60a5fa 100%);
+        }
+        .merchant-theme .tech-card-inner {
+            background-image: radial-gradient(#dbeafe 1px, transparent 1px); /* 淺藍色網格 */
+        }
+        html.dark .merchant-theme .tech-card-inner {
+            background-image: radial-gradient(#1e3a8a 1px, transparent 1px); /* 深色模式藍網格 */
+        }
+
+        /* ====== 網紅專屬主題 (藍綠色系) ====== */
+        .influencer-theme:hover {
+            box-shadow: 0 20px 40px -12px rgba(20, 184, 166, 0.35); /* 藍綠色高級發光陰影 */
+        }
+        .influencer-theme::before {
+            background: conic-gradient(from 0deg, transparent 70%, #5eead4 80%, #14b8a6 100%);
+        }
+        html.dark .influencer-theme::before {
+            background: conic-gradient(from 0deg, transparent 70%, #14b8a6 80%, #2dd4bf 100%);
+        }
+        .influencer-theme .tech-card-inner {
+            background-image: radial-gradient(#ccfbf1 1px, transparent 1px); /* 淺綠色網格 */
+        }
+        html.dark .influencer-theme .tech-card-inner {
+            background-image: radial-gradient(#134e4a 1px, transparent 1px); /* 深色模式綠網格 */
+        }
+    </style>
+
+    <div class="min-h-screen relative flex flex-col justify-center items-center p-4">
+        
+        <div class="p-6 text-4xl font-bold text-gray-800 border-b mb-4">Influence<span class="text-teal-500 logo-accent">AI</span></div>
+        
+        <div class="mb-8 text-center">
+            <h2 class="text-2xl md:text-3xl font-black text-gray-800 mb-2 tracking-tight">選擇您的身份</h2>
+      <!--      <p class="text-gray-500 text-sm md:text-base font-medium">系統將根據您的角色，載入專屬的 AI 分析模組與資料庫</p>  -->
+        </div>
+        
+        <div class="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto">
+            
+            <div onclick="enterDashboard('merchant')" class="tech-card-wrapper merchant-theme cursor-pointer group">
+                <div class="tech-card-inner p-6 flex flex-col items-center text-center">
+                    
+                    <div class="relative w-16 h-16 mb-5 flex items-center justify-center">
+                        <div class="absolute inset-0 bg-blue-200 dark:bg-blue-900/50 rounded-xl transform rotate-3 group-hover:rotate-6 transition-transform duration-300 blur-[2px]"></div>
+                        
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg border border-blue-300/50 rounded-xl flex items-center justify-center transform -rotate-3 group-hover:-rotate-0 transition-transform duration-300">
+                            
+                            <svg class="w-8 h-8 text-white drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-blue-600 dark:text-blue-400 mb-2 transition-colors">品牌 / 商家</h3>
+                    <p class="text-sm text-gray-800 mb-6 flex-1 leading-relaxed">
+                        調用 MatchAI 演算法。發布需求、預估成效，以資料驅動的方式精準媒合高轉換創作者。
+                    </p>
+                    
+                    <div class="w-full py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl font-bold text-white shadow-md group-hover:shadow-[0_8px_20px_-6px_rgba(59,130,246,0.6)] transform transition-all duration-300 flex items-center justify-center text-sm border border-blue-400/50">
+                        初始化商家環境 
+                        <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                     </div>
                 </div>
             </div>
+
+            <div onclick="enterDashboard('merchant')" class="tech-card-wrapper merchant-theme cursor-pointer group">
+                <div class="tech-card-inner p-6 flex flex-col items-center text-center">
+                    
+                    <div class="relative w-16 h-16 mb-5 flex items-center justify-center">
+                        <div class="absolute inset-0 bg-teal-200 dark:bg-teal-900/50 rounded-xl transform -rotate-3 group-hover:-rotate-6 transition-transform duration-300 blur-[2px]"></div>
+                        
+                        <div class="absolute inset-0 bg-gradient-to-br from-teal-400 to-teal-600 shadow-lg border border-teal-300/50 rounded-xl flex items-center justify-center transform rotate-3 group-hover:rotate-0 transition-transform duration-300">
+                            
+                            <svg class="w-8 h-8 text-white drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-teal-600 dark:text-teal-400 mb-2 transition-colors">創作者 / 網紅</h3>
+                    <p class="text-sm text-gray-800 mb-6 flex-1 leading-relaxed">
+                        開放社群 API 授權。建立您的影響力數據模型，接收高適配度的自動化合作訂單。
+                    </p>
+                    
+                    <div class="w-full py-2.5 bg-gradient-to-r from-teal-400 to-teal-500 rounded-xl font-bold text-white shadow-md group-hover:shadow-[0_8px_20px_-6px_rgba(45,212,191,0.6)] transform transition-all duration-300 flex items-center justify-center text-sm border border-teal-300/50">
+                        初始化創作者環境 
+                        <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    </div>
+                </div>
+            </div>
+
         </div>
+    </div>
+</div>
+
+
+
 
         <div id="merchant-dashboard-view" class="view">
             <div class="flex h-screen bg-slate-50">
