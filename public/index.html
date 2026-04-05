@@ -1402,6 +1402,16 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             <input id="register-password-confirm" name="password-confirm" type="password" autocomplete="new-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-teal-500 focus:border-teal-500">
                         </div>
                         
+                        <div class="flex items-start pt-2">
+                            <div class="flex items-center h-5">
+                                <input id="agree-terms" type="checkbox" class="w-4 h-4 border border-gray-300 rounded bg-white focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                            </div>
+                            <label for="agree-terms" class="ml-2 text-sm text-gray-600 cursor-pointer">
+                                我已閱讀並同意 
+                                <a href="#" onclick="openModal('terms-modal')" class="font-medium text-teal-600 hover:text-teal-500 hover:underline">使用條款</a> 與 
+                                <a href="#" onclick="openModal('privacy-modal')" class="font-medium text-teal-600 hover:text-teal-500 hover:underline">隱私權保護政策</a>
+                            </label>
+                        </div>
                         <div class="flex flex-col space-y-2 pt-2">
                             <button type="button" onclick="handlePerformRegistration()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">
                                 建立帳號
@@ -2544,6 +2554,44 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                 </div>
             </div>
         </div>
+
+    <div id="terms-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh]">
+            <div class="p-5 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
+                <h2 class="text-xl font-bold text-slate-800">使用條款 (Terms of Service)</h2>
+                <button onclick="closeModal('terms-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            
+            <div class="flex-1 w-full bg-white relative">
+                <iframe src="terms.html" class="absolute inset-0 w-full h-full border-0"></iframe>
+            </div>
+
+            <div class="p-5 border-t bg-slate-50 rounded-b-xl flex justify-end">
+                <button onclick="closeModal('terms-modal')" class="px-6 py-2 bg-teal-600 text-white font-bold rounded-lg hover:bg-teal-700 transition-colors">
+                    我已了解
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="privacy-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh]">
+            <div class="p-5 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
+                <h2 class="text-xl font-bold text-slate-800">隱私權保護政策 (Privacy Policy)</h2>
+                <button onclick="closeModal('privacy-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            
+            <div class="flex-1 w-full bg-white relative">
+                <iframe src="privacy.html" class="absolute inset-0 w-full h-full border-0"></iframe>
+            </div>
+
+            <div class="p-5 border-t bg-slate-50 rounded-b-xl flex justify-end">
+                <button onclick="closeModal('privacy-modal')" class="px-6 py-2 bg-teal-600 text-white font-bold rounded-lg hover:bg-teal-700 transition-colors">
+                    我已了解
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- 
       v2 (本次修改): 
