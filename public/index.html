@@ -1128,7 +1128,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
   }
 
   .top-navbar-logo {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: 800;
     color: #0f172a;
     white-space: nowrap;
@@ -1153,13 +1153,14 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
   }
 
   /* ✅ 新增：包裹選單與按鈕的容器 */
-  .top-navbar-collapse {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-grow: 1;
-    margin-left: 20px;
-  }
+.top-navbar-collapse {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* 將選單和按鈕推向右邊 */
+  gap: 40px; /* 👈 新增這行，控制「選單區」與「註冊按鈕」之間的距離 */
+  flex-grow: 1;
+  margin-left: 40px;
+}
 
   .top-navbar-menu {
     display: flex;
@@ -1171,7 +1172,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     text-decoration: none;
     color: #334155;
     font-weight: 600;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     padding: 10px 14px;
     border-radius: 9999px;
     transition: all 0.2s ease;
@@ -1449,6 +1450,17 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     });
 </script>
 
+<style>
+    /* 新增客服對話泡泡的動畫 */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up {
+        animation: fadeInUp 0.3s ease forwards;
+    }
+</style>
+
 
 
 </head>
@@ -1563,8 +1575,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         </div>
 
         <div class="top-navbar-actions">
-          <a href="#" class="nav-btn-outline" onclick="handleLogin(); return false;">登入</a>
-          <a href="solution-contact.html" class="nav-btn-solid">註冊新帳號</a>
+          <button type="button" onclick="navigateTo('register-view')" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">註冊新帳號</button>
         </div>
     </div>
   </div>
@@ -1962,11 +1973,14 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
     <div class="min-h-screen relative flex flex-col justify-center items-center p-4">
         
-        <div class="p-6 text-4xl font-bold text-gray-800 border-b mb-4">Influence<span class="text-teal-500 logo-accent">AI</span></div>
-        
+             <div class="text-4xl font-bold text-gray-800 mb-2">Influence<span class="text-teal-500">AI</span></div>
+                <p class="text-gray-600 mb-8">用 AI 預見行銷成效</p>
+
+
+
         <div class="mb-8 text-center">
             <h2 class="text-2xl md:text-3xl font-black text-gray-800 mb-2 tracking-tight">選擇您的身份</h2>
-      <!--      <p class="text-gray-500 text-sm md:text-base font-medium">系統將根據您的角色，載入專屬的 AI 分析模組與資料庫</p>  -->
+
         </div>
         
         <div class="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto">
@@ -1997,7 +2011,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                 </div>
             </div>
 
-            <div onclick="enterDashboard('merchant')" class="tech-card-wrapper merchant-theme cursor-pointer group">
+            <div onclick="enterDashboard('influencer')" class="tech-card-wrapper influencer-theme cursor-pointer group">
                 <div class="tech-card-inner p-6 flex flex-col items-center text-center">
                     
                     <div class="relative w-16 h-16 mb-5 flex items-center justify-center">
@@ -2024,6 +2038,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             </div>
 
         </div>
+
     </div>
 </div>
 
@@ -2040,6 +2055,13 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                         <a href="#" onclick="switchTab('merchant', 'reports')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">成效報告</a>
                         <a href="#" onclick="switchTab('merchant', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
                         <a href="#" onclick="switchTab('merchant', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
+                        <a href="#" onclick="switchTab('merchant', 'support')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold border-gray-100 mt-2">專人客服</a>
+
+                        <a href="#" onclick="startTutorial()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold border-b border-gray-100 mt-2 pt-4">操作教學</a>
+
+
+
+
                         <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
                         <button onclick="navigateTo('role-selection-view')" class="mt-4 ml-4 text-sm text-teal-600 border border-teal-800 px-6 py-2 rounded hover:bg-teal-50">⇄ 切換身分</button>
 
@@ -2333,79 +2355,131 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
 
                         <div id="merchant-settings-content" class="dashboard-content">
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- 表單 -->
-    <div class="bg-white rounded-xl shadow p-8 lg:col-span-2">
-      <h2 class="text-xl font-bold text-slate-800 mb-6">公司設定</h2>
-      <form id="company-form" class="space-y-5" onsubmit="return false;">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">公司名稱</label>
-          <input id="company-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：InfluenceAI Inc.">
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">統一編號</label>
-            <input id="company-regno" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：12345678">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">聯絡電話</label>
-            <input id="company-phone" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：02-1234-5678">
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">公司地址</label>
-          <input id="company-address" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：台北市大安區…">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">公司官網</label>
-          <input id="company-website" type="url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="https://example.com">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Logo 圖片 URL</label>
-          <input id="company-logo" type="url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="https://…/logo.png">
-          <p class="text-xs text-gray-500 mt-1">你也可以直接上傳檔案（如下），完成後會自動填入這個欄位。</p>
-        </div>
-        <div class="mt-3">
-          <label class="block text-sm font-medium text-gray-700">或上傳 Logo 檔案</label>
-          <input id="company-logo-file" type="file" accept="image/*" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-          <div class="flex items-center gap-3 mt-2">
-            <button id="upload-logo-btn" type="button" class="bg-teal-600 text-white font-semibold py-1.5 px-3 rounded hover:bg-teal-700" onclick="uploadCompanyLogo()">上傳 Logo</button>
-            <progress id="logo-upload-progress" value="0" max="100" class="w-40"></progress>
-            <span id="logo-upload-status" class="text-xs text-gray-600"></span>
-          </div>
-          <p class="text-xs text-gray-500 mt-1">上傳完成後，會自動把下載連結填入上面的「Logo 圖片 URL」。</p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">公司描述</label>
-          <textarea id="company-desc" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="簡述你的品牌與產品…"></textarea>
-        </div>
-        <div class="flex gap-3 pt-2">
-          <button id="company-save-btn" type="button" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800" onclick="handleSaveCompany()">儲存</button>
-          <button class="bg-gray-100 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-200" onclick="resetCompanyForm()">重設</button>
-          <span id="company-save-hint" class="text-sm text-gray-500 self-center hidden">已儲存！</span>
-        </div>
-      </form>
-    </div>
+                          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- 表單 -->
+                            <div class="bg-white rounded-xl shadow p-8 lg:col-span-2">
+                              <h2 class="text-xl font-bold text-slate-800 mb-6">公司設定</h2>
+                              <form id="company-form" class="space-y-5" onsubmit="return false;">
+                                <div>
+                                  <label class="block text-sm font-medium text-gray-700">公司名稱</label>
+                                  <input id="company-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：InfluenceAI Inc.">
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label class="block text-sm font-medium text-gray-700">統一編號</label>
+                                    <input id="company-regno" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：12345678">
+                                  </div>
+                                  <div>
+                                    <label class="block text-sm font-medium text-gray-700">聯絡電話</label>
+                                    <input id="company-phone" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：02-1234-5678">
+                                  </div>
+                                </div>
+                                <div>
+                                  <label class="block text-sm font-medium text-gray-700">公司地址</label>
+                                  <input id="company-address" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：台北市大安區…">
+                                </div>
+                                <div>
+                                  <label class="block text-sm font-medium text-gray-700">公司官網</label>
+                                  <input id="company-website" type="url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="https://example.com">
+                                </div>
+                                <div>
+                                  <label class="block text-sm font-medium text-gray-700">Logo 圖片 URL</label>
+                                  <input id="company-logo" type="url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="https://…/logo.png">
+                                  <p class="text-xs text-gray-500 mt-1">你也可以直接上傳檔案（如下），完成後會自動填入這個欄位。</p>
+                                </div>
+                                <div class="mt-3">
+                                  <label class="block text-sm font-medium text-gray-700">或上傳 Logo 檔案</label>
+                                  <input id="company-logo-file" type="file" accept="image/*" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                  <div class="flex items-center gap-3 mt-2">
+                                    <button id="upload-logo-btn" type="button" class="bg-teal-600 text-white font-semibold py-1.5 px-3 rounded hover:bg-teal-700" onclick="uploadCompanyLogo()">上傳 Logo</button>
+                                    <progress id="logo-upload-progress" value="0" max="100" class="w-40"></progress>
+                                    <span id="logo-upload-status" class="text-xs text-gray-600"></span>
+                                  </div>
+                                  <p class="text-xs text-gray-500 mt-1">上傳完成後，會自動把下載連結填入上面的「Logo 圖片 URL」。</p>
+                                </div>
+                                <div>
+                                  <label class="block text-sm font-medium text-gray-700">公司描述</label>
+                                  <textarea id="company-desc" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="簡述你的品牌與產品…"></textarea>
+                                </div>
+                                <div class="flex gap-3 pt-2">
+                                  <button id="company-save-btn" type="button" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800" onclick="handleSaveCompany()">儲存</button>
+                                  <button class="bg-gray-100 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-200" onclick="resetCompanyForm()">重設</button>
+                                  <span id="company-save-hint" class="text-sm text-gray-500 self-center hidden">已儲存！</span>
+                                </div>
+                              </form>
+                            </div>
 
-    <!-- 預覽 -->
-    <div class="bg-white rounded-xl shadow p-8">
-      <h3 class="font-bold text-slate-800 mb-4">即時預覽</h3>
-      <div id="company-preview" class="border rounded-lg p-4 flex items-start gap-4">
-        <img id="company-preview-logo" class="w-16 h-16 rounded-lg object-cover bg-slate-100" src="" alt="">
-        <div>
-          <div id="company-preview-name" class="text-lg font-bold text-slate-800">（尚未設定）</div>
-          <div id="company-preview-lines" class="text-sm text-gray-600 space-y-0.5">
-            <div id="preview-line-phone"></div>
-            <div id="preview-line-address"></div>
-            <a id="preview-line-website" class="text-teal-600 hover:underline" target="_blank" rel="noopener"></a>
-          </div>
-          <p id="company-preview-desc" class="text-sm text-gray-600 mt-2"></p>
+
+
+
+
+                            <!-- 預覽 -->
+                            <div class="bg-white rounded-xl shadow p-8">
+                              <h3 class="font-bold text-slate-800 mb-4">即時預覽</h3>
+                              <div id="company-preview" class="border rounded-lg p-4 flex items-start gap-4">
+                                <img id="company-preview-logo" class="w-16 h-16 rounded-lg object-cover bg-slate-100" src="" alt="">
+                                <div>
+                                  <div id="company-preview-name" class="text-lg font-bold text-slate-800">（尚未設定）</div>
+                                  <div id="company-preview-lines" class="text-sm text-gray-600 space-y-0.5">
+                                    <div id="preview-line-phone"></div>
+                                    <div id="preview-line-address"></div>
+                                    <a id="preview-line-website" class="text-teal-600 hover:underline" target="_blank" rel="noopener"></a>
+                                  </div>
+                                  <p id="company-preview-desc" class="text-sm text-gray-600 mt-2"></p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div id="merchant-support-content" class="dashboard-content">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col h-[calc(100vh-140px)] overflow-hidden">
+        
+        <div class="bg-gradient-to-r from-teal-500 to-teal-600 p-4 text-white flex justify-between items-center flex-shrink-0 shadow-sm z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-inner">👨‍💻</div>
+                <div>
+                    <h2 class="font-bold text-lg leading-tight">InfluenceAI 專屬顧問</h2>
+                    <p class="text-xs text-teal-100 flex items-center gap-1"><span class="w-2 h-2 bg-green-300 rounded-full animate-pulse"></span> 線上為您服務</p>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <div id="support-chat-window" class="flex-1 bg-slate-50 p-4 overflow-y-auto flex flex-col space-y-4 scrollbar-thin scrollbar-thumb-gray-300">
+            <div class="flex flex-col items-start w-full">
+                <div class="flex items-end gap-2 max-w-[80%]">
+                    <div class="w-8 h-8 bg-teal-500 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs">AI</div>
+                    <div class="bg-white text-slate-800 p-3 rounded-2xl rounded-bl-sm shadow-sm border border-gray-100 text-sm">
+                        您好！我是您的專屬顧問。請問有什麼我可以協助您的嗎？您可以上傳截圖或影片告訴我遇到的問題。
+                    </div>
+                </div>
+                <span class="text-[10px] text-gray-400 mt-1 ml-10">系統自動發送</span>
+            </div>
+        </div>
+
+        <div id="support-preview-area" class="hidden bg-gray-100 p-3 border-t border-gray-200 flex gap-3 overflow-x-auto"></div>
+
+        <div class="bg-white p-3 border-t border-gray-200 flex items-end gap-2 flex-shrink-0">
+            <label class="cursor-pointer p-2 text-gray-400 hover:text-teal-600 transition bg-gray-50 rounded-full hover:bg-teal-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+                <input type="file" id="support-file-input" multiple accept="image/*,video/*" class="hidden" onchange="previewSupportFiles()">
+            </label>
+            
+            <textarea id="support-text-input" rows="1" class="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white resize-none max-h-32" placeholder="輸入訊息..." oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+            
+            <button id="btn-send-support" onclick="sendSupportMessage()" class="p-2.5 bg-teal-500 text-white rounded-full hover:bg-teal-600 transition shadow-sm flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-90" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+            </button>
+        </div>
     </div>
-  </div>
-</div></div>
+</div>
+                      </div>
+
                     </main>
+
                 </div>
             </div>
          <div id="merchant-sidebar-overlay" onclick="toggleMenu('merchant')" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
@@ -3398,6 +3472,10 @@ const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
                 if (typeof initMerchantReports === 'function') {
                     initMerchantReports();
                 }
+            }
+            // 👉 新增這段：當切換到客服時，開啟對話監聽
+            if (tabId === 'support') {
+                if (typeof listenForSupportChat === 'function') listenForSupportChat();
             }
         }
     };
@@ -6892,6 +6970,197 @@ function formatReportNumber(num) {
         pdfBtn.addEventListener('click', () => window.print());
       }
     })();
+
+
+
+
+    // ==========================================
+// NEW: 專人客服 (Line-like Chat) 模組
+// ==========================================
+let supportUnsub = null;
+let supportSelectedFiles = [];
+
+// 1. 預覽選擇的檔案
+window.previewSupportFiles = function() {
+    const input = document.getElementById('support-file-input');
+    const previewArea = document.getElementById('support-preview-area');
+    
+    if (input.files && input.files.length > 0) {
+        supportSelectedFiles = Array.from(input.files);
+        previewArea.classList.remove('hidden');
+        previewArea.innerHTML = '';
+        
+        supportSelectedFiles.forEach((file, index) => {
+            const url = URL.createObjectURL(file);
+            const isVideo = file.type.startsWith('video');
+            const el = document.createElement('div');
+            el.className = "relative w-16 h-16 rounded-lg overflow-hidden border border-gray-300 flex-shrink-0";
+            
+            if (isVideo) {
+                el.innerHTML = `<video src="${url}" class="w-full h-full object-cover"></video><div class="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs">▶</div>`;
+            } else {
+                el.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+            }
+            // 刪除按鈕
+            const delBtn = document.createElement('button');
+            delBtn.className = "absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow";
+            delBtn.innerHTML = "×";
+            delBtn.onclick = () => {
+                supportSelectedFiles.splice(index, 1);
+                previewSupportFiles(); // 重新渲染
+                if(supportSelectedFiles.length === 0) {
+                    previewArea.classList.add('hidden');
+                    input.value = '';
+                }
+            };
+            el.appendChild(delBtn);
+            previewArea.appendChild(el);
+        });
+    }
+};
+
+// 2. 發送訊息與上傳檔案
+window.sendSupportMessage = async function() {
+    const user = auth.currentUser;
+    if (!user) return alert('請先登入');
+
+    const inputEl = document.getElementById('support-text-input');
+    const text = inputEl.value.trim();
+    const btn = document.getElementById('btn-send-support');
+
+    if (!text && supportSelectedFiles.length === 0) return;
+
+    btn.disabled = true;
+    inputEl.disabled = true;
+    const originalBtnHTML = btn.innerHTML;
+    btn.innerHTML = `<span class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full inline-block"></span>`;
+
+    try {
+        let uploadedMedia = [];
+
+        // 若有檔案，先上傳 Storage
+        if (supportSelectedFiles.length > 0) {
+            const uploadPromises = supportSelectedFiles.map(file => {
+                return new Promise((resolve, reject) => {
+                    const path = `support/${user.uid}/${Date.now()}_${file.name}`;
+                    const ref = storageRef(storage, path);
+                    const task = uploadBytesResumable(ref, file);
+                    
+                    task.on('state_changed', null, reject, async () => {
+                        const url = await getDownloadURL(task.snapshot.ref);
+                        resolve({
+                            url: url,
+                            type: file.type.startsWith('video/') ? 'video' : 'image',
+                            name: file.name
+                        });
+                    });
+                });
+            });
+            uploadedMedia = await Promise.all(uploadPromises);
+        }
+
+        // 寫入 Firestore: users/{uid}/support_messages
+        await addDoc(collection(db, 'users', user.uid, 'support_messages'), {
+            sender: 'merchant',
+            text: text,
+            media: uploadedMedia,
+            createdAt: serverTimestamp(),
+            timestampMs: Date.now()
+        });
+
+        // 清空 UI
+        inputEl.value = '';
+        inputEl.style.height = '';
+        supportSelectedFiles = [];
+        document.getElementById('support-preview-area').classList.add('hidden');
+        document.getElementById('support-file-input').value = '';
+
+    } catch (error) {
+        console.error("發送客服訊息失敗:", error);
+        alert("發送失敗，請稍後再試。");
+    } finally {
+        btn.disabled = false;
+        inputEl.disabled = false;
+        btn.innerHTML = originalBtnHTML;
+        inputEl.focus();
+    }
+};
+
+// 3. 監聽並渲染對話 (Line-like UI)
+window.listenForSupportChat = function() {
+    const user = auth.currentUser;
+    if (!user) return;
+    if (supportUnsub) supportUnsub(); // 防止重複監聽
+
+    const chatWindow = document.getElementById('support-chat-window');
+    
+    // 查詢並依時間排序
+    const q = query(
+        collection(db, 'users', user.uid, 'support_messages'),
+        orderBy('timestampMs', 'asc')
+    );
+
+    supportUnsub = onSnapshot(q, (snapshot) => {
+        // 保留第一則預設訊息，清除其他的
+        const defaultMsg = chatWindow.firstElementChild.outerHTML;
+        let html = defaultMsg;
+
+        snapshot.docs.forEach(docSnap => {
+            const msg = docSnap.data();
+            const isMe = msg.sender === 'merchant';
+            // 取得真實時間：優先使用伺服器時間，若剛發送尚未同步，則使用本地發送時間
+const timeMs = msg.createdAt ? msg.createdAt.toMillis() : (msg.timestampMs || Date.now());
+const timeStr = new Date(timeMs).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+            // 處理多媒體附件 HTML
+            let mediaHtml = '';
+            if (msg.media && msg.media.length > 0) {
+                mediaHtml = '<div class="grid grid-cols-2 gap-2 mt-2">';
+                msg.media.forEach(m => {
+                    if (m.type === 'video') {
+                        mediaHtml += `<video src="${m.url}" controls class="w-full h-32 object-cover rounded-lg bg-black"></video>`;
+                    } else {
+                        mediaHtml += `<a href="${m.url}" target="_blank"><img src="${m.url}" class="w-full h-32 object-cover rounded-lg"></a>`;
+                    }
+                });
+                mediaHtml += '</div>';
+            }
+
+            if (isMe) {
+                // 使用者的 Bubble (靠右，綠色)
+                html += `
+                <div class="flex flex-col items-end w-full animate-fade-in-up">
+                    <div class="flex items-end gap-2 max-w-[80%] flex-row-reverse">
+                        <div class="bg-teal-500 text-white p-3 rounded-2xl rounded-tr-sm shadow-sm text-sm break-words">
+                            ${msg.text ? `<div>${msg.text.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${mediaHtml}
+                        </div>
+                        <span class="text-[10px] text-gray-400 mb-1 flex-shrink-0">${timeStr}</span>
+                    </div>
+                </div>`;
+            } else {
+                // 客服/Admin 的 Bubble (靠左，白色)
+                html += `
+                <div class="flex flex-col items-start w-full animate-fade-in-up">
+                    <div class="flex items-end gap-2 max-w-[80%]">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs shadow-sm">服</div>
+                        <div class="bg-white text-slate-800 p-3 rounded-2xl rounded-bl-sm shadow-sm border border-gray-100 text-sm break-words">
+                            ${msg.text ? `<div>${msg.text.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${mediaHtml}
+                        </div>
+                        <span class="text-[10px] text-gray-400 mb-1 flex-shrink-0">${timeStr}</span>
+                    </div>
+                </div>`;
+            }
+        });
+
+        chatWindow.innerHTML = html;
+        // 自動滾動到最底部
+        setTimeout(() => {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }, 100);
+    });
+};
 </script>
 
 
@@ -7162,10 +7431,107 @@ function formatReportNumber(num) {
         }, 1500);
     };
 
-  
+  // ==========================================
+// 1. 操作教學 (Tutorial) 邏輯
+// ==========================================
+const tutorialSteps = [
+    { icon: '👋', title: '歡迎來到 InfluenceAI', desc: '只要三分鐘，帶您了解如何用 AI 將網紅行銷效率提升 10 倍！' },
+    { icon: '🚀', title: '發起新活動', desc: '點擊總覽頁面的「建立活動」，填寫您的產品資訊與預算，AI 將自動為您尋找最合適的網紅。' },
+    { icon: '🤝', title: '審核與媒合', desc: '網紅接單並提交素材後，您可以在「行銷活動」中進行審核，並給予修改建議。' },
+    { icon: '📊', title: '成效報告', desc: '活動結束後，系統會自動產出專家級的成效報告，追蹤曝光、點擊與 ROI 等核心數據。' },
+    { icon: '💬', title: '專人隨時支援', desc: '遇到問題？點擊左側「專人客服」，我們的團隊隨時為您提供協助。' }
+];
+
+let currentTutorialStep = 0;
+
+window.startTutorial = function() {
+    currentTutorialStep = 0;
+    renderTutorialStep();
+    const modal = document.getElementById('tutorial-modal');
+    modal.classList.remove('hidden');
+    // 觸發動畫
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('div').classList.remove('scale-95');
+    }, 10);
+};
+
+window.closeTutorial = function() {
+    const modal = document.getElementById('tutorial-modal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('div').classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+};
+
+window.nextTutorialStep = function() {
+    if (currentTutorialStep < tutorialSteps.length - 1) {
+        currentTutorialStep++;
+        renderTutorialStep();
+    } else {
+        closeTutorial();
+    }
+};
+
+window.prevTutorialStep = function() {
+    if (currentTutorialStep > 0) {
+        currentTutorialStep--;
+        renderTutorialStep();
+    }
+};
+
+function renderTutorialStep() {
+    const step = tutorialSteps[currentTutorialStep];
+    
+    // 增加一點進場動畫特效
+    const iconEl = document.getElementById('tutorial-icon');
+    iconEl.style.transform = 'scale(0.5)';
+    iconEl.style.opacity = '0';
+    setTimeout(() => {
+        iconEl.textContent = step.icon;
+        iconEl.style.transform = 'scale(1)';
+        iconEl.style.opacity = '1';
+    }, 150);
+
+    document.getElementById('tutorial-title').textContent = step.title;
+    document.getElementById('tutorial-desc').textContent = step.desc;
+
+    // 更新進度點點
+    const dotsContainer = document.getElementById('tutorial-dots');
+    dotsContainer.innerHTML = tutorialSteps.map((_, index) => `
+        <div class="h-2 rounded-full transition-all duration-300 ${index === currentTutorialStep ? 'w-6 bg-teal-500' : 'w-2 bg-slate-200'}"></div>
+    `).join('');
+
+    // 按鈕狀態切換
+    document.getElementById('tutorial-prev-btn').classList.toggle('hidden', currentTutorialStep === 0);
+    document.getElementById('tutorial-next-btn').textContent = currentTutorialStep === tutorialSteps.length - 1 ? '開始使用' : '下一步';
+}
 
 
 </script>
 
+
+<div id="tutorial-modal" class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[9999] opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col">
+        <div class="h-48 bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center relative overflow-hidden" id="tutorial-hero">
+            <div class="text-6xl absolute transform hover:scale-110 transition-transform duration-500" id="tutorial-icon">👋</div>
+            <div class="absolute inset-0 bg-white/10 pattern-grid opacity-50"></div>
+        </div>
+        
+        <div class="p-8 text-center flex-1">
+            <h3 id="tutorial-title" class="text-2xl font-black text-slate-800 mb-3 tracking-tight">歡迎來到 InfluenceAI</h3>
+            <p id="tutorial-desc" class="text-slate-500 leading-relaxed min-h-[4rem] text-sm">只要三分鐘，我們將帶您了解如何快速發布需求、AI 精準配對，以及查看專家級的成效報告。</p>
+            
+            <div id="tutorial-dots" class="flex justify-center gap-2 mt-8"></div>
+        </div>
+        
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+            <button onclick="closeTutorial()" class="text-slate-400 font-bold px-4 py-2 hover:bg-slate-200 hover:text-slate-600 rounded-lg transition text-sm">跳過教學</button>
+            <div class="flex gap-2">
+                <button id="tutorial-prev-btn" onclick="prevTutorialStep()" class="bg-white border border-slate-200 text-slate-600 font-bold py-2 px-4 rounded-lg hover:bg-slate-50 transition hidden text-sm shadow-sm">上一步</button>
+                <button id="tutorial-next-btn" onclick="nextTutorialStep()" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition shadow-md text-sm">下一步</button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
