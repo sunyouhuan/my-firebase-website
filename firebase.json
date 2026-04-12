@@ -8,6 +8,22 @@
     ],
     "rewrites": [
       {
+        "source": "/app",
+        "function": "serveDashboard"
+      },
+      {
+        "source": "/app/**",
+        "function": "serveDashboard"
+      },
+      {
+        "source": "/api/session-login",
+        "function": "sessionLogin"
+      },
+      {
+        "source": "/api/session-logout",
+        "function": "sessionLogout"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
