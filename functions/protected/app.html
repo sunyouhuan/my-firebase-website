@@ -20,6 +20,20 @@
         .view.active, .dashboard-content.active {
             display: block;
         }
+        /* --- Loading overlay (shown until auth resolves) --- */
+        #app-loading-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; font-family: inherit; transition: opacity 0.3s;
+        }
+        #app-loading-overlay.fade-out { opacity: 0; pointer-events: none; }
+        #app-loading-overlay .alo-spinner {
+            width: 50px; height: 50px; margin-bottom: 20px;
+            border: 4px solid rgba(255,255,255,0.2); border-top-color: white;
+            border-radius: 50%; animation: alo-spin 0.8s linear infinite;
+        }
+        @keyframes alo-spin { to { transform: rotate(360deg); } }
         .sidebar-link {
             transition: all 0.2s;
         }
@@ -141,8 +155,7 @@ html.dark       #role-selection-view .min-h-screen{ background: transparent !imp
   html.dark .bg-white.border-b { background-color: var(--c-side-dark) !important; border-color: var(--c-border-dark) !important; }
   html.dark #merchant-sidebar,
   html.dark #influencer-sidebar { background-color: var(--c-side-dark) !important; }
-  html.dark #platform-detail-modal > div,
-  html.dark #ai-chat-modal > div { background-color: var(--c-card-dark) !important; border-color: var(--c-border-dark) !important; }
+  html.dark #platform-detail-modal > div { background-color: var(--c-card-dark) !important; border-color: var(--c-border-dark) !important; }
 
   /* 表單元件（input/textarea/select） */
   html.dark input[type="text"],
@@ -255,8 +268,7 @@ html.dark       #role-selection-view .min-h-screen{ background: transparent !imp
   html.dark header.bg-white,
   html.dark .bg-white.border-b { background-color: var(--sidebar) !important; border-color: var(--border) !important; }
   html.dark #merchant-sidebar, html.dark #influencer-sidebar { background-color: var(--sidebar) !important; }
-  html.dark #platform-detail-modal > div,
-  html.dark #ai-chat-modal > div { background-color: var(--card) !important; border-color: var(--border) !important; }
+  html.dark #platform-detail-modal > div { background-color: var(--card) !important; border-color: var(--border) !important; }
 
   /* Inputs */
   html.dark input[type="text"],
@@ -1550,7 +1562,14 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
 <div id="app">
 
-        <div id="login-view" class="view active">
+<!-- Loading overlay: visible until Firebase Auth resolves -->
+<div id="app-loading-overlay">
+    <div class="alo-spinner"></div>
+    <div style="font-size:18px;font-weight:500;margin-bottom:8px">InfluenceAI</div>
+    <div style="font-size:14px;opacity:.9">載入中...</div>
+</div>
+
+        <div id="login-view" class="view">
            <div class="min-h-screen bg-slate-100 flex flex-col items-center p-4 pt-28">
             <!-- ===== Top Navbar ===== -->
 <nav class="top-navbar">
@@ -3109,7 +3128,6 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
 
 
-        <div id="ai-chat-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col h-[70vh] transform scale-95 transition-transform duration-300"><div class="p-4 border-b flex justify-between items-center"><h2 class="text-lg font-bold text-slate-800">AI 行銷顧問</h2><button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div><div id="chat-window" class="flex-1 p-4 overflow-y-auto space-y-4"></div><div class="p-4 border-t"><div class="flex space-x-2"><input id="chat-input" type="text" class="flex-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="請輸入您的回覆..."><button onclick="sendChatMessage()" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800">發送</button></div></div></div></div>
         <div id="platform-detail-modal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50 opacity-0">
           <div id="platform-detail-content" class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300">           
           </div>
@@ -3525,124 +3543,6 @@ const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
                 }, 300);
             }
         }
-
-// ========== Gemini Chat（Firestore 擴充程式）整合 ==========
-
-// 讓聊天快取目前的監聽器，關閉視窗時取消監聽
-let chatUnsub = null;
-
-// 將一則訊息渲染到視窗
-function appendChatBubble(text, role = 'bot') {
-  const $chat = document.getElementById('chat-window');
-  if (!$chat) return;
-  const wrap = document.createElement('div');
-  wrap.className = role === 'me'
-    ? 'bg-slate-700 text-white rounded-xl px-4 py-3 max-w-[80%] ml-auto'
-    : 'bg-slate-100 text-slate-800 rounded-xl px-4 py-3 max-w-[80%]';
-  wrap.textContent = text;
-  const row = document.createElement('div');
-  row.className = 'w-full flex ' + (role === 'me' ? 'justify-end' : 'justify-start');
-  row.appendChild(wrap);
-  $chat.appendChild(row);
-  $chat.scrollTop = $chat.scrollHeight;
-}
-
-// 清空視窗
-function resetChatWindow() {
-  const $chat = document.getElementById('chat-window');
-  if ($chat) $chat.innerHTML = '';
-}
-
-// 啟動監聽：依 createTime 由小到大顯示最新 100 則
-function startChatListener(uid) {
-  if (chatUnsub) chatUnsub(); // 先關舊監聽，避免重複
-
-  const msgsRef = collection(db, 'users', uid, 'messages');
-  // ✅ 用 createTimeMs 排序，立即穩定
-  const q = query(msgsRef, orderBy('createTimeMs', 'asc'), limit(100));
-
-  chatUnsub = onSnapshot(q, (snap) => {
-    // ✅ 全量重繪，永遠會吃到 modified 後的 response
-    const $chat = document.getElementById('chat-window');
-    if (!$chat) return;
-    $chat.innerHTML = '';
-
-    snap.docs.forEach(docSnap => {
-      const d = docSnap.data();
-      if (d.prompt) appendChatBubble(d.prompt, 'me');
-      if (d.response) appendChatBubble(d.response, 'bot');
-      else if (d.status) appendChatBubble(`（狀態：${d.status}）`, 'bot');
-    });
-
-    $chat.scrollTop = $chat.scrollHeight;
-  }, (err) => {
-    console.error('聊天監聽失敗：', err);
-    appendChatBubble('系統：監聽訊息時發生錯誤，請稍後重試。', 'bot');
-  });
-}
-
-// === 給 HTML 呼叫的 3 個函式 ===
-window.openAIChat = function openAIChat() {
-  const user = auth.currentUser;
-  if (!user) {
-    alert('請先登入後再使用 AI 顧問');
-    return;
-  }
-  // 打開 modal（沿用你現有的開關動畫邏輯）
-  const modal = document.getElementById('ai-chat-modal');
-  modal.classList.remove('hidden');
-  setTimeout(() => {
-    modal.classList.remove('opacity-0');
-    modal.querySelector('div > div').classList.remove('scale-95');
-  }, 10);
-
-  resetChatWindow();
-  appendChatBubble('👋 我是你的 AI 行銷顧問，輸入你的需求吧！', 'bot');
-
-  // 開始監聽 Firestore 訊息
-  startChatListener(user.uid);
-};
-
-window.closeAIChat = function closeAIChat() {
-  // 關閉監聽
-  if (chatUnsub) { chatUnsub(); chatUnsub = null; }
-
-  // 關閉 modal（沿用你現有的動畫）
-  const modal = document.getElementById('ai-chat-modal');
-  modal.classList.add('opacity-0');
-  modal.querySelector('div > div').classList.add('scale-95');
-  setTimeout(() => { modal.classList.add('hidden'); }, 300);
-};
-
-window.sendChatMessage = async function sendChatMessage() {
-  const user = auth.currentUser;
-  if (!user) return alert('請先登入');
-
-  const $input = document.getElementById('chat-input');
-  const text = ($input.value || '').trim();
-  if (!text) return;
-
-  // 立刻在前端先顯示使用者訊息（好有即時感）
-  appendChatBubble(text, 'me');
-
-  try {
-    const msgsRef = collection(db, 'users', user.uid, 'messages');
-    await addDoc(msgsRef, {
-      prompt: text,              // 擴充程式讀這個欄位
-      createTime: serverTimestamp(),
-      createTimeMs: Date.now() 
-      // 你也可在這裡嘗試擴充程式支援的參數（若版本支援）：
-      // temperature: 0.4, topP: 0.95, topK: 32,
-    });
-    // 擴充程式會在背景呼叫 Gemini，幾秒後把 response 寫回同筆文件
-  } catch (err) {
-    console.error('送出失敗：', err);
-    appendChatBubble('（送出失敗，請稍後重試）', 'bot');
-  } finally {
-    $input.value = '';
-    $input.focus();
-  }
-};
 
     // === 新增部分 START: 這裡是所有新增加用來顯示、刪除、查看活動的功能 ===
 
@@ -5744,6 +5644,10 @@ window.renderInfluencerInvitations = async function() {
 
     // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
         onAuthStateChanged(auth, async (user) => {
+            // Hide loading overlay once auth state is known
+            const _overlay = document.getElementById('app-loading-overlay');
+            if (_overlay) { _overlay.classList.add('fade-out'); setTimeout(() => _overlay.remove(), 350); }
+
             if (user) {
                 console.log('使用者已登入:', user.uid);
         
@@ -5804,8 +5708,8 @@ window.renderInfluencerInvitations = async function() {
                 const infEl = document.getElementById('inf-balance-display');
                 if (infEl) infEl.textContent = 'NT$ 0';
 
-                // Session 已失效 → 導回首頁登入
-                window.location.href = '/';
+                // Session 已失效 → 導回登入頁
+                window.location.href = '/login';
             }
         });
     // === 修改部分 END ===

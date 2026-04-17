@@ -34,7 +34,7 @@ function parseCookie(cookieHeader, name) {
   return "";
 }
 
-exports.serveDashboard = onRequest(async (req, res) => {
+exports.serveDashboard = onRequest({ invoker: "public" }, async (req, res) => {
   if (req.method !== "GET") {
     res.status(405).send("Method Not Allowed");
     return;
@@ -43,7 +43,7 @@ exports.serveDashboard = onRequest(async (req, res) => {
   const sessionCookie = parseCookie(req.headers.cookie, "__session");
 
   if (!sessionCookie) {
-    res.redirect(302, "/");
+    res.redirect(302, "/login");
     return;
   }
 
@@ -62,6 +62,6 @@ exports.serveDashboard = onRequest(async (req, res) => {
       "Set-Cookie",
       "__session=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax"
     );
-    res.redirect(302, "/");
+    res.redirect(302, "/login");
   }
 });

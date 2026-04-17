@@ -10,7 +10,7 @@ const admin = require("firebase-admin");
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
-exports.sessionLogin = onRequest(async (req, res) => {
+exports.sessionLogin = onRequest({ invoker: "public" }, async (req, res) => {
   // 只接受 POST
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method Not Allowed" });

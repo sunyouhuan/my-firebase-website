@@ -1,6 +1,7 @@
 {
   "hosting": {
     "public": "public",
+    "cleanUrls": true,
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -22,6 +23,10 @@
       {
         "source": "/api/session-logout",
         "function": "sessionLogout"
+      },
+      {
+        "source": "/api/session-status",
+        "function": "sessionStatus"
       },
       {
         "source": "**",

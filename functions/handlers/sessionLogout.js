@@ -20,7 +20,7 @@ function parseCookie(cookieHeader, name) {
   return "";
 }
 
-exports.sessionLogout = onRequest(async (req, res) => {
+exports.sessionLogout = onRequest({ invoker: "public" }, async (req, res) => {
   // 嘗試撤銷 session（optional: best-effort）
   const sessionCookie = parseCookie(req.headers.cookie, "__session");
   if (sessionCookie) {
@@ -38,6 +38,6 @@ exports.sessionLogout = onRequest(async (req, res) => {
     "__session=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax"
   );
 
-  // 302 回首頁
-  res.redirect(302, "/");
+  // 302 回登入頁
+  res.redirect(302, "/login");
 });
