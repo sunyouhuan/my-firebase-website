@@ -1463,6 +1463,253 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
 
 
+
+<style>
+/* =========================
+   Tutorial / Coachmark 系統
+   ========================= */
+:root{
+  --tutorial-z: 999999;
+  --tutorial-radius: 20px;
+  --tutorial-shadow:
+    0 0 0 9999px rgba(15, 23, 42, 0.72),
+    0 0 0 2px rgba(255,255,255,0.95),
+    0 20px 50px rgba(0,0,0,0.35);
+}
+
+#tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--tutorial-z);
+  pointer-events: auto;
+  display: none;
+}
+
+#tutorial-overlay.active {
+  display: block;
+}
+
+#tutorial-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.68);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+#tutorial-overlay.active #tutorial-backdrop {
+  opacity: 1;
+}
+
+#tutorial-backdrop {
+  pointer-events: auto;
+}
+
+#tutorial-card,
+#tutorial-card *,
+#tutorial-prev-btn,
+#tutorial-next-btn,
+#tutorial-skip-btn {
+  pointer-events: auto !important;
+}
+
+#tutorial-highlight {
+  position: fixed;
+  border-radius: var(--tutorial-radius);
+  box-shadow: var(--tutorial-shadow);
+  background: transparent;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    top 0.28s ease,
+    left 0.28s ease,
+    width 0.28s ease,
+    height 0.28s ease,
+    opacity 0.25s ease;
+}
+
+#tutorial-overlay.active #tutorial-highlight {
+  opacity: 1;
+}
+
+.tutorial-target-active {
+  position: relative !important;
+  z-index: calc(var(--tutorial-z) + 1) !important;
+}
+
+#tutorial-card {
+  position: fixed;
+  z-index: calc(var(--tutorial-z) + 4);
+  width: min(360px, calc(100vw - 32px));
+  background: rgba(255,255,255,0.98);
+  color: #0f172a;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+  padding: 18px 18px 16px;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  transition:
+    top 0.28s ease,
+    left 0.28s ease,
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+#tutorial-overlay.active #tutorial-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+#tutorial-step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #ecfeff;
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+  margin-bottom: 12px;
+}
+
+#tutorial-title {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+#tutorial-text {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #475569;
+  margin-bottom: 14px;
+}
+
+#tutorial-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+#tutorial-progress {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.tutorial-btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tutorial-btn {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.2s ease;
+}
+
+.tutorial-btn:hover {
+  transform: translateY(-1px);
+}
+
+.tutorial-btn-secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.tutorial-btn-primary {
+  background: #0d9488;
+  color: #ffffff;
+}
+
+.tutorial-btn-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+#tutorial-arrow {
+  position: fixed;
+  width: 28px;
+  height: 28px;
+  z-index: calc(var(--tutorial-z) + 2);
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    top 0.28s ease,
+    left 0.28s ease,
+    transform 0.28s ease,
+    opacity 0.22s ease;
+}
+
+#tutorial-overlay.active #tutorial-arrow {
+  opacity: 1;
+}
+
+#tutorial-arrow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-right: 4px solid #ffffff;
+  border-bottom: 4px solid #ffffff;
+  transform: rotate(45deg);
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.22));
+  animation: tutorialArrowFloat 1.1s ease-in-out infinite;
+}
+
+@keyframes tutorialArrowFloat {
+  0%, 100% { transform: rotate(45deg) translate(0, 0); }
+  50% { transform: rotate(45deg) translate(3px, 3px); }
+}
+
+.tutorial-clickable {
+  pointer-events: auto !important;
+}
+
+html.dark #tutorial-card {
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
+  border: 1px solid rgba(148,163,184,0.18);
+}
+
+html.dark #tutorial-text {
+  color: #cbd5e1;
+}
+
+html.dark #tutorial-progress {
+  color: #94a3b8;
+}
+
+html.dark #tutorial-step-badge {
+  background: rgba(13, 148, 136, 0.14);
+  color: #99f6e4;
+  border-color: rgba(45, 212, 191, 0.28);
+}
+
+html.dark .tutorial-btn-secondary {
+  background: #334155;
+  color: #f8fafc;
+}
+
+@media (max-width: 768px) {
+  #tutorial-card {
+    width: calc(100vw - 24px);
+  }
+}
+</style>
+
 </head>
 <body>
     <!-- ✅ 本機 file:// 開啟時的提示（避免 ES Module / Firebase 無法載入） -->
@@ -1859,7 +2106,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                             </label>
                         </div>
                         <div class="flex flex-col space-y-2 pt-2">
-                            <button type="button" onclick="handlePerformRegistration()" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">
+                            <button type="button" onclick="handlePerformRegistration()" data-tour="register-submit" class="w-full bg-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors">
                                 建立帳號
                             </button>
                         </div>
@@ -2082,7 +2329,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                         </div>
                     </header>
 
-                    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
+                    <main id="influencer-main-scroll" data-tour="inf-main-scroll" class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
 <div id="merchant-dashboard-content" class="dashboard-content active">
     <div class="mb-8 flex justify-between items-end">
         <div>
@@ -2491,9 +2738,9 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                 <div id="influencer-sidebar" class="w-64 bg-white shadow-md flex-shrink-0 fixed inset-y-0 left-0 z-30 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
                     <div class="p-6 text-2xl font-bold text-gray-800 border-b">Influence<span class="text-teal-500">AI</span></div>
                     <nav class="mt-6">
-                        <a href="#" onclick="switchTab('influencer', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
+                        <a href="#" onclick="switchTab('influencer', 'dashboard')" data-tour="inf-nav-dashboard" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
                         <a href="#" onclick="switchTab('influencer', 'value')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">我的價值</a>
-                        <a href="#" onclick="switchTab('influencer', 'invitations')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">合作邀請</a>
+                        <a href="#" onclick="switchTab('influencer', 'invitations')" data-tour="inf-nav-invitations" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">合作邀請</a>
                         <a href="#" onclick="switchTab('influencer', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
                         <a href="#" onclick="switchTab('influencer', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
                         <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
@@ -2519,7 +2766,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                     </header>
 
                     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-8">
-                        <div id="influencer-dashboard-content" class="dashboard-content active">
+                        <div id="influencer-dashboard-content" data-tour="inf-dashboard-panel" class="dashboard-content active">
     <div id="inf-dashboard-card-container" class="bg-white rounded-xl shadow p-6 mb-8 flex flex-col md:flex-row items-center gap-6">
         <div class="relative">
             <img id="dash-inf-avatar" src="https://placehold.co/100" class="w-24 h-24 rounded-full object-cover border-4 border-slate-50 shadow-md">
@@ -2804,7 +3051,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     </div>
 
 
-                        <div id="influencer-invitations-content" class="dashboard-content">
+                        <div id="influencer-invitations-content" data-tour="inf-invitations-panel" class="dashboard-content">
                           <h2 class="text-xl font-bold text-slate-800 mb-6">合作邀請 (新活動)</h2>
                           <div id="influencer-invitations-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <p class="text-gray-500">目前沒有新的合作邀請。</p>
@@ -2852,7 +3099,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     </div>
 </div>
 
-<div id="influencer-settings-content" class="dashboard-content">
+<div id="influencer-settings-content" data-tour="inf-settings-panel" class="dashboard-content">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="bg-white rounded-xl shadow p-8 lg:col-span-2">
             <h2 class="text-xl font-bold text-slate-800 mb-6">網紅個人資料設定</h2>
@@ -2939,6 +3186,15 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                 </div>
 
                 <p id="inf-card-bio" class="text-sm text-gray-600 line-clamp-3">（個人簡介將顯示於此...）</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-8 mt-8">
+            <h3 class="font-bold text-slate-800 mb-3">新手教學</h3>
+            <p class="text-sm text-gray-600 mb-4">如果你想重新查看引導流程，可以從這裡重新開始。</p>
+            <div class="flex flex-wrap gap-3">
+                <button onclick="startInfluencerTutorial()" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700">重新開始教學</button>
+                <button onclick="resetInfluencerTutorial()" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">重設教學狀態</button>
             </div>
         </div>
     </div>
@@ -3344,7 +3600,10 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             email: user.email,
             createdAt: serverTimestamp(),
             tutorialBriefAssigned: true,
-            tutorialBriefId: '9YYZu9DLJsWd1YFarZwm'
+            tutorialBriefId: '9YYZu9DLJsWd1YFarZwm',
+            tutorials: {
+                influencerOnboardingDone: false
+            }
         }, { merge: true });
 
         // 3. 將新註冊 uid 加入新手教學 brief 的 targetAudience
@@ -4328,9 +4587,11 @@ window.renderInfluencerInvitations = async function() {
                 }
             }
 
+            const isTutorialBrief = briefId === TUTORIAL_BRIEF_ID;
+
             html += `
-                <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-6 items-start hover:shadow-lg transition-shadow border border-gray-100 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-teal-500 text-white text-xs px-2 py-1 rounded-bl-lg font-bold">專屬邀請</div>
+                <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-6 items-start hover:shadow-lg transition-shadow border border-gray-100 relative overflow-hidden" ${isTutorialBrief ? 'data-tour="tutorial-brief-card"' : ''}>
+                    <div class="absolute top-0 right-0 bg-teal-500 text-white text-xs px-2 py-1 rounded-bl-lg font-bold">${isTutorialBrief ? '新手教學' : '專屬邀請'}</div>
                     <div class="cursor-pointer" onclick="openBriefDetail('${briefId}', true)">
                         ${coverImg}
                     </div>
@@ -4358,7 +4619,7 @@ window.renderInfluencerInvitations = async function() {
                                         class="px-4 py-2 border border-gray-300 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm">
                                     查看完整內容
                                 </button>
-                                <button onclick="handleAcceptInvite('${briefId}', '${brief.merchantId}')" 
+                                <button onclick="handleAcceptInvite('${briefId}', '${brief.merchantId}')" ${isTutorialBrief ? 'data-tour="tutorial-accept-btn"' : ''}
                                         class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-all shadow-md">
                                     接單
                                 </button>
@@ -5781,11 +6042,457 @@ window.renderInfluencerInvitations = async function() {
                 document.querySelector('#influencer-dashboard-view header .text-gray-600').textContent = `你好, ${user.displayName || user.email}`;
                 document.querySelector('#influencer-dashboard-view header button').classList.remove('hidden');
                 switchTab('influencer', 'dashboard');
+                setTimeout(() => {
+                    if (typeof maybeStartTutorialForUser === 'function') {
+                        maybeStartTutorialForUser();
+                    }
+                }, 1200);
             }
         };
 
 
 
+
+
+    // === Tutorial / Coachmark 系統 ===
+    const TUTORIAL_BRIEF_ID = '9YYZu9DLJsWd1YFarZwm';
+    const tutorialState = {
+        active: false,
+        currentStepIndex: 0,
+        steps: [],
+        currentRole: 'influencer',
+        currentUid: null,
+        cleanupTarget: null,
+        hasStartedInSession: false
+    };
+
+    function getTutorialEls() {
+        return {
+            overlay: document.getElementById('tutorial-overlay'),
+            backdrop: document.getElementById('tutorial-backdrop'),
+            highlight: document.getElementById('tutorial-highlight'),
+            arrow: document.getElementById('tutorial-arrow'),
+            card: document.getElementById('tutorial-card'),
+            title: document.getElementById('tutorial-title'),
+            text: document.getElementById('tutorial-text'),
+            progress: document.getElementById('tutorial-progress'),
+            prevBtn: document.getElementById('tutorial-prev-btn'),
+            nextBtn: document.getElementById('tutorial-next-btn'),
+            skipBtn: document.getElementById('tutorial-skip-btn'),
+            badge: document.getElementById('tutorial-step-badge')
+        };
+    }
+
+    function tutorialWait(ms = 250) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function waitForElement(selector, timeout = 8000) {
+        return new Promise((resolve, reject) => {
+            const found = document.querySelector(selector);
+            if (found) return resolve(found);
+
+            const started = Date.now();
+            const timer = setInterval(() => {
+                const el = document.querySelector(selector);
+                if (el) {
+                    clearInterval(timer);
+                    resolve(el);
+                    return;
+                }
+                if (Date.now() - started > timeout) {
+                    clearInterval(timer);
+                    reject(new Error(`找不到元素: ${selector}`));
+                }
+            }, 120);
+        });
+    }
+
+    function scrollElementIntoView(el) {
+        if (!el) return;
+        try {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        } catch (e) {
+            el.scrollIntoView();
+        }
+    }
+
+    function clearTutorialTarget() {
+        if (tutorialState.cleanupTarget) {
+            tutorialState.cleanupTarget.classList.remove('tutorial-target-active', 'tutorial-clickable');
+            tutorialState.cleanupTarget = null;
+        }
+    }
+
+    function getElementRect(el, padding = 10) {
+        const rect = el.getBoundingClientRect();
+        return {
+            top: Math.max(8, rect.top - padding),
+            left: Math.max(8, rect.left - padding),
+            width: Math.max(40, rect.width + padding * 2),
+            height: Math.max(40, rect.height + padding * 2),
+            right: rect.right + padding,
+            bottom: rect.bottom + padding
+        };
+    }
+
+    function placeTutorialCard(targetRect, placement = 'bottom') {
+        const { card, arrow } = getTutorialEls();
+        if (!card || !arrow) return;
+
+        const gap = 18;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const cardRect = card.getBoundingClientRect();
+        let top = 0;
+        let left = 0;
+
+        const safeLeft = (x) => Math.min(vw - cardRect.width - 12, Math.max(12, x));
+        const safeTop = (y) => Math.min(vh - cardRect.height - 12, Math.max(12, y));
+
+        switch (placement) {
+            case 'top':
+                top = targetRect.top - cardRect.height - gap;
+                left = targetRect.left + targetRect.width / 2 - cardRect.width / 2;
+                break;
+            case 'left':
+                top = targetRect.top + targetRect.height / 2 - cardRect.height / 2;
+                left = targetRect.left - cardRect.width - gap;
+                break;
+            case 'right':
+                top = targetRect.top + targetRect.height / 2 - cardRect.height / 2;
+                left = targetRect.right + gap;
+                break;
+            case 'center':
+                top = vh / 2 - cardRect.height / 2;
+                left = vw / 2 - cardRect.width / 2;
+                break;
+            case 'bottom':
+            default:
+                top = targetRect.bottom + gap;
+                left = targetRect.left + targetRect.width / 2 - cardRect.width / 2;
+                break;
+        }
+
+        top = safeTop(top);
+        left = safeLeft(left);
+        card.style.top = `${top}px`;
+        card.style.left = `${left}px`;
+
+        if (placement === 'center') {
+            arrow.style.opacity = '0';
+            return;
+        }
+
+        arrow.style.opacity = '1';
+        let arrowTop = 0;
+        let arrowLeft = 0;
+        let arrowRotate = 'rotate(45deg)';
+
+        if (placement === 'bottom') {
+            arrowTop = targetRect.bottom + 4;
+            arrowLeft = targetRect.left + targetRect.width / 2 - 14;
+            arrowRotate = 'rotate(45deg)';
+        } else if (placement === 'top') {
+            arrowTop = targetRect.top - 22;
+            arrowLeft = targetRect.left + targetRect.width / 2 - 14;
+            arrowRotate = 'rotate(225deg)';
+        } else if (placement === 'left') {
+            arrowTop = targetRect.top + targetRect.height / 2 - 14;
+            arrowLeft = targetRect.left - 22;
+            arrowRotate = 'rotate(135deg)';
+        } else if (placement === 'right') {
+            arrowTop = targetRect.top + targetRect.height / 2 - 14;
+            arrowLeft = targetRect.right + 4;
+            arrowRotate = 'rotate(-45deg)';
+        }
+
+        arrow.style.top = `${arrowTop}px`;
+        arrow.style.left = `${arrowLeft}px`;
+        arrow.style.transform = arrowRotate;
+    }
+
+    function setHighlightOnElement(el, options = {}) {
+        const { highlight } = getTutorialEls();
+        clearTutorialTarget();
+
+        if (!el) {
+            if (highlight) highlight.style.opacity = '0';
+            return null;
+        }
+
+        const padding = options.padding ?? 10;
+        const rect = getElementRect(el, padding);
+        el.classList.add('tutorial-target-active', 'tutorial-clickable');
+        tutorialState.cleanupTarget = el;
+
+        highlight.style.top = `${rect.top}px`;
+        highlight.style.left = `${rect.left}px`;
+        highlight.style.width = `${rect.width}px`;
+        highlight.style.height = `${rect.height}px`;
+        highlight.style.opacity = '1';
+        return rect;
+    }
+
+    function getDefaultInfluencerTutorialSteps() {
+        return [
+            {
+                id: 'welcome',
+                title: '歡迎來到新手教學',
+                text: '接下來我會帶你完成第一個示範合作。整個畫面會變暗，你只要跟著亮起來的地方操作就可以。',
+                target: null,
+                placement: 'center'
+            },
+            {
+                id: 'sidebar',
+                title: '先認識左側主選單',
+                text: '這裡是網紅端的主操作區。之後你常用的功能，像是總覽、合作邀請、財務管理，都會從這裡進入。',
+                target: '[data-tour="inf-nav-invitations"]',
+                placement: 'right'
+            },
+            {
+                id: 'go-invitations',
+                title: '前往「合作邀請」',
+                text: '現在請點選「合作邀請」。系統會載入你可以接的合作案件。',
+                target: '[data-tour="inf-nav-invitations"]',
+                placement: 'right',
+                nextMode: 'manual-click'
+            },
+            {
+                id: 'tutorial-brief',
+                title: '這就是你的新手教學案件',
+                text: '這張卡片是系統提供給新註冊帳號的第一個示範合作。先看一下內容，接著我們會練習接受邀請。',
+                target: '[data-tour="tutorial-brief-card"]',
+                placement: 'bottom',
+                beforeEnter: async () => {
+                    switchTab('influencer', 'invitations');
+                    await tutorialWait(450);
+                    if (typeof renderInfluencerInvitations === 'function') {
+                        await renderInfluencerInvitations();
+                    }
+                    await waitForElement('[data-tour="tutorial-brief-card"]', 10000);
+                }
+            },
+            {
+                id: 'accept',
+                title: '點這裡接受邀請',
+                text: '當你願意接案時，就按這個按鈕。按下後，案件會從「合作邀請」移到你的進行中工作。',
+                target: '[data-tour="tutorial-accept-btn"]',
+                placement: 'bottom',
+                beforeEnter: async () => {
+                    await waitForElement('[data-tour="tutorial-accept-btn"]', 10000);
+                },
+                nextMode: 'manual-click'
+            },
+            {
+                id: 'dashboard-after-accept',
+                title: '回到總覽看你的工作',
+                text: '接受後，回到「總覽」。之後你會在這裡看到目前進行中的合作、摘要資訊與待辦。',
+                target: '[data-tour="inf-nav-dashboard"]',
+                placement: 'right',
+                beforeEnter: async () => {
+                    switchTab('influencer', 'dashboard');
+                    await tutorialWait(450);
+                }
+            },
+            {
+                id: 'done',
+                title: '教學完成',
+                text: '你已經完成最核心的第一輪流程：找到合作邀請、接受案件、回到總覽查看工作。之後你也可以在設定裡重新開啟教學。',
+                target: '[data-tour="inf-dashboard-panel"]',
+                placement: 'top'
+            }
+        ];
+    }
+
+    async function renderTutorialStep(index) {
+        const els = getTutorialEls();
+        const steps = tutorialState.steps;
+        const step = steps[index];
+        if (!step) return;
+
+        tutorialState.currentStepIndex = index;
+        els.title.textContent = step.title || '新手教學';
+        els.text.textContent = step.text || '';
+        els.progress.textContent = `${index + 1} / ${steps.length}`;
+        els.badge.textContent = '新手教學';
+        els.prevBtn.style.display = index === 0 ? 'none' : 'inline-flex';
+        els.nextBtn.textContent = index === steps.length - 1 ? '完成' : '下一步';
+
+        clearTutorialTarget();
+
+        if (typeof step.beforeEnter === 'function') {
+            try {
+                await step.beforeEnter();
+            } catch (err) {
+                console.error('beforeEnter 執行失敗:', err);
+            }
+        }
+
+        if (!step.target) {
+            const centerRect = {
+                top: window.innerHeight / 2 - 80,
+                left: window.innerWidth / 2 - 80,
+                width: 160,
+                height: 160,
+                right: window.innerWidth / 2 + 80,
+                bottom: window.innerHeight / 2 + 80
+            };
+            els.highlight.style.opacity = '0';
+            placeTutorialCard(centerRect, 'center');
+            els.nextBtn.style.display = 'inline-flex';
+            return;
+        }
+
+        const target = await waitForElement(step.target, 10000).catch(() => null);
+        if (!target) {
+            els.highlight.style.opacity = '0';
+            placeTutorialCard({
+                top: window.innerHeight / 2 - 80,
+                left: window.innerWidth / 2 - 80,
+                width: 160,
+                height: 160,
+                right: window.innerWidth / 2 + 80,
+                bottom: window.innerHeight / 2 + 80
+            }, 'center');
+            els.nextBtn.style.display = 'inline-flex';
+            return;
+        }
+
+        scrollElementIntoView(target);
+        await tutorialWait(450);
+        const rect = setHighlightOnElement(target, { padding: step.padding ?? 10 });
+        placeTutorialCard(rect, step.placement || 'bottom');
+
+        els.nextBtn.style.display = step.nextMode === 'manual-click' ? 'none' : 'inline-flex';
+    }
+
+    async function startTutorial(options = {}) {
+        const els = getTutorialEls();
+        if (!els.overlay) return;
+        tutorialState.active = true;
+        tutorialState.currentRole = options.role || 'influencer';
+        tutorialState.steps = options.steps || getDefaultInfluencerTutorialSteps();
+        tutorialState.currentUid = auth.currentUser?.uid || null;
+        tutorialState.hasStartedInSession = true;
+        els.overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        await renderTutorialStep(0);
+    }
+
+    async function nextTutorialStep() {
+        const nextIndex = tutorialState.currentStepIndex + 1;
+        if (nextIndex >= tutorialState.steps.length) {
+            await finishTutorial();
+            return;
+        }
+        await renderTutorialStep(nextIndex);
+    }
+
+    async function prevTutorialStep() {
+        const prevIndex = tutorialState.currentStepIndex - 1;
+        if (prevIndex < 0) return;
+        await renderTutorialStep(prevIndex);
+    }
+
+    async function closeTutorial(saveAsDone = false) {
+        const els = getTutorialEls();
+        tutorialState.active = false;
+        clearTutorialTarget();
+        if (els.highlight) els.highlight.style.opacity = '0';
+        els.overlay.classList.remove('active');
+        document.body.style.overflow = '';
+
+        if (saveAsDone && auth.currentUser?.uid) {
+            try {
+                await setDoc(doc(db, 'users', auth.currentUser.uid, 'account', 'profile'), {
+                    tutorials: {
+                        influencerOnboardingDone: true,
+                        influencerOnboardingDoneAt: serverTimestamp()
+                    }
+                }, { merge: true });
+            } catch (err) {
+                console.error('寫入教學完成狀態失敗:', err);
+            }
+        }
+    }
+
+    async function finishTutorial() {
+        await closeTutorial(true);
+        alert('新手教學完成！');
+    }
+
+    window.startInfluencerTutorial = async function() {
+        await startTutorial({ role: 'influencer', steps: getDefaultInfluencerTutorialSteps() });
+    };
+
+    window.resetInfluencerTutorial = async function() {
+        if (!auth.currentUser?.uid) return;
+        await setDoc(doc(db, 'users', auth.currentUser.uid, 'account', 'profile'), {
+            tutorials: {
+                influencerOnboardingDone: false
+            }
+        }, { merge: true });
+        tutorialState.hasStartedInSession = false;
+        alert('已重設教學狀態，下次可重新開始。');
+    };
+
+    function bindTutorialButtons() {
+        const els = getTutorialEls();
+        if (!els.overlay) return;
+        els.prevBtn?.addEventListener('click', prevTutorialStep);
+        els.nextBtn?.addEventListener('click', nextTutorialStep);
+        els.skipBtn?.addEventListener('click', async () => {
+            const yes = confirm('確定要略過新手教學嗎？');
+            if (!yes) return;
+            await closeTutorial(true);
+        });
+    }
+
+    function bindTutorialAutoAdvance() {
+        document.addEventListener('click', async (e) => {
+            if (!tutorialState.active) return;
+            const currentStep = tutorialState.steps[tutorialState.currentStepIndex];
+            if (!currentStep || currentStep.nextMode !== 'manual-click') return;
+            const target = currentStep.target ? document.querySelector(currentStep.target) : null;
+            if (!target) return;
+            if (target.contains(e.target)) {
+                setTimeout(() => {
+                    nextTutorialStep();
+                }, currentStep.id === 'accept' ? 900 : 650);
+            }
+        });
+    }
+
+    async function maybeStartTutorialForUser() {
+        const user = auth.currentUser;
+        if (!user || tutorialState.active || tutorialState.hasStartedInSession) return;
+
+        const currentView = document.querySelector('#influencer-dashboard-view.view.active');
+        if (!currentView) return;
+
+        try {
+            const profileRef = doc(db, 'users', user.uid, 'account', 'profile');
+            const profileSnap = await getDoc(profileRef);
+            const profile = profileSnap.exists() ? profileSnap.data() : {};
+            const done = profile?.tutorials?.influencerOnboardingDone === true;
+            if (!done) {
+                await tutorialWait(500);
+                startInfluencerTutorial();
+            }
+        } catch (err) {
+            console.error('檢查教學狀態失敗:', err);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        bindTutorialButtons();
+        bindTutorialAutoAdvance();
+        window.addEventListener('resize', () => {
+            if (!tutorialState.active) return;
+            renderTutorialStep(tutorialState.currentStepIndex);
+        });
+    });
 
 
     // === 修改部分 START：修改 onAuthStateChanged 以啟動和停止監聽器 ===
@@ -5827,6 +6534,7 @@ window.renderInfluencerInvitations = async function() {
                     navigateTo('role-selection-view');
                 }
             } else {
+                tutorialState.hasStartedInSession = false;
                 console.log('使用者已登出，停止監聽。');
                 // 當用戶登出後，取消監聽，避免不必要的讀取和潛在的錯誤
                 if (unsubscribeCampaigns) {
@@ -7582,5 +8290,30 @@ function renderTutorialStep() {
         </div>
     </div>
 </div>
+
+<!-- =========================
+     Tutorial Overlay 容器
+     ========================= -->
+<div id="tutorial-overlay" aria-hidden="true">
+  <div id="tutorial-backdrop"></div>
+  <div id="tutorial-highlight"></div>
+  <div id="tutorial-arrow"></div>
+
+  <div id="tutorial-card" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+    <div id="tutorial-step-badge">新手教學</div>
+    <div id="tutorial-title">歡迎使用 InfluenceAI</div>
+    <div id="tutorial-text">接下來我會一步一步帶你完成第一個合作邀請。</div>
+
+    <div id="tutorial-actions">
+      <div id="tutorial-progress">1 / 1</div>
+      <div class="tutorial-btn-group">
+        <button id="tutorial-skip-btn" class="tutorial-btn tutorial-btn-danger" type="button">略過</button>
+        <button id="tutorial-prev-btn" class="tutorial-btn tutorial-btn-secondary" type="button">上一步</button>
+        <button id="tutorial-next-btn" class="tutorial-btn tutorial-btn-primary" type="button">下一步</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
