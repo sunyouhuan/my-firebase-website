@@ -3295,7 +3295,8 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             onSnapshot,      // 新增：用於即時監聽資料變化
             orderBy,       // 新增：用於排序查詢結果
             serverTimestamp,   // ⬅️ 新增
-            limit
+            limit,
+            arrayUnion
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
       let influencerSelectedFiles = {};
@@ -3306,6 +3307,8 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     const password = document.getElementById('register-password').value;
     const confirmPassword = document.getElementById('register-password-confirm').value;
     const agreeTerms = document.getElementById('agree-terms');
+
+    const ONBOARDING_BRIEF_ID = '9YYZu9DLJsWd1YFarZwm';
 
     if (!email || !password || !confirmPassword) {
         alert('請填寫所有欄位！');
@@ -3328,15 +3331,40 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     }
 
     try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert('註冊成功！將為您導向登入頁面。');
+        // 1) 建立 Firebase Auth 帳號
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const uid = user.uid;
+
+        // 2) 可選：建立基本 user 文件，方便你未來做身份判斷 / onboarding 狀態管理
+        await setDoc(doc(db, 'users', uid), {
+            uid,
+            email,
+            role: 'influencer',
+            createdAt: serverTimestamp(),
+            onboardingBriefId: ONBOARDING_BRIEF_ID,
+            onboardingCompleted: false
+        }, { merge: true });
+
+        // 3) 把新註冊者加入教學 brief 的 targetAudience
+        await updateDoc(doc(db, 'briefs', ONBOARDING_BRIEF_ID), {
+            targetAudience: arrayUnion(uid),
+            updatedAt: serverTimestamp()
+        });
+
+        alert('註冊成功！已自動加入新手教學合作邀請。');
+
         navigateTo('login-view');
         document.getElementById('register-form').reset();
         document.getElementById('email').value = email;
+
     } catch (error) {
         console.error("註冊失敗:", error);
+
         if (error.code === 'auth/email-already-in-use') {
             alert('註冊失敗：這個 Email 已經被註冊了。');
+        } else if (error.code === 'not-found') {
+            alert('註冊成功，但找不到新手教學 brief：9YYZu9DLJsWd1YFarZwm，請先到 Firestore 建立這筆資料。');
         } else {
             alert('註冊失敗：' + error.message);
         }
