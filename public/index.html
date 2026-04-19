@@ -3296,6 +3296,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             orderBy,       // 新增：用於排序查詢結果
             serverTimestamp,   // ⬅️ 新增
             limit
+            arrayUnion
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
       let influencerSelectedFiles = {};
@@ -3328,13 +3329,61 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     }
 
     try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert('註冊成功！將為您導向登入頁面。');
+        // 1. 建立 Auth 帳號（Firebase 會自動登入）
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        if (!user) {
+            throw new Error('註冊成功，但無法取得使用者資料');
+        }
+
+        // 2. 建立基本使用者資料（建議一定要做）
+        // 這樣未來你可以更穩定地判斷角色/初始化資料
+        await setDoc(doc(db, 'users', user.uid, 'account', 'profile'), {
+            uid: user.uid,
+            email: user.email,
+            createdAt: serverTimestamp(),
+            tutorialBriefAssigned: true,
+            tutorialBriefId: '9YYZu9DLJsWd1YFarZwm'
+        }, { merge: true });
+
+        // 3. 將新註冊 uid 加入新手教學 brief 的 targetAudience
+        const tutorialBriefRef = doc(db, 'briefs', '9YYZu9DLJsWd1YFarZwm');
+        const tutorialBriefSnap = await getDoc(tutorialBriefRef);
+
+        if (!tutorialBriefSnap.exists()) {
+            throw new Error('新手教學活動不存在：9YYZu9DLJsWd1YFarZwm');
+        }
+
+        const tutorialBriefData = tutorialBriefSnap.data();
+
+        // 4. 先檢查這筆 brief 是否符合「網紅端合作邀請」顯示條件
+        if (tutorialBriefData.isDeleted === true) {
+            throw new Error('新手教學活動目前是刪除狀態 isDeleted=true，無法顯示在合作邀請');
+        }
+
+        if (tutorialBriefData.status !== 'pending_match') {
+            throw new Error(`新手教學活動 status 目前是 ${tutorialBriefData.status}，不是 pending_match，因此不會顯示在合作邀請`);
+        }
+
+        // 5. 寫入 targetAudience（arrayUnion 可避免重複）
+        await updateDoc(tutorialBriefRef, {
+            targetAudience: arrayUnion(user.uid),
+            updatedAt: serverTimestamp()
+        });
+
+        // 6. 關鍵：註冊後強制登出，要求重新輸入密碼登入
+        await signOut(auth);
+
+        alert('註冊成功！已為您建立新手教學合作邀請，請重新登入開始使用。');
+
         navigateTo('login-view');
         document.getElementById('register-form').reset();
         document.getElementById('email').value = email;
+
     } catch (error) {
         console.error("註冊失敗:", error);
+
         if (error.code === 'auth/email-already-in-use') {
             alert('註冊失敗：這個 Email 已經被註冊了。');
         } else {
