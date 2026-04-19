@@ -3295,34 +3295,10 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
             onSnapshot,      // 新增：用於即時監聽資料變化
             orderBy,       // 新增：用於排序查詢結果
             serverTimestamp,   // ⬅️ 新增
-            limit,
-            arrayUnion,
-            arrayRemove
+            limit
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
       let influencerSelectedFiles = {};
-
-
-      const TUTORIAL_BRIEF_ID = "9YYZu9DLJsWd1YFarZwm";
-
-// 將新註冊使用者加入教學專案的 targetAudience
-async function addUserToTutorialBrief(uid) {
-    if (!uid) throw new Error("缺少 uid，無法加入教學專案");
-
-    const tutorialRef = doc(db, "briefs", TUTORIAL_BRIEF_ID);
-    const tutorialSnap = await getDoc(tutorialRef);
-
-    if (!tutorialSnap.exists()) {
-        throw new Error(`找不到教學專案：${TUTORIAL_BRIEF_ID}`);
-    }
-
-    await updateDoc(tutorialRef, {
-        targetAudience: arrayUnion(uid),
-        updatedAt: serverTimestamp()
-    });
-
-    console.log(`已將使用者 ${uid} 加入教學專案 ${TUTORIAL_BRIEF_ID}`);
-}
 
     // === 新增：執行註冊的函式 (給 register-view 使用) ===
         window.handlePerformRegistration = async function() {
@@ -3352,35 +3328,13 @@ async function addUserToTutorialBrief(uid) {
     }
 
     try {
-        // 1. 建立 Firebase Auth 帳號
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const newUser = userCredential.user;
-
-        // 2. 可選：初始化 users/{uid} 根文件，避免某些監聽讀不到資料
-        await setDoc(doc(db, "users", newUser.uid), {
-            email: newUser.email || email,
-            createdAt: serverTimestamp(),
-            tutorialAssigned: true
-        }, { merge: true });
-
-        // 3. 將新帳號加入教學專案 targetAudience
-        await addUserToTutorialBrief(newUser.uid);
-
-        // 4. 可選：初始化網紅 profile，讓後面監聽更穩
-        await setDoc(doc(db, "users", newUser.uid, "influencer", "profile"), {
-            email: newUser.email || email,
-            createdAt: serverTimestamp(),
-            onboardingBriefId: TUTORIAL_BRIEF_ID
-        }, { merge: true });
-
-        alert('註冊成功！系統已自動為您加入新手教學合作邀請。');
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert('註冊成功！將為您導向登入頁面。');
         navigateTo('login-view');
         document.getElementById('register-form').reset();
         document.getElementById('email').value = email;
-
     } catch (error) {
         console.error("註冊失敗:", error);
-
         if (error.code === 'auth/email-already-in-use') {
             alert('註冊失敗：這個 Email 已經被註冊了。');
         } else {
@@ -4440,7 +4394,7 @@ window.renderInfluencerInvitations = async function() {
             // 寫入 collaborations
             await addDoc(collection(db, "collaborations"), {
                 briefId: briefId,
-                merchantId: merchantId || 'unknown',
+                merchantId: merchantId || 'unknown', // 防止 undefined
                 influencerId: user.uid,
                 influencerEmail: user.email,
                 status: 'accepted',
@@ -4448,13 +4402,6 @@ window.renderInfluencerInvitations = async function() {
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
-
-            if (briefId === TUTORIAL_BRIEF_ID) {
-                await updateDoc(doc(db, "briefs", briefId), {
-                    targetAudience: arrayRemove(user.uid),
-                    updatedAt: serverTimestamp()
-                });
-            }
 
             console.log("4. 寫入成功！");
             alert('接單成功！請至「總覽」分頁查看並開始製作素材。');
