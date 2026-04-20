@@ -228,7 +228,7 @@
   - createdAt: timestamp
   - updatedAt: timestamp
   - targetAudience: array<string>
-
+#### test
 #### Path: briefs/{briefId}/report/summary
 - Purpose:
   - Summary metrics used by merchant report page.
