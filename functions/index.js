@@ -56,7 +56,7 @@ exports.exchangeIgToken = onCall(async (request) => {
         });
 
         // 為了保險起見，我們用 Long Token 再去抓一次 /me，確保 ID 絕對正確 (因為 Graph API 的 /me 回傳 ID 是字串)
-        const meVerify = await axios.get(`https://graph.instagram.com/v21.0/me?fields=id&access_token=${longTokenRes.data.access_token}`);
+        const meVerify = await axios.get(`https://graph.instagram.com/v25.0/me?fields=id&access_token=${longTokenRes.data.access_token}`);
         const safeUserId = meVerify.data.id; // 這裡是字串，安全！
 
         await admin.firestore().collection("users").doc(request.auth.uid).collection("tokens").doc("instagram").set({
@@ -90,7 +90,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
         if (providerId === 'instagram') {
             
             // 1. 取得基礎帳號資訊
-            const meRes = await axios.get(`https://graph.instagram.com/v21.0/me`, {
+            const meRes = await axios.get(`https://graph.instagram.com/v25.0/me`, {
                 params: {
                     fields: 'id,username,account_type,media_count,followers_count,biography,profile_picture_url',
                     access_token: accessToken
@@ -104,7 +104,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
             
             console.log(`[ID檢查] 使用的正確ID: ${igUserId}`); // Log 出來確認
 
-            const INSIGHTS_URL = `https://graph.instagram.com/v21.0/${igUserId}/insights`;
+            const INSIGHTS_URL = `https://graph.instagram.com/v25.0/${igUserId}/insights`;
 
             // 2. 定義候選名單
             // 注意：likes, comments 在 User Insights 其實不常支援 day 週期，通常是用在 Media 上
@@ -114,7 +114,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 "profile_views", 
                 "total_interactions",
                 "accounts_engaged",
-                "content_views", // 修正 ID 後，這個可能就會通了！
+                "views",
                 "likes", 
                 "comments", 
                 "shares", 
@@ -124,12 +124,18 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
 
             const dayMs = 24 * 60 * 60 * 1000;
             const today0 = new Date(); today0.setHours(0, 0, 0, 0);
-            const daysAgo7 = new Date(today0.getTime() - (7 * dayMs));
+            const daysAgo30 = new Date(today0.getTime() - (30 * dayMs));
             
-            const sinceTimestamp = Math.floor(daysAgo7.getTime() / 1000);
+            const sinceTimestamp = Math.floor(daysAgo30.getTime() / 1000);
             const untilTimestamp = Math.floor(today0.getTime() / 1000);
 
             let rawDataMap = {};
+
+            const toNumber = (value) => {
+                if (typeof value === "number") return value;
+                const parsed = Number(value);
+                return Number.isFinite(parsed) ? parsed : 0;
+            };
 
             const fetchPromises = CANDIDATE_METRICS.map(async (metric) => {
                 try {
@@ -137,17 +143,22 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                         params: {
                             metric: metric,
                             period: 'day', 
+                            metric_type: 'time_series',
                             since: sinceTimestamp,
                             until: untilTimestamp,
                             access_token: accessToken
                         }
                     });
                     const values = res.data?.data?.[0]?.values || [];
-                    const totalSum = values.reduce((acc, curr) => acc + (curr.value || 0), 0);
-                    const latestVal = values.length > 0 ? values[values.length - 1].value : 0;
+                    const numericValues = values.map((entry) => toNumber(entry.value));
+                    const totalSum30Days = numericValues.reduce((acc, value) => acc + value, 0);
+                    const latestVal = numericValues.length > 0 ? numericValues[numericValues.length - 1] : 0;
+                    const sum7Days = numericValues.slice(-7).reduce((acc, value) => acc + value, 0);
+                    const avg30Days = Math.round(totalSum30Days / 30);
 
                     rawDataMap[metric] = {
-                        sum_7_days: totalSum,
+                        sum_7_days: sum7Days,
+                        avg_30_days: avg30Days,
                         latest_day: latestVal
                     };
                 } catch (err) {
@@ -170,7 +181,14 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 await Promise.all(demoRequests.map(async (req) => {
                     try {
                         const res = await axios.get(INSIGHTS_URL, {
-                            params: { metric: 'follower_demographics', period: 'lifetime', breakdown: req.breakdown, access_token: accessToken }
+                            params: {
+                                metric: 'follower_demographics',
+                                period: 'lifetime',
+                                breakdown: req.breakdown,
+                                timeframe: 'last_90_days',
+                                metric_type: 'total_value',
+                                access_token: accessToken
+                            }
                         });
                         const dataPoints = res.data?.data?.[0]?.total_value?.breakdowns?.[0]?.results || [];
                         audienceData[req.key] = dataPoints.reduce((acc, curr) => {
@@ -185,9 +203,9 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
 
 
             // 4. 計算互動率 (Media)
-            let calculatedStats = { er: 0, avgLikes: 0 };
+            let calculatedStats = { er: 0, avgLikes: 0, avgComments: 0 };
             try {
-                const mediaRes = await axios.get(`https://graph.instagram.com/v21.0/me/media`, {
+                const mediaRes = await axios.get(`https://graph.instagram.com/v25.0/me/media`, {
                     params: { fields: 'like_count,comments_count', limit: 20, access_token: accessToken } // 抓多一點樣本
                 });
                 const posts = mediaRes.data.data || [];
@@ -195,33 +213,41 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                     let tLikes = 0, tComms = 0;
                     posts.forEach(p => { tLikes += (p.like_count||0); tComms += (p.comments_count||0); });
                     calculatedStats.avgLikes = Math.round(tLikes / posts.length);
+                    calculatedStats.avgComments = Math.round(tComms / posts.length);
                     calculatedStats.er = (tLikes + tComms) / posts.length / (meRes.data.followers_count || 1);
                 }
             } catch(e) {}
 
             // 5. 寫入 DB
-            // 策略：如果有 content_views (18?) 就用，沒有就用 reach (4)
-            const finalBrowsing = rawDataMap['content_views']?.sum_7_days || rawDataMap['reach']?.sum_7_days || 0;
+            const followers = meRes.data.followers_count || 0;
+            const baselineEr = 0.03;
+            const erGapRatio = Math.max(0, (baselineEr - calculatedStats.er) / baselineEr);
+            const fakeFollowerRate = Math.min(0.9, Math.max(0.05, 0.05 + erGapRatio * 0.85));
 
             const finalData = {
                 id: meRes.data.id, // 確保這裡存的也是字串 ID
                 username: meRes.data.username,
-                followers: meRes.data.followers_count || 0,
+                followers: followers,
                 mediaCount: meRes.data.media_count || 0,
                 avatar: meRes.data.profile_picture_url || "",
+                bio: meRes.data.biography || "",
                 
                 insights: {
-                    browsing_count_week: finalBrowsing, 
                     profile_views_week: rawDataMap['profile_views']?.sum_7_days || 0,
+                    views_day: rawDataMap['views']?.latest_day || 0,
+                    views_avg_30: rawDataMap['views']?.avg_30_days || 0,
                     reach_day: rawDataMap['reach']?.latest_day || 0,
+                    reach_avg_30: rawDataMap['reach']?.avg_30_days || 0,
                     total_interactions_day: rawDataMap['total_interactions']?.latest_day || 0
                 },
                 
-                raw_debug_data: rawDataMap,
                 audience: audienceData,
                 advanced: {
                     engagement_rate: calculatedStats.er,
-                    avg_likes: calculatedStats.avgLikes
+                    avg_likes: calculatedStats.avgLikes,
+                    avg_comments: calculatedStats.avgComments,
+                    fake_follower_rate: fakeFollowerRate,
+                    expected_story_views: Math.round(followers * 0.25)
                 },
                 lastUpdated: admin.firestore.FieldValue.serverTimestamp()
             };
