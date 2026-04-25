@@ -2653,8 +2653,8 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                     </div>
 
                     <div class="text-center p-3 bg-green-50 rounded-lg border border-green-100">
-                        <p class="text-[10px] text-green-600 font-bold uppercase">主頁瀏覽 (昨日)</p>
-                        <p id="stat-profile-views-day" class="text-xl font-bold text-green-700 mt-1">--</p>
+                        <p class="text-[10px] text-green-600 font-bold uppercase">主頁瀏覽 (近 7 天)</p>
+                        <p id="stat-profile-views-week" class="text-xl font-bold text-green-700 mt-1">--</p>
                     </div>
 
                     <div class="text-center p-3 bg-blue-50 rounded-lg">
@@ -2663,7 +2663,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                     </div>
 
                     <div class="text-center p-3 bg-blue-50 rounded-lg">
-                        <p class="text-[10px] text-blue-600 font-bold uppercase">曝光 (平均 / 昨日)</p>
+                        <p class="text-[10px] text-blue-600 font-bold uppercase">瀏覽 (平均 / 昨日)</p>
                         <p id="stat-impressions" class="text-lg font-bold text-blue-700 mt-1">--</p>
                     </div>
 
@@ -6160,6 +6160,8 @@ function updateDashboardWithRealData(igData) {
     if(navAvatar && igData.avatar) navAvatar.src = igData.avatar;
     const navName = document.getElementById('dash-inf-name');
     if(navName && igData.username) navName.textContent = `@${igData.username}`;
+    const navBio = document.getElementById('dash-inf-bio');
+    if(navBio) navBio.textContent = igData.bio || '(無簡介)';
 
     // 2. 個人檔案卡片 (左側)
     if (document.getElementById('profile-avatar')) document.getElementById('profile-avatar').src = igData.avatar || 'https://via.placeholder.com/150';
@@ -6203,13 +6205,13 @@ function updateDashboardWithRealData(igData) {
     // 使用 formatK 函式讓數字變短 (例如 12.5k)
     setText('stat-reach', `${formatK(reachAvg)} / ${formatK(reachDay)}`);
 
-    // 曝光 (Impressions)
-    const impAvg = (insights.impressions_avg_30 || 0);
-    const impDay = (insights.impressions_day || 0);
-    setText('stat-impressions', `${formatK(impAvg)} / ${formatK(impDay)}`);
+    // 瀏覽 (Views)
+    const viewsAvg = (insights.views_avg_30 || 0);
+    const viewsDay = (insights.views_day || 0);
+    setText('stat-impressions', `${formatK(viewsAvg)} / ${formatK(viewsDay)}`);
 
-    // 主頁瀏覽 (昨日 Profile Views)
-    setText('stat-profile-views-day', (insights.profile_views_day || 0).toLocaleString());
+    // 主頁瀏覽 (近 7 天 Profile Views)
+    setText('stat-profile-views-week', (insights.profile_views_week || 0).toLocaleString());
 
     // 4. 互動數據 (分開顯示：按讚 / 留言)
     setText('stat-avg-likes', (advanced.avg_likes || 0).toLocaleString());
