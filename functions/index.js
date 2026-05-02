@@ -130,6 +130,7 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
             const untilTimestamp = Math.floor(today0.getTime() / 1000);
 
             let rawDataMap = {};
+            const missingMetrics = new Set();
 
             const toNumber = (value) => {
                 if (typeof value === "number") return value;
@@ -150,6 +151,9 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                         }
                     });
                     const values = res.data?.data?.[0]?.values || [];
+                    if (!res.data?.data?.[0] || values.length === 0) {
+                        missingMetrics.add(metric);
+                    }
                     const numericValues = values.map((entry) => toNumber(entry.value));
                     const totalSum30Days = numericValues.reduce((acc, value) => acc + value, 0);
                     const latestVal = numericValues.length > 0 ? numericValues[numericValues.length - 1] : 0;
@@ -164,11 +168,16 @@ exports.fetchInstagramStats = onDocumentWritten("users/{userId}/tokens/{provider
                 } catch (err) {
                     // 這裡的 Log 會幫你確認哪些 Metric 是真的不支援，哪些是因為 ID 錯了 (現在 ID 對了，錯誤訊息會變)
                     // console.warn(`[略過] ${metric}: ${err?.response?.data?.error?.message}`);
+                    missingMetrics.add(metric);
                     rawDataMap[metric] = { error: "Unsupported" };
                 }
             });
 
             await Promise.allSettled(fetchPromises);
+
+            if (missingMetrics.size > 0) {
+                console.warn(`[IG資料抓取][Warning] 以下 metric 未查詢到資料或查詢失敗: ${Array.from(missingMetrics).join(", ")}`);
+            }
 
             // 3. 處理受眾 (完整版 - 加入城市國家)
             let audienceData = { city: {}, genderAge: {}, country: {}, _available: true };

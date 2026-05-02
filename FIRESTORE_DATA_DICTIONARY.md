@@ -17,7 +17,7 @@
 
 ## Top-Level Collections
 
-### 1) users
+### users
 
 #### Path: users/{uid}
 - Purpose:
@@ -179,7 +179,7 @@
 - Fields:
   - sender: string (merchant/system)
   - text: string
-  - media: array<object>
+  - media: array\<object\>
     - url: string
     - type: string (image/video)
     - name: string
@@ -188,7 +188,8 @@
 - Query pattern:
   - orderBy(timestampMs, asc)
 
-### 2) briefs
+
+### briefs
 
 #### Path: briefs/{briefId}
 - Purpose:
@@ -200,8 +201,8 @@
   - query + onSnapshot
 - Fields commonly written:
   - productName: string
-  - categories: array<string>
-  - platforms: array<string>
+  - categories: array\<string\>
+  - platforms: array\<string\>
   - productDesc: string
   - requirementDesc: string
   - schedule: object
@@ -220,14 +221,14 @@
   - logistics: object
     - provideProduct: boolean
     - quantity: number
-  - imageUrls: array<string>
+  - imageUrls: array\<string\>
   - status: string
   - isDeleted: boolean
   - merchantId: string
   - merchantEmail: string
   - createdAt: timestamp
   - updatedAt: timestamp
-  - targetAudience: array<string>
+  - targetAudience: array\<string\>
 #### test
 #### Path: briefs/{briefId}/report/summary
 - Purpose:
@@ -247,9 +248,9 @@
   - funnel_view: number
   - funnel_click: number
   - funnel_convert: number
-  - trend_labels: array<string>
-  - trend_values: array<number>
-  - ai_insights: array<string>
+  - trend_labels: array\<string\>
+  - trend_values: array\<number\>
+  - ai_insights: array\<string\>
   - next_step_strategy: string
   - updatedAt: timestamp
 
@@ -261,7 +262,7 @@
 - Field shape:
   - dynamic, document-dependent
 
-### 3) collaborations
+### collaborations
 
 #### Path: collaborations/{collabId}
 - Purpose:
@@ -289,17 +290,17 @@
   - marketingLink: string
   - marketingNote: string
   - autoApproved: boolean
-  - contentData: array<object> or object
+  - contentData: array\<object\> or object
     - url: string
     - type: string (image/video)
     - name: string
-  - history: array<object>
+  - history: array\<object\>
     - role: string (merchant/influencer)
     - action: string
     - text: string
-    - files: array<object>
+    - files: array\<object\>
     - time: date or timestamp
-  - finalResults: array<object>
+  - finalResults: array\<object\>
   - createdAt: timestamp
   - updatedAt: timestamp
 
