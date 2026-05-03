@@ -1467,6 +1467,760 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
 
 
+
+<style>
+/* === v24 — Creator Value Center UIUX polish ===
+   目的：合併「我的價值」與「設定」後，讓它像一個完整的網紅資料中心，而不是兩頁硬貼在一起。
+   原則：保留所有既有 id / onclick / Firebase 寫入函式，只優化 HTML/CSS 視覺與資訊層級。
+*/
+#influencer-value-content.creator-value-center {
+  --creator-primary: #0d9488;
+  --creator-primary-2: #14b8a6;
+  --creator-indigo: #6366f1;
+  --creator-ink: #0f172a;
+  --creator-muted: #64748b;
+  --creator-soft: rgba(13, 148, 136, 0.08);
+  --creator-border: rgba(148, 163, 184, 0.24);
+  --creator-card: rgba(255, 255, 255, 0.92);
+  --creator-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  position: relative;
+}
+
+#influencer-value-content.creator-value-center::before {
+  content: "";
+  position: absolute;
+  inset: -28px -28px auto -28px;
+  height: 260px;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(20, 184, 166, 0.20), transparent 36%),
+    radial-gradient(circle at 90% 0%, rgba(99, 102, 241, 0.16), transparent 35%),
+    linear-gradient(135deg, rgba(240, 253, 250, 0.92), rgba(255,255,255,0));
+  border-radius: 0 0 32px 32px;
+}
+
+#influencer-value-content.creator-value-center > * {
+  position: relative;
+  z-index: 1;
+}
+
+.creator-hero-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--creator-border);
+  background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(240,253,250,.84));
+  border-radius: 28px;
+  box-shadow: var(--creator-shadow);
+}
+.creator-hero-card::after {
+  content: "";
+  position: absolute;
+  right: -90px;
+  top: -90px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(13,148,136,.20), rgba(13,148,136,0) 68%);
+}
+.creator-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(13,148,136,.10);
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.creator-quick-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.creator-quick-nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(13,148,136,.24);
+  background: rgba(255,255,255,.75);
+  color: #0f766e;
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.creator-quick-nav button:hover {
+  transform: translateY(-1px);
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15,23,42,.08);
+}
+.creator-section-card {
+  border: 1px solid var(--creator-border);
+  background: var(--creator-card);
+  border-radius: 24px;
+  box-shadow: 0 14px 34px rgba(15,23,42,.06);
+}
+.creator-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.creator-section-title {
+  color: var(--creator-ink);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.creator-section-subtitle {
+  color: var(--creator-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-top: 4px;
+}
+.creator-step-badge {
+  flex: 0 0 auto;
+  min-width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f766e;
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 10px 18px rgba(15,118,110,.22);
+}
+.creator-connect-card {
+  border: 1px solid rgba(148,163,184,.22);
+  background: rgba(248,250,252,.86);
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 108px;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+}
+.creator-connect-card:hover {
+  transform: translateY(-3px);
+  background: #ffffff;
+  border-color: rgba(13,148,136,.36);
+  box-shadow: 0 16px 34px rgba(15,23,42,.08);
+}
+.creator-connect-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  box-shadow: 0 10px 20px rgba(15,23,42,.12);
+}
+.creator-connect-action {
+  border: 1px solid rgba(148,163,184,.30);
+  background: #fff;
+  color: #334155;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+  transition: all .2s ease;
+}
+.creator-connect-action:hover {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+}
+.creator-form-card input,
+.creator-form-card textarea {
+  min-height: 44px;
+  border-radius: 12px !important;
+  border-color: rgba(148,163,184,.36) !important;
+}
+.creator-form-card textarea { min-height: 108px; }
+.creator-form-card label { font-weight: 800; color: #334155; }
+.creator-form-card input:focus,
+.creator-form-card textarea:focus {
+  outline: none;
+  border-color: rgba(13,148,136,.68) !important;
+  box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+}
+.creator-save-bar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 20;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+  background: linear-gradient(to top, rgba(248,250,252,.96), rgba(248,250,252,0));
+}
+.creator-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  font-weight: 900;
+  padding: 11px 18px;
+  box-shadow: 0 14px 28px rgba(13,148,136,.24);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.creator-primary-btn:hover { transform: translateY(-1px); box-shadow: 0 18px 34px rgba(13,148,136,.30); }
+.creator-secondary-btn {
+  border-radius: 13px;
+  background: #e2e8f0;
+  color: #334155;
+  font-weight: 800;
+  padding: 9px 12px;
+}
+.creator-preview-card {
+  position: sticky;
+  top: 88px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(148,163,184,.22);
+}
+.creator-preview-card::before {
+  content:"";
+  display:block;
+  height: 72px;
+  background: linear-gradient(135deg, rgba(13,148,136,.88), rgba(99,102,241,.78));
+}
+.creator-avatar-ring {
+  margin-top: -52px;
+  border: 5px solid #fff;
+  box-shadow: 0 14px 26px rgba(15,23,42,.16);
+}
+.creator-mini-tip {
+  border: 1px dashed rgba(13,148,136,.28);
+  background: rgba(240,253,250,.74);
+  color: #0f766e;
+  border-radius: 18px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.creator-stat-card {
+  border: 1px solid rgba(148,163,184,.20);
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(248,250,252,.88));
+  border-radius: 18px;
+  padding: 14px;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.creator-stat-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(15,23,42,.06); }
+.creator-stat-label { font-size: 10px; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
+.creator-stat-value { margin-top: 5px; color: #0f172a; font-weight: 950; }
+.creator-chart-card {
+  border: 1px solid rgba(148,163,184,.22);
+  background: rgba(255,255,255,.92);
+  border-radius: 24px;
+  box-shadow: 0 12px 30px rgba(15,23,42,.05);
+}
+.creator-empty-state {
+  border: 1px solid rgba(148,163,184,.22);
+  background: rgba(255,255,255,.72);
+  border-radius: 22px;
+  padding: 20px;
+}
+
+html.dark #influencer-value-content.creator-value-center {
+  --creator-card: rgba(31, 41, 59, 0.58);
+  --creator-border: rgba(148, 163, 184, 0.28);
+  --creator-ink: #f8fafc;
+  --creator-muted: #cbd5e1;
+}
+html.dark #influencer-value-content.creator-value-center::before {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(45,212,191,.22), transparent 36%),
+    radial-gradient(circle at 90% 0%, rgba(129,140,248,.22), transparent 38%);
+}
+html.dark .creator-hero-card,
+html.dark .creator-section-card,
+html.dark .creator-chart-card,
+html.dark .creator-preview-card {
+  background: rgba(31,41,59,.56) !important;
+  border-color: rgba(148,163,184,.30) !important;
+  box-shadow: 0 18px 45px rgba(2,6,23,.28) !important;
+}
+html.dark .creator-connect-card,
+html.dark .creator-stat-card,
+html.dark .creator-empty-state {
+  background: rgba(15,23,42,.44) !important;
+  border-color: rgba(148,163,184,.25) !important;
+}
+html.dark .creator-section-title,
+html.dark .creator-stat-value { color: #f8fafc !important; }
+html.dark .creator-section-subtitle,
+html.dark .creator-stat-label { color: #cbd5e1 !important; }
+html.dark .creator-form-card label { color: #e2e8f0 !important; }
+html.dark .creator-save-bar { background: linear-gradient(to top, rgba(15,23,42,.86), rgba(15,23,42,0)); }
+html.dark .creator-connect-action { background: rgba(15,23,42,.72); color: #e2e8f0; border-color: rgba(148,163,184,.3); }
+html.dark .creator-mini-tip { background: rgba(13,148,136,.12); color: #99f6e4; border-color: rgba(45,212,191,.28); }
+
+@media (max-width: 1024px) {
+  .creator-preview-card { position: relative; top: auto; }
+  .creator-save-bar { position: static; background: transparent; }
+}
+@media (max-width: 768px) {
+  .creator-section-header { flex-direction: column; }
+  .creator-hero-card { border-radius: 22px; }
+  .creator-connect-card { min-height: auto; }
+}
+</style>
+
+
+
+<style id="ia-pro-global-uiux-v1">
+/* =========================================================
+   InfluenceAI 全站 UIUX 優化版
+   範圍：商家端全部介面 + 網紅端除了已合併頁之外的其他介面
+   原則：只做 UI / UX / HTML 呈現層與導覽相容，不改 Firestore 資料結構
+   ========================================================= */
+:root{
+  --ia-bg:#f5f7fb;
+  --ia-surface:rgba(255,255,255,.86);
+  --ia-surface-solid:#ffffff;
+  --ia-border:rgba(15,23,42,.09);
+  --ia-text:#0f172a;
+  --ia-muted:#64748b;
+  --ia-soft:#eef6ff;
+  --ia-brand:#0d9488;
+  --ia-brand-2:#6366f1;
+  --ia-brand-3:#8b5cf6;
+  --ia-success:#10b981;
+  --ia-warning:#f59e0b;
+  --ia-danger:#ef4444;
+  --ia-radius-xl:22px;
+  --ia-radius-lg:16px;
+  --ia-shadow:0 18px 45px rgba(15,23,42,.08);
+  --ia-shadow-strong:0 26px 70px rgba(15,23,42,.14);
+  --ia-ease:cubic-bezier(.22,.61,.36,1);
+}
+
+/* 背景：讓後台看起來像現代 SaaS，而不是單純灰底 */
+#merchant-dashboard-view .flex.h-screen,
+#influencer-dashboard-view .flex.h-screen{
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(20,184,166,.16), transparent 62%),
+    radial-gradient(820px 420px at 92% 4%, rgba(99,102,241,.15), transparent 62%),
+    linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%) !important;
+}
+html.dark #merchant-dashboard-view .flex.h-screen,
+html.dark #influencer-dashboard-view .flex.h-screen{
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(45,212,191,.15), transparent 62%),
+    radial-gradient(820px 420px at 92% 4%, rgba(129,140,248,.18), transparent 62%),
+    linear-gradient(180deg,#0f172a 0%,#111827 100%) !important;
+}
+
+/* 側邊欄：更高級、更可信任的產品感 */
+#merchant-sidebar,
+#influencer-sidebar{
+  width:280px !important;
+  background:rgba(255,255,255,.78) !important;
+  border-right:1px solid var(--ia-border) !important;
+  box-shadow:10px 0 35px rgba(15,23,42,.05) !important;
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+html.dark #merchant-sidebar,
+html.dark #influencer-sidebar{
+  background:rgba(15,23,42,.78) !important;
+  border-right-color:rgba(148,163,184,.16) !important;
+}
+#merchant-sidebar > div:first-child,
+#influencer-sidebar > div:first-child{
+  padding:26px 24px !important;
+  font-size:1.55rem !important;
+  letter-spacing:-.035em;
+  border-bottom:1px solid rgba(15,23,42,.08) !important;
+}
+html.dark #merchant-sidebar > div:first-child,
+html.dark #influencer-sidebar > div:first-child{ border-bottom-color:rgba(148,163,184,.16) !important; }
+#merchant-sidebar nav,
+#influencer-sidebar nav{ padding:14px 14px 24px !important; margin-top:0 !important; }
+#merchant-sidebar .sidebar-link,
+#influencer-sidebar .sidebar-link{
+  margin:6px 0 !important;
+  padding:12px 14px !important;
+  border-radius:14px !important;
+  border-left:0 !important;
+  display:flex !important;
+  align-items:center;
+  gap:10px;
+  color:#526179 !important;
+  font-weight:760 !important;
+  letter-spacing:-.01em;
+  transform:none !important;
+  position:relative;
+}
+#merchant-sidebar .sidebar-link::before,
+#influencer-sidebar .sidebar-link::before{
+  content:"";
+  width:8px;height:8px;border-radius:999px;
+  background:#cbd5e1;
+  box-shadow:0 0 0 4px rgba(148,163,184,.12);
+  flex:0 0 auto;
+}
+#merchant-sidebar .sidebar-link:hover,
+#merchant-sidebar .sidebar-link.active,
+#influencer-sidebar .sidebar-link:hover,
+#influencer-sidebar .sidebar-link.active{
+  background:linear-gradient(135deg,rgba(13,148,136,.12),rgba(99,102,241,.10)) !important;
+  color:#0f766e !important;
+  box-shadow:inset 0 0 0 1px rgba(13,148,136,.16);
+}
+#merchant-sidebar .sidebar-link.active::before,
+#influencer-sidebar .sidebar-link.active::before{
+  background:linear-gradient(135deg,var(--ia-brand),var(--ia-brand-2));
+  box-shadow:0 0 0 4px rgba(13,148,136,.13), 0 0 18px rgba(13,148,136,.25);
+}
+html.dark #merchant-sidebar .sidebar-link,
+html.dark #influencer-sidebar .sidebar-link{ color:#cbd5e1 !important; }
+html.dark #merchant-sidebar .sidebar-link:hover,
+html.dark #merchant-sidebar .sidebar-link.active,
+html.dark #influencer-sidebar .sidebar-link:hover,
+html.dark #influencer-sidebar .sidebar-link.active{
+  color:#a7f3d0 !important;
+  background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(129,140,248,.12)) !important;
+}
+#merchant-sidebar button[onclick*="role-selection"],
+#influencer-sidebar button[onclick*="role-selection"]{
+  width:calc(100% - 12px);
+  margin:14px 6px 0 !important;
+  border:1px solid rgba(13,148,136,.22) !important;
+  color:#0f766e !important;
+  background:rgba(240,253,250,.75) !important;
+  border-radius:999px !important;
+  padding:10px 14px !important;
+  font-weight:800;
+}
+
+/* Header：資訊層級更清楚 */
+#merchant-dashboard-view header,
+#influencer-dashboard-view header{
+  background:rgba(255,255,255,.74) !important;
+  border-bottom:1px solid var(--ia-border) !important;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  min-height:72px;
+  padding:16px 28px !important;
+}
+html.dark #merchant-dashboard-view header,
+html.dark #influencer-dashboard-view header{
+  background:rgba(15,23,42,.70) !important;
+  border-bottom-color:rgba(148,163,184,.14) !important;
+}
+#merchant-header-title,
+#influencer-header-title{
+  font-size:1.35rem !important;
+  letter-spacing:-.035em;
+  color:var(--ia-text) !important;
+}
+html.dark #merchant-header-title,
+html.dark #influencer-header-title{ color:#f8fafc !important; }
+#user-email-display{
+  border:1px solid rgba(15,23,42,.08);
+  background:rgba(255,255,255,.72);
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:.86rem;
+}
+
+/* Main 區域：讓所有頁面一致 */
+#merchant-dashboard-view main,
+#influencer-dashboard-view main{
+  padding:30px !important;
+  background:transparent !important;
+  scroll-behavior:smooth;
+}
+#merchant-dashboard-view .dashboard-content,
+#influencer-dashboard-view .dashboard-content{
+  max-width:1320px;
+  margin:0 auto;
+  animation:iaFadeUp .38s var(--ia-ease) both;
+}
+@keyframes iaFadeUp{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none} }
+
+/* 頁面 Hero：由 JS 自動插入，不動資料結構 */
+.ia-pro-page-hero{
+  position:relative;
+  overflow:hidden;
+  border-radius:28px;
+  padding:28px;
+  margin-bottom:24px;
+  color:#fff;
+  background:
+    radial-gradient(720px 260px at 88% 12%, rgba(255,255,255,.24), transparent 55%),
+    linear-gradient(135deg,#0f766e 0%,#0d9488 38%,#6366f1 100%);
+  box-shadow:var(--ia-shadow-strong);
+}
+.ia-pro-page-hero::after{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.10) 1px,transparent 1px);
+  background-size:32px 32px;
+  mask-image:linear-gradient(90deg,rgba(0,0,0,.55),transparent 75%);
+  pointer-events:none;
+}
+.ia-pro-page-hero > *{ position:relative; z-index:1; }
+.ia-pro-kicker{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 11px;
+  border-radius:999px;
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.24);
+  color:#ecfeff;
+  font-size:.78rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.ia-pro-title{ margin-top:12px; font-size:clamp(1.75rem,3vw,2.7rem); line-height:1.05; font-weight:950; letter-spacing:-.055em; }
+.ia-pro-desc{ max-width:760px; margin-top:10px; color:rgba(255,255,255,.84); line-height:1.75; font-weight:520; }
+.ia-pro-actions{ margin-top:18px; display:flex; gap:10px; flex-wrap:wrap; }
+.ia-pro-actions button,.ia-pro-actions a{
+  border:1px solid rgba(255,255,255,.24);
+  background:rgba(255,255,255,.16);
+  color:#fff;
+  font-weight:850;
+  padding:10px 14px;
+  border-radius:999px;
+  transition:all .22s var(--ia-ease);
+}
+.ia-pro-actions button:hover,.ia-pro-actions a:hover{ transform:translateY(-2px); background:rgba(255,255,255,.24); }
+
+/* 卡片系統：套用商家端與網紅端其他頁面 */
+#merchant-dashboard-view main .bg-white,
+#influencer-dashboard-view main .bg-white,
+#merchant-dashboard-view main .creator-chart-card,
+#influencer-dashboard-view main .creator-chart-card,
+#merchant-dashboard-view main .creator-step-card,
+#influencer-dashboard-view main .creator-step-card,
+#merchant-dashboard-view main .creator-stat-card,
+#influencer-dashboard-view main .creator-stat-card{
+  background:var(--ia-surface) !important;
+  border:1px solid var(--ia-border) !important;
+  border-radius:var(--ia-radius-xl) !important;
+  box-shadow:var(--ia-shadow) !important;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+html.dark #merchant-dashboard-view main .bg-white,
+html.dark #influencer-dashboard-view main .bg-white,
+html.dark #merchant-dashboard-view main .creator-chart-card,
+html.dark #influencer-dashboard-view main .creator-chart-card,
+html.dark #merchant-dashboard-view main .creator-step-card,
+html.dark #influencer-dashboard-view main .creator-step-card,
+html.dark #merchant-dashboard-view main .creator-stat-card,
+html.dark #influencer-dashboard-view main .creator-stat-card{
+  background:rgba(30,41,59,.72) !important;
+  border-color:rgba(148,163,184,.16) !important;
+}
+#merchant-dashboard-view main .bg-white:hover,
+#influencer-dashboard-view main .bg-white:hover,
+#merchant-dashboard-view main .creator-chart-card:hover,
+#influencer-dashboard-view main .creator-chart-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 22px 55px rgba(15,23,42,.11) !important;
+  transition:all .22s var(--ia-ease);
+}
+
+/* KPI 卡片：讓數字看起來更有商業報表感 */
+#merchant-dashboard-content .grid .bg-white,
+#influencer-dashboard-content .grid .bg-white{
+  border-left:0 !important;
+  position:relative;
+  overflow:hidden;
+}
+#merchant-dashboard-content .grid .bg-white::before,
+#influencer-dashboard-content .grid .bg-white::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--ia-brand),var(--ia-brand-2),var(--ia-brand-3));
+}
+#merchant-dashboard-content [id^="m-stat"],
+#influencer-dashboard-content [id^="dash-"],
+#inf-balance-display,
+#finance-account-balance{
+  letter-spacing:-.055em;
+}
+
+/* 表單：更清楚、更像專業後台 */
+#merchant-dashboard-view input,
+#merchant-dashboard-view textarea,
+#merchant-dashboard-view select,
+#influencer-dashboard-view input,
+#influencer-dashboard-view textarea,
+#influencer-dashboard-view select{
+  border-radius:14px !important;
+  border:1px solid rgba(15,23,42,.12) !important;
+  min-height:44px;
+  padding:10px 13px;
+  box-shadow:0 1px 0 rgba(15,23,42,.02);
+  transition:border-color .2s, box-shadow .2s, background .2s;
+}
+#merchant-dashboard-view input:focus,
+#merchant-dashboard-view textarea:focus,
+#merchant-dashboard-view select:focus,
+#influencer-dashboard-view input:focus,
+#influencer-dashboard-view textarea:focus,
+#influencer-dashboard-view select:focus{
+  outline:none !important;
+  border-color:rgba(13,148,136,.55) !important;
+  box-shadow:0 0 0 4px rgba(13,148,136,.12) !important;
+}
+#merchant-dashboard-view label,
+#influencer-dashboard-view label{
+  color:#334155 !important;
+  font-weight:760 !important;
+}
+html.dark #merchant-dashboard-view label,
+html.dark #influencer-dashboard-view label{ color:#e2e8f0 !important; }
+
+/* 按鈕：可信任的主按鈕與次按鈕 */
+#merchant-dashboard-view main button,
+#influencer-dashboard-view main button,
+#merchant-dashboard-view main a[class*="bg-"],
+#influencer-dashboard-view main a[class*="bg-"]{
+  border-radius:14px !important;
+  font-weight:850 !important;
+  transition:transform .2s var(--ia-ease), box-shadow .2s var(--ia-ease), background .2s !important;
+}
+#merchant-dashboard-view main button:hover,
+#influencer-dashboard-view main button:hover{ transform:translateY(-1px); }
+#merchant-dashboard-view .bg-slate-700,
+#influencer-dashboard-view .bg-slate-700,
+#merchant-dashboard-view .bg-teal-500,
+#influencer-dashboard-view .bg-teal-500,
+#merchant-dashboard-view .bg-indigo-600,
+#influencer-dashboard-view .bg-indigo-600,
+#merchant-dashboard-view .bg-green-500,
+#influencer-dashboard-view .bg-green-500{
+  background:linear-gradient(135deg,var(--ia-brand),var(--ia-brand-2)) !important;
+  box-shadow:0 12px 24px rgba(13,148,136,.18) !important;
+}
+
+/* 表格與清單 */
+#merchant-dashboard-view table,
+#influencer-dashboard-view table{
+  border-collapse:separate !important;
+  border-spacing:0;
+  overflow:hidden;
+  border-radius:18px;
+}
+#merchant-dashboard-view th,
+#influencer-dashboard-view th{
+  background:rgba(241,245,249,.75) !important;
+  color:#475569 !important;
+  font-size:.78rem !important;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+#merchant-dashboard-view td,
+#influencer-dashboard-view td{ border-color:rgba(15,23,42,.07) !important; }
+
+/* 動態產生的活動卡、邀請卡，也給同一套質感 */
+#campaigns-list > *,
+#influencer-invitations-list > *,
+#merchant-dashboard-view [id$="-list"] > *,
+#influencer-dashboard-view [id$="-list"] > *{
+  border-radius:22px !important;
+  transition:transform .22s var(--ia-ease), box-shadow .22s var(--ia-ease);
+}
+#campaigns-list > *:hover,
+#influencer-invitations-list > *:hover{ transform:translateY(-3px); box-shadow:0 22px 48px rgba(15,23,42,.12) !important; }
+
+/* 空狀態 */
+#campaigns-list > p,
+#influencer-invitations-list > p{
+  grid-column:1 / -1;
+  background:rgba(255,255,255,.78);
+  border:1px dashed rgba(13,148,136,.25);
+  border-radius:22px;
+  padding:34px !important;
+  text-align:center;
+  color:#64748b !important;
+}
+#campaigns-list > p::before,
+#influencer-invitations-list > p::before{
+  content:"✨";
+  display:block;
+  font-size:2.2rem;
+  margin-bottom:8px;
+}
+
+/* 商家報告頁：強化 BI 感 */
+#merchant-reports-content .grid .rounded-xl,
+#merchant-reports-content canvas,
+#influencer-value-content canvas{
+  max-width:100%;
+}
+#merchant-reports-content [id^="kpi-"],
+#merchant-reports-content [id^="report-"]{
+  font-variant-numeric:tabular-nums;
+}
+
+/* 客服頁：更像顧問工作台 */
+#merchant-support-content > .bg-white{
+  min-height:calc(100vh - 172px) !important;
+  overflow:hidden;
+}
+#merchant-support-content .bg-gradient-to-r{
+  background:
+    radial-gradient(600px 220px at 95% 0%, rgba(255,255,255,.20), transparent 58%),
+    linear-gradient(135deg,#0f766e,#4f46e5) !important;
+  border-radius:22px 22px 0 0 !important;
+}
+
+/* 財務頁：讓金額與流程更像金融產品 */
+#merchant-finance-content > .bg-white:first-child,
+#influencer-finance-content > .bg-white:first-child{
+  background:
+    radial-gradient(480px 180px at 92% 12%, rgba(255,255,255,.20), transparent 60%),
+    linear-gradient(135deg,#064e3b,#0d9488,#6366f1) !important;
+  color:#fff !important;
+  border:0 !important;
+}
+#merchant-finance-content > .bg-white:first-child h3,
+#merchant-finance-content > .bg-white:first-child p,
+#influencer-finance-content > .bg-white:first-child h3,
+#influencer-finance-content > .bg-white:first-child p{ color:#fff !important; }
+
+/* Modal：建立活動視窗更乾淨 */
+.modal > div{
+  border-radius:26px !important;
+  border:1px solid rgba(15,23,42,.10) !important;
+  box-shadow:0 30px 90px rgba(2,6,23,.25) !important;
+  overflow:hidden;
+}
+.modal .bg-slate-50{ background:#f8fafc !important; }
+html.dark .modal .bg-slate-50{ background:#0f172a !important; }
+
+/* 手機版優化 */
+@media (max-width: 768px){
+  #merchant-dashboard-view main,
+  #influencer-dashboard-view main{ padding:18px !important; }
+  .ia-pro-page-hero{ padding:22px; border-radius:22px; }
+  #merchant-sidebar,
+  #influencer-sidebar{ width:292px !important; }
+  #merchant-dashboard-view header,
+  #influencer-dashboard-view header{ padding:14px 18px !important; }
+}
+</style>
+
 </head>
 <body>
     <!-- ✅ 本機 file:// 開啟時的提示（避免 ES Module / Firebase 無法載入） -->
@@ -2496,10 +3250,9 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                     <div class="p-6 text-2xl font-bold text-gray-800 border-b">Influence<span class="text-teal-500">AI</span></div>
                     <nav class="mt-6">
                         <a href="#" onclick="switchTab('influencer', 'dashboard')" class="sidebar-link active block py-3 px-6 text-gray-600 font-semibold">總覽</a>
-                        <a href="#" onclick="switchTab('influencer', 'value')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">我的價值</a>
+                        <a href="#" onclick="switchTab('influencer', 'value')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">我的價值中心</a>
                         <a href="#" onclick="switchTab('influencer', 'invitations')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">合作邀請</a>
                         <a href="#" onclick="switchTab('influencer', 'finance')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">財務管理</a>
-                        <a href="#" onclick="switchTab('influencer', 'settings')" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold">設定</a>
                         <a href="#" onclick="handleLogout()" class="sidebar-link block py-3 px-6 text-gray-600 font-semibold mt-10">登出</a>
                         <button onclick="navigateTo('role-selection-view')" class="mt-4 ml-4 text-sm text-teal-600 border border-teal-800 px-6 py-2 rounded hover:bg-teal-50">⇄ 切換身分</button>
                     </nav>
@@ -2537,7 +3290,7 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
                 <span class="px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-bold" id="dash-collab-count">合作 0 次</span>
             </div>
         </div>
-        <button onclick="switchTab('influencer', 'settings')" class="text-sm text-gray-500 border px-4 py-2 rounded hover:bg-gray-50">編輯檔案</button>
+        <button onclick="switchTab('influencer', 'value')" class="text-sm text-gray-500 border px-4 py-2 rounded hover:bg-gray-50">編輯檔案</button>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -2562,159 +3315,309 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         </div>
     </div>
 </div>
-                        <div id="influencer-value-content" class="dashboard-content">
-    
-    <div class="bg-white rounded-xl shadow p-6 mb-8">
-        <h3 class="text-xl font-bold text-slate-800 mb-4">連結社交平台帳戶</h3>
-        <p class="text-gray-500 text-sm mb-6">連結後，系統將自動分析您的粉絲輪廓與互動數據，為您生成「價值報告」並推薦更適合的廠商。</p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-ig">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white flex items-center justify-center text-xl"><i class="fab fa-instagram"></i></div>
-                    <div>
-                        <p class="font-bold text-slate-700">Instagram</p>
-                        <p class="text-xs text-gray-400" id="status-ig">尚未連結</p>
-                    </div>
-                </div>
-                <button
-  id="btn-connect-ig"
-  onclick="connectInstagram()"
-  class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100"
->
-  連結
-</button>
+                        <div id="influencer-value-content" class="dashboard-content creator-value-center">
 
+    <!-- v24: Creator Value Center Hero / 將「我的價值」與「設定」整合成同一個工作流 -->
+    <section class="creator-hero-card p-6 md:p-8 mb-8">
+        <div class="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6 items-center">
+            <div>
+                <span class="creator-kicker">Creator Value Center</span>
+                <h2 class="mt-4 text-3xl md:text-4xl font-black tracking-tight text-slate-900">我的價值與設定</h2>
+                <p class="mt-3 text-slate-600 leading-7 max-w-3xl">
+                    這一頁整合你的公開檔案、合作聯絡資料、社群平台連結與數據分析。品牌端看到的是你的專業形象，系統讀取的是原本資料庫欄位；本次只調整 UIUX，不更動 Firestore 結構。
+                </p>
+                <div class="creator-quick-nav mt-5">
+                    <button type="button" onclick="document.getElementById('creator-connect-section')?.scrollIntoView({behavior:'smooth', block:'start'})">① 連結社群</button>
+                    <button type="button" onclick="document.getElementById('influencer-profile-settings-panel')?.scrollIntoView({behavior:'smooth', block:'start'})">② 編輯資料</button>
+                    <button type="button" onclick="document.getElementById('analytics-dashboard')?.scrollIntoView({behavior:'smooth', block:'start'})">③ 查看分析</button>
+                </div>
             </div>
-
-            <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-yt">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center text-xl"><i class="fab fa-youtube"></i></div>
-                    <div>
-                        <p class="font-bold text-slate-700">YouTube</p>
-                        <p class="text-xs text-gray-400" id="status-yt">尚未連結</p>
-                    </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="creator-empty-state text-center">
+                    <p class="text-xs font-black text-slate-500 uppercase">Profile</p>
+                    <p class="mt-2 text-2xl font-black text-teal-600">完整</p>
+                    <p class="mt-1 text-xs text-slate-500">名稱 / 聯絡 / 簡介</p>
                 </div>
-                <button onclick="simulateConnect('yt')" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100" id="btn-connect-yt">連結</button>
-            </div>
-
-            <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-tt">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-xl"><i class="fab fa-tiktok"></i></div>
-                    <div>
-                        <p class="font-bold text-slate-700">TikTok</p>
-                        <p class="text-xs text-gray-400" id="status-tt">尚未連結</p>
-                    </div>
+                <div class="creator-empty-state text-center">
+                    <p class="text-xs font-black text-slate-500 uppercase">Social</p>
+                    <p class="mt-2 text-2xl font-black text-indigo-600">連結</p>
+                    <p class="mt-1 text-xs text-slate-500">IG / FB / TikTok</p>
                 </div>
-                <button onclick="simulateConnect('tt')" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100" id="btn-connect-tt">連結</button>
-            </div>
-
-            <div class="border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition bg-slate-50" id="card-connect-fb">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl"><i class="fab fa-facebook-f"></i></div>
-                    <div>
-                        <p class="font-bold text-slate-700">Facebook</p>
-                        <p class="text-xs text-gray-400" id="status-fb">尚未連結</p>
-                    </div>
+                <div class="creator-empty-state text-center">
+                    <p class="text-xs font-black text-slate-500 uppercase">Insight</p>
+                    <p class="mt-2 text-2xl font-black text-purple-600">分析</p>
+                    <p class="mt-1 text-xs text-slate-500">粉絲 / 互動 / 受眾</p>
                 </div>
-                <button onclick="simulateConnect('fb')" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:bg-slate-100" id="btn-connect-fb">連結</button>
             </div>
         </div>
-    </div>
+    </section>
 
-<div id="analytics-dashboard" class="hidden space-y-8 mt-8">
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
-            <div class="flex flex-col md:flex-row items-center gap-6">
-                
-                <div class="flex flex-col items-center md:items-start min-w-[200px] text-center md:text-left border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-6">
-                    <img id="profile-avatar" src="https://via.placeholder.com/150" alt="Avatar" class="w-24 h-24 rounded-full border-4 border-white shadow-md mb-3 object-cover">
-                    <h2 id="profile-username" class="text-xl font-bold text-slate-800">@username</h2>
+    <!-- Step 1: 社群平台連結 -->
+    <section id="creator-connect-section" class="creator-section-card p-6 md:p-7 mb-8">
+        <div class="creator-section-header">
+            <div class="flex gap-4">
+                <span class="creator-step-badge">1</span>
+                <div>
+                    <h3 class="creator-section-title">連結社交平台帳戶</h3>
+                    <p class="creator-section-subtitle">連結後，系統會讀取社群統計資料並生成價值報告。這裡保留原本的 connect / simulateConnect 函式。</p>
+                </div>
+            </div>
+            <span class="hidden md:inline-flex px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-black border border-teal-100">建議先完成 IG 連結</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="creator-connect-card" id="card-connect-ig">
+                <div class="flex items-center gap-3">
+                    <div class="creator-connect-icon bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500"><i class="fab fa-instagram"></i></div>
+                    <div>
+                        <p class="font-black text-slate-800">Instagram</p>
+                        <p class="text-xs text-gray-500" id="status-ig">尚未連結</p>
+                    </div>
+                </div>
+                <button id="btn-connect-ig" onclick="connectInstagram()" class="creator-connect-action">連結</button>
+            </div>
+
+            <div class="creator-connect-card" id="card-connect-yt">
+                <div class="flex items-center gap-3">
+                    <div class="creator-connect-icon bg-red-600"><i class="fab fa-youtube"></i></div>
+                    <div>
+                        <p class="font-black text-slate-800">YouTube</p>
+                        <p class="text-xs text-gray-500" id="status-yt">尚未連結</p>
+                    </div>
+                </div>
+                <button onclick="simulateConnect('yt')" class="creator-connect-action" id="btn-connect-yt">連結</button>
+            </div>
+
+            <div class="creator-connect-card" id="card-connect-tt">
+                <div class="flex items-center gap-3">
+                    <div class="creator-connect-icon bg-black"><i class="fab fa-tiktok"></i></div>
+                    <div>
+                        <p class="font-black text-slate-800">TikTok</p>
+                        <p class="text-xs text-gray-500" id="status-tt">尚未連結</p>
+                    </div>
+                </div>
+                <button onclick="simulateConnect('tt')" class="creator-connect-action" id="btn-connect-tt">連結</button>
+            </div>
+
+            <div class="creator-connect-card" id="card-connect-fb">
+                <div class="flex items-center gap-3">
+                    <div class="creator-connect-icon bg-blue-600"><i class="fab fa-facebook-f"></i></div>
+                    <div>
+                        <p class="font-black text-slate-800">Facebook</p>
+                        <p class="text-xs text-gray-500" id="status-fb">尚未連結</p>
+                    </div>
+                </div>
+                <button onclick="simulateConnect('fb')" class="creator-connect-action" id="btn-connect-fb">連結</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Step 2: 原設定頁合併到此；所有 id / 儲存函式維持不變 -->
+    <section id="influencer-profile-settings-panel" class="mb-8">
+        <div class="creator-section-header">
+            <div class="flex gap-4">
+                <span class="creator-step-badge">2</span>
+                <div>
+                    <h3 class="creator-section-title">個人資料與合作設定</h3>
+                    <p class="creator-section-subtitle">用品牌端看得懂的方式整理你的身份、聯絡資訊、社群帳號與風格描述。</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('influencer-profile-form')?.scrollIntoView({behavior:'smooth', block:'start'})" class="creator-primary-btn">快速編輯</button>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="creator-section-card creator-form-card p-6 md:p-8 xl:col-span-2">
+                <form id="influencer-profile-form" class="space-y-6" onsubmit="return false;">
+                    <div class="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div class="shrink-0">
+                            <img id="inf-avatar-preview-form" class="h-20 w-20 object-cover rounded-2xl border border-gray-200 shadow-sm" src="https://placehold.co/100?text=Avatar" alt="Avatar">
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-black text-slate-800">大頭貼與公開形象</p>
+                            <p class="text-sm text-slate-500 mt-1">建議使用清楚的個人照或品牌識別圖，會同步到總覽卡片預覽。</p>
+                            <label class="block mt-3">
+                                <span class="sr-only">選擇大頭貼</span>
+                                <input type="file" id="inf-avatar-file" accept="image/*" class="block w-full text-sm text-slate-500
+                                  file:mr-4 file:py-2 file:px-4
+                                  file:rounded-full file:border-0
+                                  file:text-sm file:font-semibold
+                                  file:bg-teal-50 file:text-teal-700
+                                  hover:file:bg-teal-100" />
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="uploadInfluencerAvatar()" class="creator-secondary-btn">上傳</button>
+                            <span id="inf-upload-status" class="text-xs text-gray-500"></span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="inf-avatar-url">
+
+                    <div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                            <h4 class="font-black text-slate-800">基本聯絡資訊</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm">名字 / 暱稱</label>
+                                <input id="inf-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" placeholder="例：InfluenceAI Creator">
+                            </div>
+                            <div>
+                                <label class="block text-sm">聯絡 Email（公開）</label>
+                                <input id="inf-contact-email" type="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" placeholder="name@gmail.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm">電話</label>
+                                <input id="inf-phone" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" placeholder="例：02-1234-5678">
+                            </div>
+                            <div>
+                                <label class="block text-sm">公關品配送地址</label>
+                                <input id="inf-address" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" placeholder="例：台北市大安區…">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm">個人簡介 / 風格描述</label>
+                        <textarea id="inf-bio" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-3" placeholder="描述你的內容定位、受眾族群、合作風格與代表作品。"></textarea>
+                    </div>
+
+                    <div class="border-t border-slate-200 pt-5">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <h4 class="font-black text-slate-800">社交平台帳號 ID</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-500">Instagram ID</label>
+                                <input id="inf-ig" type="text" placeholder="@username" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm p-2">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Facebook ID</label>
+                                <input id="inf-yt" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm p-2" placeholder="facebook page / id">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">TikTok ID</label>
+                                <input id="inf-tt" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm p-2" placeholder="@tiktokname">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="creator-save-bar">
+                        <button onclick="handleSaveInfluencerProfile()" class="creator-primary-btn">儲存個人資料與設定</button>
+                    </div>
+                </form>
+            </div>
+
+            <aside class="creator-preview-card shadow">
+                <div class="px-6 pb-6 text-center">
+                    <img id="inf-card-avatar" src="https://placehold.co/100?text=Avatar" class="creator-avatar-ring w-28 h-28 rounded-3xl object-cover mx-auto mb-4">
+                    <p class="text-xs font-black uppercase tracking-wider text-teal-600">Preview Card</p>
+                    <h3 id="inf-card-name" class="text-2xl font-black text-slate-900 mt-1">（尚未設定暱稱）</h3>
+                    <p id="inf-card-email" class="text-sm text-gray-500 mt-1 mb-4">email@example.com</p>
+                    <div class="flex justify-center gap-2 mb-4 flex-wrap">
+                        <span id="badge-ig" class="hidden px-3 py-1 bg-pink-100 text-pink-700 text-xs rounded-full font-bold">IG</span>
+                        <span id="badge-yt" class="hidden px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full font-bold">Facebook</span>
+                        <span id="badge-tt" class="hidden px-3 py-1 bg-black text-white text-xs rounded-full font-bold">TikTok</span>
+                    </div>
+                    <p id="inf-card-bio" class="text-sm text-gray-600 leading-6 line-clamp-4">（個人簡介將顯示於此...）</p>
+                    <div class="creator-mini-tip mt-5 text-left">
+                        <strong>品牌端印象提示：</strong>簡介建議包含「內容主題、受眾、合作形式、過往成效」，比只寫個人介紹更容易促成合作。
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <!-- Step 3: 原社群分析報告，保留所有 canvas 與 stat id -->
+    <section class="mb-4">
+        <div class="creator-section-header">
+            <div class="flex gap-4">
+                <span class="creator-step-badge">3</span>
+                <div>
+                    <h3 class="creator-section-title">社群分析與商業價值報告</h3>
+                    <p class="creator-section-subtitle">連結帳號後，這裡會顯示粉絲、互動率、受眾輪廓與品牌合作參考指標。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="analytics-dashboard" class="hidden space-y-6 mt-4">
+        <div class="creator-section-card p-6 md:p-7">
+            <div class="flex flex-col xl:flex-row items-stretch gap-6">
+                <div class="flex flex-col items-center xl:items-start min-w-[220px] text-center xl:text-left xl:border-r border-slate-200 xl:pr-6">
+                    <img id="profile-avatar" src="https://via.placeholder.com/150" alt="Avatar" class="w-24 h-24 rounded-3xl border-4 border-white shadow-md mb-3 object-cover">
+                    <h2 id="profile-username" class="text-xl font-black text-slate-800">@username</h2>
                     <p id="profile-id" class="text-xs text-gray-400 mb-2">ID: --</p>
-                    <p id="profile-bio" class="text-sm text-gray-600 line-clamp-3 max-w-xs">這裡會顯示個人簡介...</p>
+                    <p id="profile-bio" class="text-sm text-gray-600 line-clamp-4 max-w-xs leading-6">這裡會顯示個人簡介...</p>
                 </div>
 
-              
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
-                    
-                    <div class="text-center p-3 bg-purple-100 rounded-lg border border-purple-200">
-                        <p class="text-[10px] text-purple-700 font-bold uppercase">互動率 (Eng. Rate)</p>
-                        <p id="stat-er" class="text-2xl font-extrabold text-purple-800 mt-1">--%</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
+                    <div class="creator-stat-card">
+                        <p class="creator-stat-label text-purple-700">互動率 Eng. Rate</p>
+                        <p id="stat-er" class="creator-stat-value text-3xl">--%</p>
                     </div>
-
-                    <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <p class="text-[10px] text-gray-500 font-bold uppercase">總粉絲數</p>
-                        <p id="stat-followers" class="text-xl font-bold text-slate-800 mt-1">--</p>
+                    <div class="creator-stat-card">
+                        <p class="creator-stat-label">總粉絲數</p>
+                        <p id="stat-followers" class="creator-stat-value text-2xl">--</p>
                     </div>
-
-                    <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <p class="text-[10px] text-gray-500 font-bold uppercase">總貼文數</p>
-                        <p id="stat-posts" class="text-xl font-bold text-slate-800 mt-1">--</p>
+                    <div class="creator-stat-card">
+                        <p class="creator-stat-label">總貼文數</p>
+                        <p id="stat-posts" class="creator-stat-value text-2xl">--</p>
                     </div>
-
-                    <div class="text-center p-3 bg-green-50 rounded-lg border border-green-100">
-                        <p class="text-[10px] text-green-600 font-bold uppercase">主頁瀏覽 (近 7 天)</p>
-                        <p id="stat-profile-views-week" class="text-xl font-bold text-green-700 mt-1">--</p>
+                    <div class="creator-stat-card">
+                        <p class="creator-stat-label text-green-700">主頁瀏覽 7 天</p>
+                        <p id="stat-profile-views-week" class="creator-stat-value text-2xl">--</p>
                     </div>
-
-                    <div class="text-center p-3 bg-blue-50 rounded-lg">
-                        <p class="text-[10px] text-blue-600 font-bold uppercase">觸及 (平均 / 昨日)</p>
-                        <p id="stat-reach" class="text-lg font-bold text-blue-700 mt-1">--</p>
+                    <div class="creator-stat-card">
+                        <p class="creator-stat-label text-blue-700">觸及 平均 / 昨日</p>
+                        <p id="stat-reach" class="creator-stat-value text-xl">--</p>
                     </div>
-
-                    <div class="text-center p-3 bg-blue-50 rounded-lg">
-                        <p class="text-[10px] text-blue-600 font-bold uppercase">瀏覽 (平均 / 昨日)</p>
-                        <p id="stat-impressions" class="text-lg font-bold text-blue-700 mt-1">--</p>
+                    <div class="creator-stat-card">
+                        <p class="creator-stat-label text-blue-700">瀏覽 平均 / 昨日</p>
+                        <p id="stat-impressions" class="creator-stat-value text-xl">--</p>
                     </div>
-
-                    <div class="text-center p-3 bg-pink-50 rounded-lg">
-                        <p class="text-[10px] text-pink-600 font-bold uppercase">平均按讚 (Likes)</p>
-                        <p id="stat-avg-likes" class="text-xl font-bold text-pink-700 mt-1">--</p>
+                    <div class="creator-stat-card">
+                        <p class="creator-stat-label text-pink-700">平均按讚 Likes</p>
+                        <p id="stat-avg-likes" class="creator-stat-value text-2xl">--</p>
                     </div>
-
-                    <div class="text-center p-3 bg-pink-50 rounded-lg">
-                        <p class="text-[10px] text-pink-600 font-bold uppercase">平均留言 (Comm.)</p>
-                        <p id="stat-avg-comments" class="text-xl font-bold text-pink-700 mt-1">--</p>
+                    <div class="creator-stat-card">
+                        <p class="creator-stat-label text-pink-700">平均留言 Comm.</p>
+                        <p id="stat-avg-comments" class="creator-stat-value text-2xl">--</p>
                     </div>
-
                 </div>
-
-
-
-
-
             </div>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-red-500">
+            <div class="creator-chart-card p-6 border-l-4 border-red-500">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">健康度檢測</p>
-                        <h3 class="font-bold text-slate-800 text-lg">假粉絲比例 (Fake Rate)</h3>
+                        <p class="text-gray-500 text-xs font-black uppercase mb-1">健康度檢測</p>
+                        <h3 class="font-black text-slate-800 text-lg">假粉絲比例 Fake Rate</h3>
                     </div>
-                    <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded font-bold">Risk</span>
+                    <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded font-black">Risk</span>
                 </div>
                 <div class="mt-4 flex items-end gap-2">
-                    <p class="text-4xl font-extrabold text-slate-800" id="val-fake-rate">--%</p>
+                    <p class="text-4xl font-black text-slate-800" id="val-fake-rate">--%</p>
                     <p class="text-sm text-gray-400 mb-1">預估值</p>
-               </div>
+                </div>
                 <div class="w-full bg-gray-200 rounded-full h-2 mt-4">
                     <div id="bar-fake-rate" class="bg-red-500 h-2 rounded-full" style="width: 0%"></div>
                 </div>
                 <p class="text-xs text-gray-500 mt-2">基於互動率與帳號活躍度演算</p>
             </div>
 
-            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-purple-500">
+            <div class="creator-chart-card p-6 border-l-4 border-purple-500">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">廣告價值</p>
-                        <h3 class="font-bold text-slate-800 text-lg">限動預期曝光 (Story Views)</h3>
+                        <p class="text-gray-500 text-xs font-black uppercase mb-1">廣告價值</p>
+                        <h3 class="font-black text-slate-800 text-lg">限動預期曝光 Story Views</h3>
                     </div>
-                    <span class="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded font-bold">24h</span>
+                    <span class="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded font-black">24h</span>
                 </div>
-               <div class="mt-4 flex items-end gap-2">
-                    <p class="text-4xl font-extrabold text-slate-800" id="val-story-views">--</p>
+                <div class="mt-4 flex items-end gap-2">
+                    <p class="text-4xl font-black text-slate-800" id="val-story-views">--</p>
                     <p class="text-sm text-gray-400 mb-1">人次</p>
                 </div>
                 <p class="text-xs text-gray-500 mt-4">約為真實粉絲數的 25%</p>
@@ -2722,22 +3625,26 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl shadow p-6">
-                <h3 class="font-bold text-slate-800 mb-4">🌍 粉絲國家分佈 (Top 5 Countries)</h3>
+            <div class="creator-chart-card p-6">
+                <h3 class="font-black text-slate-800 mb-4">🌍 粉絲國家分佈 Top 5 Countries</h3>
                 <div class="h-64"><canvas id="chart-country"></canvas></div>
             </div>
-            <div class="bg-white rounded-xl shadow p-6">
-                <h3 class="font-bold text-slate-800 mb-4">🏙️ 核心城市分佈 (Top 5 Cities)</h3>
-                <p class="text-xs text-gray-400 mb-2">*顯示最大宗國家的主要城市</p>
+            <div class="creator-chart-card p-6">
+                <h3 class="font-black text-slate-800 mb-2">🏙️ 核心城市分佈 Top 5 Cities</h3>
+                <p class="text-xs text-gray-400 mb-3">顯示最大宗國家的主要城市</p>
                 <div class="h-64"><canvas id="chart-city"></canvas></div>
             </div>
         </div>
 
-       <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="font-bold text-slate-800 mb-4">👥 男女年齡分佈比例 (Gender & Age)</h3>
+        <div class="creator-chart-card p-6">
+            <h3 class="font-black text-slate-800 mb-4">👥 男女年齡分佈比例 Gender & Age</h3>
             <div class="h-80"><canvas id="chart-gender-age"></canvas></div>
-       </div>
-        
+        </div>
+
+        <div class="creator-chart-card p-6">
+            <h3 class="font-black text-slate-800 mb-4">📈 粉絲成長趨勢</h3>
+            <div class="h-64"><canvas id="chart-followers"></canvas></div>
+        </div>
     </div>
 </div>
 
@@ -2747,68 +3654,11 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
 
 
 
-<div id="analytics-dashboard" class="hidden space-y-8 mt-8">
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-red-500">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">健康度檢測</p>
-                        <h3 class="font-bold text-slate-800 text-lg">假粉絲比例 (Fake Rate)</h3>
-                    </div>
-                    <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded font-bold">Risk</span>
-                </div>
-                <div class="mt-4 flex items-end gap-2">
-                    <p class="text-4xl font-extrabold text-slate-800" id="val-fake-rate">--%</p>
-                    <p class="text-sm text-gray-400 mb-1">預估值</p>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 mt-4">
-                    <div id="bar-fake-rate" class="bg-red-500 h-2 rounded-full" style="width: 0%"></div>
-                </div>
-                <p class="text-xs text-gray-500 mt-2">基於互動率與帳號活躍度演算</p>
-            </div>
-
-            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-purple-500">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">廣告價值</p>
-                        <h3 class="font-bold text-slate-800 text-lg">限動預期曝光 (Story Views)</h3>
-                    </div>
-                    <span class="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded font-bold">24h</span>
-                </div>
-                <div class="mt-4 flex items-end gap-2">
-                    <p class="text-4xl font-extrabold text-slate-800" id="val-story-views">--</p>
-                    <p class="text-sm text-gray-400 mb-1">人次</p>
-                </div>
-                <p class="text-xs text-gray-500 mt-4">約為真實粉絲數的 25%</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl shadow p-6">
-                <h3 class="font-bold text-slate-800 mb-4">🌍 粉絲國家分佈 (Top 5 Countries)</h3>
-                <div class="h-64"><canvas id="chart-country"></canvas></div>
-            </div>
-            <div class="bg-white rounded-xl shadow p-6">
-                <h3 class="font-bold text-slate-800 mb-4">🏙️ 核心城市分佈 (Top 5 Cities)</h3>
-                <p class="text-xs text-gray-400 mb-2">*顯示最大宗國家的主要城市</p>
-                <div class="h-64"><canvas id="chart-city"></canvas></div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="font-bold text-slate-800 mb-4">👥 男女年齡分佈比例 (Gender & Age)</h3>
-            <div class="h-80"><canvas id="chart-gender-age"></canvas></div>
-        </div>
-        
-        <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="font-bold text-slate-800 mb-4">📈 粉絲成長趨勢</h3>
-            <div class="h-64"><canvas id="chart-followers"></canvas></div>
-        </div>
-    </div>
 
 
-                        <div id="influencer-invitations-content" class="dashboard-content">
+
+
+                         <div id="influencer-invitations-content" class="dashboard-content">
                           <h2 class="text-xl font-bold text-slate-800 mb-6">合作邀請 (新活動)</h2>
                           <div id="influencer-invitations-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <p class="text-gray-500">目前沒有新的合作邀請。</p>
@@ -2856,97 +3706,6 @@ body:not(.glow-on) #bg-anim{ display:none !important; opacity:0 !important; }
     </div>
 </div>
 
-<div id="influencer-settings-content" class="dashboard-content">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="bg-white rounded-xl shadow p-8 lg:col-span-2">
-            <h2 class="text-xl font-bold text-slate-800 mb-6">網紅個人資料設定</h2>
-            <form id="influencer-profile-form" class="space-y-5" onsubmit="return false;">
-                
-                <div class="flex items-center gap-4">
-                    <div class="shrink-0">
-                        <img id="inf-avatar-preview-form" class="h-16 w-16 object-cover rounded-full border border-gray-200" src="https://placehold.co/100?text=Avatar" alt="Avatar">
-                    </div>
-                    <label class="block">
-                        <span class="sr-only">選擇大頭貼</span>
-                        <input type="file" id="inf-avatar-file" accept="image/*" class="block w-full text-sm text-slate-500
-                          file:mr-4 file:py-2 file:px-4
-                          file:rounded-full file:border-0
-                          file:text-sm file:font-semibold
-                          file:bg-teal-50 file:text-teal-700
-                          hover:file:bg-teal-100
-                        "/>
-                    </label>
-                    <button type="button" onclick="uploadInfluencerAvatar()" class="text-xs bg-slate-200 px-3 py-1 rounded hover:bg-slate-300">上傳</button>
-                    <span id="inf-upload-status" class="text-xs text-gray-500"></span>
-                </div>
-                <input type="hidden" id="inf-avatar-url">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">名字/暱稱</label>
-                        <input id="inf-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" >
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">聯絡 Email (公開)</label>
-                        <input id="inf-contact-email" type="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="＠gmail.com">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">電話</label>
-                        <input id="inf-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：02-1234-5678">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">公關品配送地址</label>
-                        <input id="inf-name" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="例：台北市大安區…">
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">個人簡介 / 風格描述</label>
-                    <textarea id="inf-bio" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
-                </div>
-
-                <div class="border-t pt-4">
-                    <h3 class="font-bold text-gray-700 mb-3">社交平台帳號連結</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="text-xs text-gray-500">Instagram ID</label>
-                            <input id="inf-ig" type="text" placeholder="@username" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-500">facebook ID</label>
-                            <input id="inf-yt" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-500">TikTok ID</label>
-                            <input id="inf-tt" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end pt-4">
-                    <button onclick="handleSaveInfluencerProfile()" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700">儲存設定</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="bg-white rounded-xl shadow p-8">
-            <h3 class="font-bold text-slate-800 mb-4">總覽卡片預覽</h3>
-            <div id="inf-card-preview" class="border rounded-xl p-6 flex flex-col items-center text-center bg-white shadow-sm">
-                <img id="inf-card-avatar" src="https://placehold.co/100?text=Avatar" class="w-24 h-24 rounded-full object-cover mb-4 border-4 border-slate-50">
-                <h3 id="inf-card-name" class="text-xl font-bold text-slate-800">（尚未設定暱稱）</h3>
-                <p id="inf-card-email" class="text-sm text-gray-500 mb-4">email@example.com</p>
-                
-                <div class="flex justify-center gap-3 mb-4">
-                    <span id="badge-ig" class="hidden px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded-full">IG</span>
-                    <span id="badge-yt" class="hidden px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">facebook ID</span>
-                    <span id="badge-tt" class="hidden px-2 py-1 bg-black text-white text-xs rounded-full">TikTok</span>
-                </div>
-
-                <p id="inf-card-bio" class="text-sm text-gray-600 line-clamp-3">（個人簡介將顯示於此...）</p>
-            </div>
-        </div>
-    </div>
-</div>
 
 
 
@@ -3469,11 +4228,13 @@ const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
 
         const headerTitles = {
             merchant: { dashboard: '總覽', campaigns: '行銷活動', reports: '成效報告', finance: '財務管理', settings: '設定' },
-            influencer: { dashboard: '總覽', value: '我的價值', invitations: '合作邀請', finance: '財務管理', settings: '設定' }
+            influencer: { dashboard: '總覽', value: '我的價值中心', invitations: '合作邀請', finance: '財務管理', settings: '我的價值中心' }
         };
     
 // === 修改後的 switchTab (切換分頁時，順便載入資料) ===
     window.switchTab = function(role, tabId) {
+        // v23: 網紅端「設定」已併入「我的價值」，保留 settings alias 避免舊按鈕或舊網址失效
+        if (role === 'influencer' && tabId === 'settings') tabId = 'value';
         // 1. 處理側邊欄按鈕樣式 (Active 狀態)
         const sidebarLinks = document.querySelectorAll(`#${role}-dashboard-view .sidebar-link`);
         sidebarLinks.forEach(link => {
@@ -3505,7 +4266,11 @@ const exchangeIgTokenFn = httpsCallable(functions, "exchangeIgToken");
         // 當切換到特定分頁時，自動觸發資料載入函式
         // ==========================================
         if (role === 'influencer') {
-            if (tabId === 'invitations') {
+            if (tabId === 'value') {
+                if (auth.currentUser && typeof listenForSocialStats === 'function') {
+                    listenForSocialStats(auth.currentUser.uid);
+                }
+            } else if (tabId === 'invitations') {
                 // 如果切換到「合作邀請」，就去資料庫撈邀請
                 if (typeof renderInfluencerInvitations === 'function') {
                     renderInfluencerInvitations();
@@ -7588,5 +8353,130 @@ function renderTutorialStep() {
         </div>
     </div>
 </div>
+
+
+<script id="ia-pro-global-uiux-runtime-v1">
+/* =========================================================
+   Runtime UI Enhancer
+   - 只增加 class / hero / 文字標籤 / UI 包裝
+   - 不碰 Firestore collection/doc path
+   - 不改既有資料欄位 id
+   ========================================================= */
+(function(){
+  function ready(fn){
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+  function textOnly(el, newText){
+    if(!el) return;
+    // 只改純文字連結，不改含複雜節點的內容
+    if(el.childElementCount === 0) el.textContent = newText;
+  }
+  function renameSidebar(){
+    const rules = [
+      ['#merchant-sidebar a[onclick*="dashboard"]','營運總覽'],
+      ['#merchant-sidebar a[onclick*="campaigns"]','活動管理'],
+      ['#merchant-sidebar a[onclick*="reports"]','數據洞察'],
+      ['#merchant-sidebar a[onclick*="finance"]','財務中心'],
+      ['#merchant-sidebar a[onclick*="settings"]','品牌設定'],
+      ['#merchant-sidebar a[onclick*="support"]','專人顧問'],
+      ['#influencer-sidebar a[onclick*="dashboard"]','創作者總覽'],
+      ['#influencer-sidebar a[onclick*="value"]','我的價值中心'],
+      ['#influencer-sidebar a[onclick*="invitations"]','合作邀請'],
+      ['#influencer-sidebar a[onclick*="finance"]','收益中心']
+    ];
+    rules.forEach(([sel,label]) => document.querySelectorAll(sel).forEach(a => textOnly(a, label)));
+  }
+  function ensureHero(id, cfg){
+    const root = document.getElementById(id);
+    if(!root || root.querySelector(':scope > .ia-pro-page-hero')) return;
+    const hero = document.createElement('section');
+    hero.className = 'ia-pro-page-hero';
+    hero.innerHTML = `
+      <span class="ia-pro-kicker">${cfg.kicker || 'Workspace'}</span>
+      <h2 class="ia-pro-title">${cfg.title || ''}</h2>
+      <p class="ia-pro-desc">${cfg.desc || ''}</p>
+      ${cfg.actions ? `<div class="ia-pro-actions">${cfg.actions}</div>` : ''}
+    `;
+    root.prepend(hero);
+  }
+  function addSemanticClasses(){
+    document.querySelectorAll('#merchant-dashboard-view main, #influencer-dashboard-view main').forEach(m => {
+      m.classList.add('ia-pro-main');
+    });
+    document.querySelectorAll('.dashboard-content').forEach(c => c.classList.add('ia-pro-content'));
+    document.querySelectorAll('#merchant-dashboard-view header, #influencer-dashboard-view header').forEach(h => {
+      h.classList.add('ia-pro-topbar');
+    });
+  }
+  function enhanceDynamicCards(){
+    document.querySelectorAll('#campaigns-list > div, #influencer-invitations-list > div').forEach(card => {
+      card.classList.add('ia-pro-dynamic-card');
+    });
+  }
+  function enhance(){
+    renameSidebar();
+    addSemanticClasses();
+    ensureHero('merchant-dashboard-content', {
+      kicker:'Brand Command Center',
+      title:'商家營運總覽',
+      desc:'把活動進度、合作邀請、付款狀態與成效指標集中在同一個決策中心，讓品牌方快速掌握行銷投放狀況。',
+      actions:'<button type="button" onclick="switchTab(\'merchant\',\'campaigns\')">管理活動</button><button type="button" onclick="switchTab(\'merchant\',\'reports\')">查看數據洞察</button>'
+    });
+    ensureHero('merchant-campaigns-content', {
+      kicker:'Campaign Studio',
+      title:'活動管理中心',
+      desc:'建立行銷 brief、管理活動列表、追蹤報名與合作流程。讓每個專案從需求到執行都有清楚的工作流。',
+      actions:'<button type="button" onclick="openModal(\'new-campaign-modal\')">＋ 建立新活動</button><button type="button" onclick="switchTab(\'merchant\',\'reports\')">查看成效報告</button>'
+    });
+    ensureHero('merchant-reports-content', {
+      kicker:'Performance Intelligence',
+      title:'成效報告與商業洞察',
+      desc:'以 KPI、趨勢圖、互動率、觸及與 AI insight 重新包裝活動成效，幫助品牌方做出下一輪預算與內容策略決策。'
+    });
+    ensureHero('merchant-finance-content', {
+      kicker:'Wallet & Billing',
+      title:'財務中心',
+      desc:'管理帳戶餘額、入金方式、匯款憑證與活動預算。讓付款流程清楚、可信任，也方便品牌內部核銷。'
+    });
+    ensureHero('merchant-settings-content', {
+      kicker:'Brand Profile',
+      title:'品牌設定',
+      desc:'維護公司資料、品牌 Logo、聯絡方式與品牌描述。這些資訊會直接影響創作者對品牌合作的信任感。'
+    });
+    ensureHero('merchant-support-content', {
+      kicker:'Advisor Desk',
+      title:'專人顧問中心',
+      desc:'針對活動規劃、網紅媒合、成效解讀與平台操作，集中在這裡與 InfluenceAI 顧問溝通。'
+    });
+    ensureHero('influencer-dashboard-content', {
+      kicker:'Creator Workspace',
+      title:'創作者總覽',
+      desc:'快速查看你的合作狀態、預估收益、進行中案件與個人品牌完整度，讓創作者經營更像一個專業事業體。',
+      actions:'<button type="button" onclick="switchTab(\'influencer\',\'value\')">完善我的價值中心</button><button type="button" onclick="switchTab(\'influencer\',\'invitations\')">查看合作邀請</button>'
+    });
+    // influencer-value-content 已在上一版做深度 UIUX，不再覆蓋，以免破壞原本合併頁
+    ensureHero('influencer-invitations-content', {
+      kicker:'Collaboration Inbox',
+      title:'合作邀請',
+      desc:'品牌方的新活動邀請會集中在這裡。你可以快速查看需求、報酬、活動內容與是否接案。'
+    });
+    ensureHero('influencer-finance-content', {
+      kicker:'Creator Payout',
+      title:'收益中心',
+      desc:'查看可提領金額、填寫銀行資料並送出提領申請。系統會根據完成案件自動計算可提領餘額。'
+    });
+    enhanceDynamicCards();
+  }
+  ready(function(){
+    enhance();
+    setTimeout(enhance, 300);
+    setTimeout(enhanceDynamicCards, 800);
+    const mo = new MutationObserver(function(){ enhanceDynamicCards(); });
+    mo.observe(document.body, {childList:true, subtree:true});
+  });
+})();
+</script>
+
 </body>
 </html>
