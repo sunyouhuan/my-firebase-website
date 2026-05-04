@@ -32,7 +32,7 @@
 ### 2) `timeframe` 是什麼
 
 - `timeframe` 是「預設時間窗」，主要搭配人口統計類指標使用。
-- 常見值：`last_14_days`, `last_30_days`, `last_90_days`, `this_week`, `this_month`, `prev_month`。
+- 常見值：`last_14_days`, `last_30_days`, `last_90_days`, `this_week`, `this_month`, `prev_month`（注意：`engaged_audience_demographics` 在 v20.0+ 僅支援 `this_month` 和 `this_week`，其餘已停用）。
 - 這類指標通常不接受 `since` / `until`，而是直接用 `timeframe` 決定區間。
 - 常見於：`follower_demographics`, `engaged_audience_demographics`。
 
@@ -50,7 +50,7 @@
 |---|---|---|---|
 | `metric_type` | 定義回傳數列型態 | `total_value`, `time_series` | 某些 metric 僅支援其中一種或預設值 |
 | `breakdown` | 分維度拆解結果 | `media_product_type`, `follow_type`, `contact_button_type`, `story_navigation_action_type`, `action_type`, `follower_type` | 僅在支援該 breakdown 的 metric 使用，否則會報錯 |
-| `timeframe` | 使用預設視窗 | `last_30_days` | 多見於 demographic；通常不與 `since/until` 併用 |
+| `timeframe` | 使用預設視窗 | `last_14_days`/`last_30_days`/`last_90_days`/`prev_month`/`this_month`/`this_week` | 多見於 demographic；通常不與 `since/until` 併用 |
 | `since` / `until` | 自訂時間區間 | `since=2026-04-01&until=2026-04-30` | 注意時區與資料延遲（最多約 48 小時） |
 
 ### 5) 快速判斷怎麼帶參數
@@ -64,10 +64,10 @@
 | Metric | 意義 | 時間維度 | 單位 | 備註 |
 |---|---|---|---|---|
 | accounts_engaged | 與內容互動的帳號數（含廣告互動） | `period=day` | accounts | `metric_type=total_value`；estimated |
-| comments | 貼文/Reels/影片/直播收到的留言數 | `period=day` | count | `metric_type=total_value`；可用 `breakdown=media_product_type` |
-| engaged_audience_demographics | 已互動受眾的人口統計（年齡/城市/國家/性別） | `period=lifetime` + `timeframe`（`last_14_days`/`last_30_days`/`last_90_days`/`prev_month`/`this_month`/`this_week`） | accounts | 受眾分析；不支援 `since/until`；互動數不足可能不回傳 |
+| comments | 貼文/Reels/影片/直播收到的留言數 | `period=day` | count | `metric_type=total_value`；可用 `breakdown=media_product_type`；in development |
+| engaged_audience_demographics | 已互動受眾的人口統計（年齡/城市/國家/性別） | `period=lifetime` + `timeframe`（`this_month`/`this_week`） | accounts | 受眾分析；`breakdown=age/city/country/gender`；不支援 `since/until`；互動數不足可能不回傳；`last_14_days`/`last_30_days`/`last_90_days`/`prev_month` 於 v20.0+ 已停用 |
 | follows_and_unfollows | 追蹤與取消追蹤（含離開 IG）帳號數 | `period=day` | accounts | `metric_type=total_value`；可用 `breakdown=follow_type` |
-| follower_demographics | 粉絲人口統計（年齡/城市/國家/性別） | `period=lifetime` + `timeframe`（同上） | accounts | 不支援 `since/until`；粉絲數不足可能不回傳 |
+| follower_demographics | 粉絲人口統計（年齡/城市/國家/性別） | `period=lifetime` + `timeframe` | accounts | `breakdown=age/city/country/gender`；不支援 `since/until`；粉絲數不足可能不回傳 |
 | likes | 貼文/Reels/影片按讚數 | `period=day` | count | `metric_type=total_value`；可用 `breakdown=media_product_type` |
 | profile_links_taps | 商家聯絡元件點擊（地址/電話/Email/簡訊） | `period=day` | count | `metric_type=total_value`；可用 `breakdown=contact_button_type` |
 | reach | 看過內容的唯一帳號數 | `period=day` | accounts | 支援 `metric_type=total_value,time_series`；可用 `breakdown=media_product_type,follow_type`；estimated |

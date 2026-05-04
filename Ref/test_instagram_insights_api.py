@@ -39,7 +39,7 @@ except Exception:  # pragma: no cover
     tk = None
     ttk = None
 
-GRAPH_BASE = "https://graph.facebook.com"
+GRAPH_BASE = "https://graph.instagram.com"
 
 # Account Metrics (use with IG User ID)
 ACCOUNT_METRICS = [
@@ -91,6 +91,42 @@ BREAKDOWN_OPTIONS = [
     "action_type",
     "follower_type",
 ]
+
+# Supported period values per account metric
+ACCOUNT_METRIC_PERIODS: Dict[str, list] = {
+    "accounts_engaged": ["", "day"],
+    "comments": ["", "day"],
+    "engaged_audience_demographics": ["", "lifetime"],
+    "follows_and_unfollows": ["", "day"],
+    "follower_demographics": ["", "lifetime"],
+    "likes": ["", "day"],
+    "profile_links_taps": ["", "day"],
+    "reach": ["", "day"],
+    "replies": ["", "day"],
+    "reposts": ["", "day"],
+    "saves": ["", "day"],
+    "shares": ["", "day"],
+    "total_interactions": ["", "day"],
+    "views": ["", "day"],
+}
+
+# Supported breakdown dimensions per account metric
+ACCOUNT_METRIC_BREAKDOWNS: Dict[str, list] = {
+    "accounts_engaged": [],
+    "comments": ["media_product_type"],
+    "engaged_audience_demographics": ["age", "city", "country", "gender"],
+    "follows_and_unfollows": ["follow_type"],
+    "follower_demographics": ["age", "city", "country", "gender"],
+    "likes": ["media_product_type"],
+    "profile_links_taps": ["contact_button_type"],
+    "reach": ["media_product_type", "follow_type"],
+    "replies": [],
+    "reposts": [],
+    "saves": ["media_product_type"],
+    "shares": ["media_product_type"],
+    "total_interactions": ["media_product_type"],
+    "views": ["follower_type", "media_product_type"],
+}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -215,8 +251,8 @@ def launch_gui(default_api_version: str) -> int:
         return 2
 
     root = tk.Tk()
-    root.title("Instagram Insights API Tester")
-    root.geometry("980x820")
+    root.title("Instagram Account Insights API Tester")
+    root.geometry("900x720")
 
     main = ttk.Frame(root, padding=12)
     main.pack(fill="both", expand=True)
@@ -224,35 +260,28 @@ def launch_gui(default_api_version: str) -> int:
     # ── Access Token ──
     token_var = tk.StringVar(value=first_non_empty(os.getenv("IG_ACCESS_TOKEN"), os.getenv("ACCESS_TOKEN")) or "")
     ttk.Label(main, text="Access Token").grid(row=0, column=0, sticky="w")
-    ttk.Entry(main, textvariable=token_var, width=100).grid(row=1, column=0, columnspan=3, sticky="ew", pady=(0, 8))
+    ttk.Entry(main, textvariable=token_var, width=100, show="").grid(row=1, column=0, columnspan=3, sticky="ew", pady=(0, 8))
 
-    # ── Metric / IDs ──
+    # ── Metric / IG User ID / API Version ──
     account_metric_var = tk.StringVar(value=ACCOUNT_METRICS[0])
-    media_metric_var = tk.StringVar(value=MEDIA_METRICS[0])
     ig_user_var = tk.StringVar(value=os.getenv("IG_USER_ID", ""))
-    media_var = tk.StringVar(value=os.getenv("IG_MEDIA_ID", ""))
     api_ver_var = tk.StringVar(value=default_api_version)
 
-    ttk.Label(main, text="Account Metric  (use with IG User ID)").grid(row=2, column=0, sticky="w")
-    ttk.Label(main, text="Media Metric  (use with Media ID)").grid(row=2, column=1, sticky="w", padx=(8, 0))
-    ttk.Label(main, text="IG User ID").grid(row=2, column=2, sticky="w", padx=(8, 0))
+    ttk.Label(main, text="Account Metric").grid(row=2, column=0, sticky="w")
+    ttk.Label(main, text="IG User ID").grid(row=2, column=1, sticky="w", padx=(8, 0))
+    ttk.Label(main, text="API Version").grid(row=2, column=2, sticky="w", padx=(8, 0))
 
-    ttk.Combobox(main, textvariable=account_metric_var, values=ACCOUNT_METRICS, state="readonly", width=28).grid(
-        row=3, column=0, sticky="w", pady=(0, 8)
+    metric_combo = ttk.Combobox(
+        main, textvariable=account_metric_var, values=ACCOUNT_METRICS,
+        state="readonly", width=32
     )
-    ttk.Combobox(main, textvariable=media_metric_var, values=MEDIA_METRICS, state="readonly", width=28).grid(
-        row=3, column=1, sticky="w", padx=(8, 0), pady=(0, 8)
-    )
-    ttk.Entry(main, textvariable=ig_user_var, width=26).grid(row=3, column=2, sticky="w", padx=(8, 0), pady=(0, 8))
-
-    ttk.Label(main, text="Media ID (leave blank for account insights)").grid(row=4, column=0, sticky="w")
-    ttk.Label(main, text="API Version").grid(row=4, column=2, sticky="w", padx=(8, 0))
-    ttk.Entry(main, textvariable=media_var, width=40).grid(row=5, column=0, columnspan=2, sticky="w", pady=(0, 8))
-    ttk.Entry(main, textvariable=api_ver_var, width=14).grid(row=5, column=2, sticky="w", padx=(8, 0), pady=(0, 8))
+    metric_combo.grid(row=3, column=0, sticky="w", pady=(0, 8))
+    ttk.Entry(main, textvariable=ig_user_var, width=28).grid(row=3, column=1, sticky="w", padx=(8, 0), pady=(0, 8))
+    ttk.Entry(main, textvariable=api_ver_var, width=14).grid(row=3, column=2, sticky="w", padx=(8, 0), pady=(0, 8))
 
     # ── Optional Parameters ──
     opt_frame = ttk.LabelFrame(main, text="Optional Parameters", padding=8)
-    opt_frame.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(0, 8))
+    opt_frame.grid(row=4, column=0, columnspan=3, sticky="ew", pady=(0, 8))
 
     metric_type_var = tk.StringVar(value="")
     period_var = tk.StringVar(value="")
@@ -265,7 +294,8 @@ def launch_gui(default_api_version: str) -> int:
                  state="readonly", width=14).grid(row=1, column=0, sticky="w", pady=(0, 6))
 
     ttk.Label(opt_frame, text="period").grid(row=0, column=1, sticky="w", padx=(16, 0))
-    ttk.Entry(opt_frame, textvariable=period_var, width=12).grid(row=1, column=1, sticky="w", padx=(16, 0), pady=(0, 6))
+    period_combo = ttk.Combobox(opt_frame, textvariable=period_var, state="readonly", width=12)
+    period_combo.grid(row=1, column=1, sticky="w", padx=(16, 0), pady=(0, 6))
 
     ttk.Label(opt_frame, text="timeframe").grid(row=0, column=2, sticky="w", padx=(16, 0))
     ttk.Combobox(opt_frame, textvariable=timeframe_var, values=TIMEFRAME_OPTIONS,
@@ -277,24 +307,57 @@ def launch_gui(default_api_version: str) -> int:
     ttk.Label(opt_frame, text="until (YYYY-MM-DD)").grid(row=0, column=4, sticky="w", padx=(16, 0))
     ttk.Entry(opt_frame, textvariable=until_var, width=14).grid(row=1, column=4, sticky="w", padx=(16, 0), pady=(0, 6))
 
-    ttk.Label(opt_frame, text="breakdown").grid(row=2, column=0, columnspan=5, sticky="w", pady=(6, 2))
-    breakdown_vars = {k: tk.BooleanVar() for k in BREAKDOWN_OPTIONS}
-    bd_frame = ttk.Frame(opt_frame)
-    bd_frame.grid(row=3, column=0, columnspan=5, sticky="w")
-    for i, bd in enumerate(BREAKDOWN_OPTIONS):
-        ttk.Checkbutton(bd_frame, text=bd, variable=breakdown_vars[bd]).grid(row=0, column=i, sticky="w", padx=(0, 10))
+    # ── Breakdown (dynamic, updates when metric changes) ──
+    bd_outer = ttk.LabelFrame(main, text="Breakdown", padding=8)
+    bd_outer.grid(row=5, column=0, columnspan=3, sticky="ew", pady=(0, 8))
+
+    bd_frame = ttk.Frame(bd_outer)
+    bd_frame.pack(fill="x")
+
+    current_breakdown_vars: Dict[str, tk.BooleanVar] = {}
+
+    def refresh_metric_options(*_) -> None:
+        metric = account_metric_var.get()
+
+        # Update period dropdown
+        period_options = ACCOUNT_METRIC_PERIODS.get(metric, ["", "day", "lifetime"])
+        period_combo["values"] = period_options
+        # Auto-select the first non-empty option as default
+        period_var.set(period_options[1] if len(period_options) > 1 else "")
+
+        # Update breakdown checkboxes
+        for widget in bd_frame.winfo_children():
+            widget.destroy()
+        current_breakdown_vars.clear()
+        valid = ACCOUNT_METRIC_BREAKDOWNS.get(metric, [])
+        if valid:
+            for i, bd in enumerate(valid):
+                var = tk.BooleanVar()
+                current_breakdown_vars[bd] = var
+                ttk.Checkbutton(bd_frame, text=bd, variable=var).grid(
+                    row=0, column=i, sticky="w", padx=(0, 10)
+                )
+        else:
+            ttk.Label(bd_frame, text="(此 metric 不支援 breakdown)").grid(row=0, column=0, sticky="w")
+
+    metric_combo.bind("<<ComboboxSelected>>", refresh_metric_options)
+    refresh_metric_options()  # initialise for the default metric
+
+    # ── Buttons ──
+    ttk.Button(main, text="Send Request", command=lambda: on_send()).grid(row=6, column=0, sticky="w", pady=(0, 6))
+    ttk.Button(main, text="Clear", command=lambda: write_output("")).grid(row=6, column=1, sticky="w", pady=(0, 6))
 
     # ── Output ──
     output = tk.Text(main, wrap="word", height=18)
-    output.grid(row=8, column=0, columnspan=3, sticky="nsew", pady=(8, 0))
+    output.grid(row=7, column=0, columnspan=3, sticky="nsew", pady=(0, 0))
     scroll = ttk.Scrollbar(main, orient="vertical", command=output.yview)
     output.configure(yscrollcommand=scroll.set)
-    scroll.grid(row=8, column=3, sticky="ns", pady=(8, 0))
+    scroll.grid(row=7, column=3, sticky="ns")
 
     main.columnconfigure(0, weight=1)
     main.columnconfigure(1, weight=1)
     main.columnconfigure(2, weight=1)
-    main.rowconfigure(8, weight=1)
+    main.rowconfigure(7, weight=1)
 
     def write_output(text: str) -> None:
         output.delete("1.0", tk.END)
@@ -303,28 +366,27 @@ def launch_gui(default_api_version: str) -> int:
     def on_send() -> None:
         token = token_var.get().strip()
         ig_user_id = ig_user_var.get().strip() or None
-        media_id = media_var.get().strip() or None
         api_version = api_ver_var.get().strip() or "v25.0"
-
-        # Choose metric based on which endpoint will be used
-        metric = (media_metric_var if media_id else account_metric_var).get().strip()
-
+        metric = account_metric_var.get().strip()
         metric_type = metric_type_var.get().strip()
         period = period_var.get().strip()
         timeframe = timeframe_var.get().strip()
         since = since_var.get().strip()
         until = until_var.get().strip()
-        breakdown = ",".join(k for k, v in breakdown_vars.items() if v.get())
+        breakdown = ",".join(k for k, v in current_breakdown_vars.items() if v.get())
 
         if not token:
             write_output("Missing token. Please paste an access token.")
+            return
+        if not ig_user_id:
+            write_output("Missing IG User ID.")
             return
         if not metric:
             write_output("Missing metric. Please choose a metric.")
             return
 
         try:
-            endpoint = build_endpoint(api_version, media_id, ig_user_id)
+            endpoint = build_endpoint(api_version, None, ig_user_id)
         except ValueError as err:
             write_output(str(err))
             return
@@ -354,9 +416,6 @@ def launch_gui(default_api_version: str) -> int:
             write_output(f"URLError: {err.reason}")
         except json.JSONDecodeError as err:
             write_output(f"Failed to parse JSON response: {err}")
-
-    ttk.Button(main, text="Send Request", command=on_send).grid(row=7, column=0, sticky="w")
-    ttk.Button(main, text="Clear", command=lambda: write_output("")).grid(row=7, column=1, sticky="w")
 
     root.mainloop()
     return 0
