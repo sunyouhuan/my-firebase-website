@@ -6995,7 +6995,9 @@ function updateDashboardWithRealData(igData) {
         btnConnect.className = "text-xs bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bold";
     }
     if (statusText) {
-        statusText.innerHTML = `✅ 已同步 <span class="text-gray-400 text-[10px] ml-1">剛剛</span>`;
+        const _lastUpdated = igData.lastUpdated ? igData.lastUpdated.toDate() : null;
+        const _timeStr = _lastUpdated ? timeAgo(_lastUpdated) : '剛剛';
+        statusText.innerHTML = `✅ 已同步 <span class="text-gray-400 text-[10px] ml-1">${_timeStr}</span>`;
         statusText.className = "text-xs text-green-600 font-bold";
     }
 
@@ -7022,6 +7024,15 @@ function formatK(num) {
 function setText(id, val) {
     const el = document.getElementById(id);
     if(el) el.textContent = val;
+}
+
+// 相對時間工具 (例如: 3 分鐘前 / 2 小時前)
+function timeAgo(date) {
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000); // 秒
+    if (diff < 60)  return '剛剛';
+    if (diff < 3600) return `${Math.floor(diff / 60)} 分鐘前`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} 小時前`;
+    return `${Math.floor(diff / 86400)} 天前`;
 }
 
 // --- 繪製真實貼文數據圖表 ---
